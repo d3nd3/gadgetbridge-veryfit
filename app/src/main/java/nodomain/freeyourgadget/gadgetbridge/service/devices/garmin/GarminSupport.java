@@ -576,6 +576,7 @@ public class GarminSupport extends AbstractBTLEDeviceSupport implements ICommuni
         sendOutgoingMessage("request supported file types", new SupportedFileTypesMessage());
 
         if (mFirstConnect) {
+            sendOutgoingMessage("set pair complete", new SystemEventMessage(SystemEventMessage.GarminSystemEventType.PAIR_COMPLETE, 0));
             sendOutgoingMessage("set sync complete", new SystemEventMessage(SystemEventMessage.GarminSystemEventType.SYNC_COMPLETE, 0));
             this.mFirstConnect = false;
         }
