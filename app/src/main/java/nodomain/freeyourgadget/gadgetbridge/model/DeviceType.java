@@ -734,7 +734,7 @@ public enum DeviceType {
     MARSTEK_B2500(MarstekB2500DeviceCoordinator.class),
     GENERIC_HEADPHONES(GenericHeadphonesCoordinator.class),
     GENERIC_THERMAL_PRINTER(ThermalPrinterCoordinator.class),
-    LS24X(Ls24xDeviceCoordinator.class),
+    CARDO_LS24X(Ls24xDeviceCoordinator.class),
     TEST(TestDeviceCoordinator.class),
     ULTRAHUMAN_RING_AIR(UltrahumanDeviceCoordinator.class),
     ATC_BLE_OEPL(ATCBLEOEPLCoordinator.class);
