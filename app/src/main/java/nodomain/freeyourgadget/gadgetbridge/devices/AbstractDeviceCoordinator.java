@@ -240,7 +240,7 @@ public abstract class AbstractDeviceCoordinator implements DeviceCoordinator {
 
     @Override
     public TimeSampleProvider<? extends HrvSummarySample> getHrvSummarySampleProvider(GBDevice device, DaoSession session) {
-        return null;
+        return supportsHrvMeasurement() ? new GenericHrvSummarySampleProvider(getHrvValueSampleProvider(device, session)) : null;
     }
 
     @Override

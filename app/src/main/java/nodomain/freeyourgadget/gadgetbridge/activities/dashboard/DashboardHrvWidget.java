@@ -94,7 +94,7 @@ public class DashboardHrvWidget extends AbstractGaugeWidget {
         final HrvData hrvData = (HrvData) dashboardData.get("hrv");
         final float value = hrvData != null ? calculateGaugeValue(hrvData.weeklyAverage, hrvData.baselineLowUpper, hrvData.baselineBalancedLower, hrvData.baselineBalancedUpper) : -1;
         final String valueText;
-        valueText = value > 0 ? getString(R.string.hrv_status_unit, hrvData.weeklyAverage) : getString(R.string.stats_empty_value);
+        valueText = hrvData != null && hrvData.weeklyAverage > 0 ? getString(R.string.hrv_status_unit, hrvData.weeklyAverage) : getString(R.string.stats_empty_value);
         setText(valueText);
         drawSegmentedGauge(
                 colors,

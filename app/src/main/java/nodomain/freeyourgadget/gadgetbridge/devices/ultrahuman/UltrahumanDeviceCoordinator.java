@@ -189,7 +189,7 @@ public class UltrahumanDeviceCoordinator extends AbstractBLEDeviceCoordinator {
     @Override
     public boolean supportsHrvMeasurement() {
         // TODO - needs getHrvSummarySampleProvider in addition to the implemented getHrvValueSampleProvider
-        return false;
+        return true;
     }
 
     @Override
