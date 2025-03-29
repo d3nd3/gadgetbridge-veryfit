@@ -65,11 +65,6 @@ public class AmazfitGTS4Coordinator extends ZeppOsCoordinator {
     }
 
     @Override
-    public boolean supportsFtpServer(final GBDevice device) {
-        return true;
-    }
-
-    @Override
     public boolean supportsBluetoothPhoneCalls(final GBDevice device) {
         return true;
     }

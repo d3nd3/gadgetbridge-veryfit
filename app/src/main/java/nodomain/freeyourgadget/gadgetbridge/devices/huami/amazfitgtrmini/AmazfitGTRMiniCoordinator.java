@@ -70,11 +70,6 @@ public class AmazfitGTRMiniCoordinator extends ZeppOsCoordinator {
     }
 
     @Override
-    public boolean supportsFtpServer(final GBDevice device) {
-        return false;
-    }
-
-    @Override
     public boolean supportsBluetoothPhoneCalls(final GBDevice device) {
         return false;
     }

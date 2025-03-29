@@ -81,11 +81,6 @@ public class AmazfitTRex3Coordinator extends ZeppOsCoordinator {
         return true;
     }
 
-    @Override
-    public boolean supportsFtpServer(final GBDevice device) {
-        return true;
-    }
-
     public boolean supportsBluetoothPhoneCalls(final GBDevice device) {
         return true;
     }

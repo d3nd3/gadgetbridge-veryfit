@@ -75,11 +75,6 @@ public class AmazfitCheetahRoundCoordinator extends ZeppOsCoordinator {
     }
 
     @Override
-    public boolean supportsFtpServer(final GBDevice device) {
-        return true;
-    }
-
-    @Override
     public boolean supportsBluetoothPhoneCalls(final GBDevice device) {
         return true;
     }
