@@ -67,6 +67,7 @@ import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.zeppos.service
 import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.zeppos.services.ZeppOsPhoneService;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.zeppos.services.ZeppOsRemindersService;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.zeppos.services.ZeppOsShortcutCardsService;
+import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.zeppos.services.filetransfer.ZeppOsFileTransferImpl;
 import nodomain.freeyourgadget.gadgetbridge.util.FileUtils;
 
 public abstract class ZeppOsCoordinator extends HuamiCoordinator {
@@ -542,10 +543,11 @@ public abstract class ZeppOsCoordinator extends HuamiCoordinator {
     }
 
     /**
-     * true for Zepp OS 2.0+, false for Zepp OS 1
+     * Mostly true for Zepp OS 2.0+, false for Zepp OS 1. The GTR Mini is a Zepp OS 2.0 device,
+     * but it doesn't seem to support the AGPS service.
      */
-    public boolean sendAgpsAsFileTransfer() {
-        return true;
+    public boolean sendAgpsAsFileTransfer(final GBDevice device) {
+        return supportsFileTransfer(device, "agps");
     }
 
     public boolean supportsGpxUploads() {
@@ -609,6 +611,13 @@ public abstract class ZeppOsCoordinator extends HuamiCoordinator {
                 DeviceSettingsUtils.getPrefPossibleValuesKey(HuamiConst.PREF_DISPLAY_ITEMS_SORTABLE),
                 Collections.emptyList()
         ).contains(item);
+    }
+
+    private boolean supportsFileTransfer(final GBDevice device, final String service) {
+        return getPrefs(device).getStringSet(
+                DeviceSettingsUtils.getPrefPossibleValuesKey(ZeppOsFileTransferImpl.PREF_SUPPORTED_SERVICES),
+                Collections.emptySet()
+        ).contains(service);
     }
 
     public static boolean experimentalFeatures(final GBDevice device) {

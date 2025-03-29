@@ -45,12 +45,6 @@ public class AmazfitGTRMiniCoordinator extends ZeppOsCoordinator {
     }
 
     @Override
-    public boolean sendAgpsAsFileTransfer() {
-        // Even though it's a Zepp OS 2.0 device, it doesn't seem to support the AGPS service
-        return false;
-    }
-
-    @Override
     public boolean supportsContinuousFindDevice() {
         return true;
     }

@@ -47,11 +47,6 @@ public class AmazfitGTR3ProCoordinator extends ZeppOsCoordinator {
     }
 
     @Override
-    public boolean sendAgpsAsFileTransfer() {
-        return false;
-    }
-
-    @Override
     public boolean supportsBluetoothPhoneCalls(final GBDevice device) {
         return true;
     }

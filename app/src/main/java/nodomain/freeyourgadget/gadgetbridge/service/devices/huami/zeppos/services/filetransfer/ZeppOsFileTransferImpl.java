@@ -11,11 +11,13 @@ import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
+import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventUpdatePreferences;
 import nodomain.freeyourgadget.gadgetbridge.devices.huami.HuamiService;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.TransactionBuilder;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.zeppos.ZeppOsSupport;
@@ -46,6 +48,8 @@ public abstract class ZeppOsFileTransferImpl {
     protected int mChunkSize = -1;
     protected int mCompressedChunkSize = -1;
     protected final List<String> supportedServices = new ArrayList<>();
+
+    public static final String PREF_SUPPORTED_SERVICES = "zepp_os_file_transfer_services";
 
     public ZeppOsFileTransferImpl(final ZeppOsFileTransferService fileTransferService,
                                   final ZeppOsSupport support) {
@@ -108,6 +112,8 @@ public abstract class ZeppOsFileTransferImpl {
             for (int i = 0; i < numServices; i++) {
                 supportedServices.add(StringUtils.untilNullTerminator(buf));
             }
+            mSupport.evaluateGBDeviceEvent(new GBDeviceEventUpdatePreferences(PREF_SUPPORTED_SERVICES, new HashSet<>(supportedServices)));
+
             // TODO: 3 unknown bytes for v3
 
             final TransactionBuilder builder = mSupport.createTransactionBuilder("enable file transfer v3 notifications");

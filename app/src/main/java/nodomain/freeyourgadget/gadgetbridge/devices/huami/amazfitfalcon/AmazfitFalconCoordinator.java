@@ -50,11 +50,6 @@ public class AmazfitFalconCoordinator extends ZeppOsCoordinator {
     }
 
     @Override
-    public boolean sendAgpsAsFileTransfer() {
-        return false;
-    }
-
-    @Override
     public boolean supportsWifiHotspot(final GBDevice device) {
         return true;
     }
