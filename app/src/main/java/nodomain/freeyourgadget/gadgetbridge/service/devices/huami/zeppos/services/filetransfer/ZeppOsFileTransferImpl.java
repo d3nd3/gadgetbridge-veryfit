@@ -110,9 +110,9 @@ public abstract class ZeppOsFileTransferImpl {
             mCompressedChunkSize = buf.getInt();
             final int numServices = buf.getShort();
             for (int i = 0; i < numServices; i++) {
+                // terminal agps notification jsapp sticky_notification nfc sport music httpproxy readiness voicememo
                 supportedServices.add(StringUtils.untilNullTerminator(buf));
             }
-            mSupport.evaluateGBDeviceEvent(new GBDeviceEventUpdatePreferences(PREF_SUPPORTED_SERVICES, new HashSet<>(supportedServices)));
 
             // TODO: 3 unknown bytes for v3
 
@@ -121,6 +121,8 @@ public abstract class ZeppOsFileTransferImpl {
             builder.notify(mSupport.getCharacteristic(HuamiService.UUID_CHARACTERISTIC_ZEPP_OS_FILE_TRANSFER_V3_RECEIVE), true);
             builder.queue(mSupport.getQueue());
         }
+
+        mSupport.evaluateGBDeviceEvent(new GBDeviceEventUpdatePreferences(PREF_SUPPORTED_SERVICES, new HashSet<>(supportedServices)));
 
         LOG.info(
                 "Got file transfer service: version={}, chunkSize={}, compressedChunkSize={}, supportedServices=[{}]",
