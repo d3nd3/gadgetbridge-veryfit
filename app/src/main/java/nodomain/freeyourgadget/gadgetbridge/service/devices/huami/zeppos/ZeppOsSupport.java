@@ -311,7 +311,7 @@ public class ZeppOsSupport extends HuamiSupport implements ZeppOsFileTransferSer
 
     @Override
     public void onTestNewFunction() {
-        voiceMemosService.requestList();
+        writeToChunked2021("music region test", (short) 0x004f, new byte[] {0x01, 'u', 'k', '\0'}, true);
     }
 
     @Override
