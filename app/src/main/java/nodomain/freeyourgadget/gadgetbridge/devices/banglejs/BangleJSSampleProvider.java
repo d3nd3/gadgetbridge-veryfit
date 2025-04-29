@@ -83,6 +83,16 @@ public class BangleJSSampleProvider extends AbstractSampleProvider<BangleJSActiv
         return new BangleJSActivitySample();
     }
 
+    @Override
+    protected List<BangleJSActivitySample> getGBActivitySamples(final int timestamp_from, final int timestamp_to) {
+        return fillGaps(
+                super.getGBActivitySamples(timestamp_from, timestamp_to),
+                timestamp_from,
+                timestamp_to,
+                10 * 60 // bangle samples are 10-minutes apart
+        );
+    }
+
     /**
      * Upserts a sample in the database, avoiding duplicated samples if a sample already exists in a
      * close timestamp (within 2 minutes);

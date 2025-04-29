@@ -103,7 +103,8 @@ public class GarminActivitySampleProvider extends AbstractSampleProvider<GarminA
         final List<GarminActivitySample> samples = fillGaps(
                 super.getGBActivitySamples(timestamp_from, timestamp_to),
                 timestamp_from,
-                timestamp_to
+                timestamp_to,
+                60
         );
 
         if (!samples.isEmpty()) {

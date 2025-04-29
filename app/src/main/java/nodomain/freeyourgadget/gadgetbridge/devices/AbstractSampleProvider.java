@@ -48,6 +48,7 @@ import nodomain.freeyourgadget.gadgetbridge.model.ActivitySample;
 /**
  * Base class for all sample providers. A Sample provider is device specific and provides
  * access to the device specific samples. There are both read and write operations.
+ *
  * @param <T> the sample type
  */
 public abstract class AbstractSampleProvider<T extends AbstractActivitySample> implements SampleProvider<T> {
@@ -173,8 +174,9 @@ public abstract class AbstractSampleProvider<T extends AbstractActivitySample> i
 
     /**
      * Get the activity samples between two timestamps (inclusive). Exactly one every minute.
+     *
      * @param timestamp_from Start timestamp
-     * @param timestamp_to End timestamp
+     * @param timestamp_to   End timestamp
      * @return Exactly one sample for every minute
      */
     protected List<T> getGBActivitySamples(int timestamp_from, int timestamp_to) {
@@ -187,7 +189,7 @@ public abstract class AbstractSampleProvider<T extends AbstractActivitySample> i
         }
         Property deviceProperty = getDeviceIdentifierSampleProperty();
         qb.where(deviceProperty.eq(dbDevice.getId()), timestampProperty.ge(timestamp_from))
-            .where(timestampProperty.le(timestamp_to));
+                .where(timestampProperty.le(timestamp_to));
         List<T> samples = qb.build().list();
         for (T sample : samples) {
             sample.setProvider(this);
@@ -202,8 +204,9 @@ public abstract class AbstractSampleProvider<T extends AbstractActivitySample> i
      * available.
      * It assumes {@link #getGBActivitySamples(int, int)} returns the highest resolution data unless
      * this is overwritten.
+     *
      * @param timestamp_from Start timestamp
-     * @param timestamp_to End timestamp
+     * @param timestamp_to   End timestamp
      * @return All the samples between start and end timestamp (inclusive)
      */
     protected List<T> getGBActivitySamplesHighRes(int timestamp_from, int timestamp_to) {
@@ -232,7 +235,7 @@ public abstract class AbstractSampleProvider<T extends AbstractActivitySample> i
         return filteredSamples;
     }
 
-    public abstract AbstractDao<T,?> getSampleDao();
+    public abstract AbstractDao<T, ?> getSampleDao();
 
     @Nullable
     protected abstract Property getRawKindSampleProperty();
@@ -331,7 +334,20 @@ public abstract class AbstractSampleProvider<T extends AbstractActivitySample> i
         return d1.equals(d2);
     }
 
-    protected List<T> fillGaps(final List<T> samples, final int timestamp_from, final int timestamp_to) {
+    /**
+     * Ensure that there are no gaps larger than 1 minute between samples.
+     *
+     * @param samples          ordered list of samples
+     * @param timestamp_from   timestamp to start generating samples from
+     * @param timestamp_to     timestamp to generate samples until
+     * @param thresholdSeconds given a sample at a specific timestamp, samples before it will be
+     *                         considered to belong to the same activity if they are within the
+     *                         specified number of seconds.
+     */
+    protected List<T> fillGaps(final List<T> samples,
+                               final int timestamp_from,
+                               final int timestamp_to,
+                               final int thresholdSeconds) {
         if (samples.isEmpty()) {
             return samples;
         }
@@ -340,13 +356,26 @@ public abstract class AbstractSampleProvider<T extends AbstractActivitySample> i
 
         final List<T> ret = new LinkedList<>(samples);
 
+        final int unknownActivityKind = toRawActivityKind(ActivityKind.UNKNOWN);
         //ret.sort(Comparator.comparingLong(T::getTimestamp));
 
-        final int firstTimestamp = ret.get(0).getTimestamp();
+        final T firstSample = ret.get(0);
+        final int firstTimestamp = firstSample.getTimestamp();
         if (firstTimestamp - timestamp_from > 60) {
             // Gap at the start
-            for (int ts = timestamp_from; ts <= firstTimestamp + 60; ts += 60) {
-                ret.add(0, createDummySample(ts));
+            for (int ts = firstTimestamp - 60; ts >= timestamp_from; ts -= 60) {
+                final int activityKind;
+                if (firstTimestamp - ts < thresholdSeconds) {
+                    activityKind = firstSample.getRawKind();
+                } else {
+                    activityKind = unknownActivityKind;
+                }
+
+                if (LOG.isTraceEnabled()) {
+                    LOG.trace("Inserting dummy sample at the start, ts={}, activityKind={}", Instant.ofEpochSecond(ts), activityKind);
+                }
+
+                ret.add(0, createDummySample(ts, activityKind));
             }
         }
 
@@ -356,7 +385,10 @@ public abstract class AbstractSampleProvider<T extends AbstractActivitySample> i
         if (minTo - lastTimestamp > 60) {
             // Gap at the end
             for (int ts = lastTimestamp + 60; ts <= minTo; ts += 60) {
-                ret.add(createDummySample(ts));
+                if (LOG.isTraceEnabled()) {
+                    LOG.trace("Inserting dummy sample at the end, ts={}", Instant.ofEpochSecond(ts));
+                }
+                ret.add(createDummySample(ts, unknownActivityKind));
             }
         }
 
@@ -364,14 +396,31 @@ public abstract class AbstractSampleProvider<T extends AbstractActivitySample> i
         T previousSample = it.next();
 
         while (it.hasNext()) {
-            final T sample = it.next();
-            if (sample.getTimestamp() - previousSample.getTimestamp() > 60) {
-                LOG.trace("Filling gap between {} and {}", Instant.ofEpochSecond(previousSample.getTimestamp() + 60), Instant.ofEpochSecond(sample.getTimestamp()));
-                for (int ts = previousSample.getTimestamp() + 60; ts < sample.getTimestamp(); ts += 60) {
-                    it.add(createDummySample(ts));
+            final T nextSample = it.next();
+            final int previousTimestamp = previousSample.getTimestamp();
+            final int nextTimestamp = nextSample.getTimestamp();
+            if (nextTimestamp - previousTimestamp > 60) {
+                it.previous(); // go back one element so we keep the inserts ordered
+                if (LOG.isTraceEnabled()) {
+                    LOG.trace("Filling gap between {} and {}", Instant.ofEpochSecond(previousTimestamp), Instant.ofEpochSecond(nextTimestamp));
                 }
+                for (int ts = previousTimestamp + 60; ts < nextTimestamp; ts += 60) {
+                    final int activityKind;
+                    if (nextTimestamp - ts < thresholdSeconds) {
+                        activityKind = nextSample.getRawKind();
+                    } else {
+                        activityKind = unknownActivityKind;
+                    }
+
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("Inserting dummy sample in the middle, ts={}, activityKind={}", Instant.ofEpochSecond(ts), activityKind);
+                    }
+
+                    it.add(createDummySample(ts, activityKind));
+                }
+                it.next(); // go forward again
             }
-            previousSample = sample;
+            previousSample = nextSample;
         }
 
         final long nanoEnd = System.nanoTime();
@@ -384,10 +433,10 @@ public abstract class AbstractSampleProvider<T extends AbstractActivitySample> i
         return ret;
     }
 
-    private T createDummySample(final int ts) {
+    private T createDummySample(final int ts, final int rawKind) {
         final T dummySample = createActivitySample();
         dummySample.setTimestamp(ts);
-        dummySample.setRawKind(ActivityKind.UNKNOWN.getCode());
+        dummySample.setRawKind(rawKind);
         dummySample.setRawIntensity(ActivitySample.NOT_MEASURED);
         dummySample.setSteps(ActivitySample.NOT_MEASURED);
         dummySample.setHeartRate(ActivitySample.NOT_MEASURED);

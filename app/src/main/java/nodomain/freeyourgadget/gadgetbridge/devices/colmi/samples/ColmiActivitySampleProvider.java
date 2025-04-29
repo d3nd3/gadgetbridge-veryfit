@@ -103,7 +103,8 @@ public class ColmiActivitySampleProvider extends AbstractSampleProvider<ColmiAct
         final List<ColmiActivitySample> samples = fillGaps(
                 super.getGBActivitySamples(timestamp_from, timestamp_to),
                 timestamp_from,
-                timestamp_to
+                timestamp_to,
+                60
         );
 
         final Map<Integer, ColmiActivitySample> sampleByTs = new HashMap<>();
