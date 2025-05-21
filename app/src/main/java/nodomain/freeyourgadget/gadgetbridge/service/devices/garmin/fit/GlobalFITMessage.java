@@ -333,6 +333,14 @@ public class GlobalFITMessage {
             new FieldDefinitionPrimitive(253, BaseType.UINT32, "timestamp", FieldDefinitionFactory.FIELD.TIMESTAMP)
     ));
 
+    public static GlobalFITMessage HEART_RATE = new GlobalFITMessage(132, "HEART_RATE", Arrays.asList(
+            new FieldDefinitionPrimitive(0, BaseType.UINT16, "fractional_timestamp"),
+            new FieldDefinitionPrimitive(6, BaseType.UINT8, "filtered_bpm", FieldDefinitionFactory.FIELD.ARRAY), // up to 8 entries
+            new FieldDefinitionPrimitive(9, BaseType.UINT32, "event_timestamp"), // TODO unit?
+            new FieldDefinitionPrimitive(10, BaseType.BASE_TYPE_BYTE, "event_timestamp_12", FieldDefinitionFactory.FIELD.ARRAY), // size 12?
+            new FieldDefinitionPrimitive(253, BaseType.UINT32, "timestamp", FieldDefinitionFactory.FIELD.TIMESTAMP)
+    ));
+
     // https://github.com/GoldenCheetah/GoldenCheetah/blob/71e3928bc614f3209d9977d90cc50b942999b855/src/FileIO/FitRideFile.cpp#L1998
     public static GlobalFITMessage PHYSIOLOGICAL_METRICS = new GlobalFITMessage(140, "PHYSIOLOGICAL_METRICS", Arrays.asList(
             new FieldDefinitionPrimitive(4, BaseType.UINT8, "aerobic_effect", 10, 0),
@@ -521,6 +529,7 @@ public class GlobalFITMessage {
         put(103, MONITORING_INFO);
         put(127, CONNECTIVITY);
         put(128, WEATHER);
+        put(132, HEART_RATE);
         put(140, PHYSIOLOGICAL_METRICS);
         put(159, WATCHFACE_SETTINGS);
         put(160, GPS_METADATA);

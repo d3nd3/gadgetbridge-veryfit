@@ -53,6 +53,8 @@ public class FitRecordDataFactory {
                 return new FitConnectivity(recordDefinition, recordHeader);
             case 128:
                 return new FitWeather(recordDefinition, recordHeader);
+            case 132:
+                return new FitHeartRate(recordDefinition, recordHeader);
             case 140:
                 return new FitPhysiologicalMetrics(recordDefinition, recordHeader);
             case 159:

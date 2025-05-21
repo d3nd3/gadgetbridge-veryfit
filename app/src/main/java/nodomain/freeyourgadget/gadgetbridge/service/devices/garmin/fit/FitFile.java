@@ -57,8 +57,12 @@ public class FitFile {
 
     //TODO: process file in chunks??
     public static FitFile parseIncoming(byte[] fileContents) throws FitParseException {
-
         final GarminByteBufferReader garminByteBufferReader = new GarminByteBufferReader(fileContents);
+        return parseIncoming(garminByteBufferReader);
+    }
+
+    public static FitFile parseIncoming(final GarminByteBufferReader garminByteBufferReader) throws FitParseException {
+        final int startPos = garminByteBufferReader.getPosition();
         garminByteBufferReader.setByteOrder(ByteOrder.LITTLE_ENDIAN);
 
         final Header header = Header.parseIncomingHeader(garminByteBufferReader);
@@ -68,7 +72,7 @@ public class FitFile {
         List<RecordData> dataRecords = new ArrayList<>();
         Long referenceTimestamp = null;
 
-        while (garminByteBufferReader.getPosition() < header.getHeaderSize() + header.getDataSize()) {
+        while (garminByteBufferReader.getPosition() < startPos + header.getHeaderSize() + header.getDataSize()) {
             byte rawRecordHeader = (byte) garminByteBufferReader.readByte();
             RecordHeader recordHeader = new RecordHeader(rawRecordHeader);
             final Integer timeOffset = recordHeader.getTimeOffset();
@@ -106,13 +110,17 @@ public class FitFile {
         }
         garminByteBufferReader.setByteOrder(ByteOrder.LITTLE_ENDIAN);
         final int fileCrc = garminByteBufferReader.readShort();
-        final int actualCrc = ChecksumCalculator.computeCrc(fileContents, 0, garminByteBufferReader.getPosition() - 2);
+        final int endPos = garminByteBufferReader.getPosition();
+        garminByteBufferReader.setPosition(startPos);
+        final int fileLength = endPos - garminByteBufferReader.getPosition();
+        final int actualCrc = ChecksumCalculator.computeCrc(garminByteBufferReader.asReadOnlyBuffer(), fileLength - 2);
+        garminByteBufferReader.setPosition(endPos);
         if (fileCrc != actualCrc) {
             throw new FitParseException("Wrong CRC for FIT file: got " + actualCrc + " expected " + fileCrc);
         }
         if (garminByteBufferReader.getPosition() < garminByteBufferReader.getLimit()) {
-            LOG.warn("There are {} bytes after the fit file", garminByteBufferReader.getLimit() - garminByteBufferReader.getPosition());
             // TODO a fit file should actually be multiple fit files
+            final FitFile fitFile2 = parseIncoming(garminByteBufferReader);
         }
         return new FitFile(header, dataRecords);
     }
@@ -203,6 +211,8 @@ public class FitFile {
         }
 
         static Header parseIncomingHeader(GarminByteBufferReader garminByteBufferReader) {
+            final int startHeaderPosition = garminByteBufferReader.getPosition();
+
             int headerSize = garminByteBufferReader.readByte();
             if (headerSize < 12) {
                 throw new IllegalArgumentException("Too short header in FIT file.");
@@ -217,10 +227,12 @@ public class FitFile {
             }
             if (hasCRC) {
                 int incomingCrc = garminByteBufferReader.readShort();
-
-                if (incomingCrc != 0 && incomingCrc != ChecksumCalculator.computeCrc(garminByteBufferReader.asReadOnlyBuffer(), 0, headerSize - 2)) {
+                final int endHeaderPosition = garminByteBufferReader.getPosition();
+                garminByteBufferReader.setPosition(startHeaderPosition);
+                if (incomingCrc != 0 && incomingCrc != ChecksumCalculator.computeCrc(garminByteBufferReader.asReadOnlyBuffer(), headerSize - 2)) {
                     throw new IllegalArgumentException("Wrong CRC for header in FIT file");
                 }
+                garminByteBufferReader.setPosition(endHeaderPosition);
                 //            LOG.info("Fit File Header didn't have CRC, no check performed.");
             }
             return new Header(hasCRC, protocolVersion, profileVersion, dataSize);

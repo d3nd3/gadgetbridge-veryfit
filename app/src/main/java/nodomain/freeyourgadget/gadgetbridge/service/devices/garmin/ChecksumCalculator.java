@@ -31,6 +31,12 @@ public final class ChecksumCalculator {
         return computeCrc(0, data, offset, length);
     }
 
+    public static int computeCrc(ByteBuffer byteBuffer, int length) {
+        byte[] data = new byte[length];
+        byteBuffer.get(data);
+        return computeCrc(0, data, 0, length);
+    }
+
     public static int computeCrc(ByteBuffer byteBuffer, int offset, int length) {
         byteBuffer.rewind();
         byte[] data = new byte[length];
