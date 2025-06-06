@@ -2096,6 +2096,36 @@ public class GBApplication extends Application {
             }
         }
 
+        if (oldVersion < 50) {
+            // Add the new Load tab.
+            try (DBHandler db = acquireDB()) {
+                final DaoSession daoSession = db.getDaoSession();
+                final List<Device> activeDevices = DBHelper.getActiveDevices(daoSession);
+
+                for (final Device dbDevice : activeDevices) {
+                    final SharedPreferences deviceSharedPrefs = GBApplication.getDeviceSpecificSharedPrefs(dbDevice.getIdentifier());
+
+                    final String chartsTabsValue = deviceSharedPrefs.getString("charts_tabs", null);
+                    if (chartsTabsValue == null) {
+                        continue;
+                    }
+
+                    final String newPrefValue;
+                    if (!StringUtils.isBlank(chartsTabsValue)) {
+                        newPrefValue = chartsTabsValue + ",load";
+                    } else {
+                        newPrefValue = "load";
+                    }
+
+                    final SharedPreferences.Editor deviceSharedPrefsEdit = deviceSharedPrefs.edit();
+                    deviceSharedPrefsEdit.putString("charts_tabs", newPrefValue);
+                    deviceSharedPrefsEdit.apply();
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to migrate prefs to version 50", e);
+            }
+        }
+
         editor.putString(PREFS_VERSION, Integer.toString(CURRENT_PREFS_VERSION));
         editor.apply();
     }
