@@ -617,6 +617,10 @@ public class DiscoveryActivityV2 extends AbstractGBActivity implements AdapterVi
             return;
         }
 
+        startPair(deviceCandidate);
+    }
+
+    private void startPair(final GBDeviceCandidate deviceCandidate) {
         DeviceType deviceType = DeviceHelper.getInstance().resolveDeviceType(deviceCandidate);
 
         if (!deviceType.isSupported()) {
@@ -780,12 +784,9 @@ public class DiscoveryActivityV2 extends AbstractGBActivity implements AdapterVi
                 .setView(linearLayout)
                 .setPositiveButton(R.string.ok, (dialog, which) -> {
                     if (selectedUnsupportedDeviceKey != DebugActivity.SELECT_DEVICE) {
-                        DebugActivity.createTestDevice(
-                                DiscoveryActivityV2.this,
-                                selectedUnsupportedDeviceKey,
-                                deviceCandidate.getMacAddress(),
-                                deviceCandidate.getName()
-                        );
+                        final DeviceType deviceType = DeviceType.values()[(int) selectedUnsupportedDeviceKey];
+                        deviceCandidate.setForcedType(deviceType);
+                        startPair(deviceCandidate);
                         finish();
                     }
                 })
