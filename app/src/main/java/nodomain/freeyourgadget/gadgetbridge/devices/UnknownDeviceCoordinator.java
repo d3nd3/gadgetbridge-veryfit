@@ -17,8 +17,6 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 package nodomain.freeyourgadget.gadgetbridge.devices;
 
-import android.app.Activity;
-
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -27,7 +25,6 @@ import androidx.annotation.StringRes;
 import java.util.List;
 
 import nodomain.freeyourgadget.gadgetbridge.R;
-import nodomain.freeyourgadget.gadgetbridge.activities.ControlCenterv2;
 import nodomain.freeyourgadget.gadgetbridge.entities.AbstractActivitySample;
 import nodomain.freeyourgadget.gadgetbridge.entities.DaoSession;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
@@ -115,11 +112,6 @@ public class UnknownDeviceCoordinator extends AbstractDeviceCoordinator {
     @Override
     public boolean supports(GBDeviceCandidate candidate) {
         return false;
-    }
-
-    @Override
-    public Class<? extends Activity> getPairingActivity() {
-        return ControlCenterv2.class;
     }
 
     @Override

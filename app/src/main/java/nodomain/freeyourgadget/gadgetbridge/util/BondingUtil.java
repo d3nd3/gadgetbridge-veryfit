@@ -47,6 +47,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.RequiresPermission;
@@ -85,7 +86,7 @@ public class BondingUtil {
             public void onReceive(Context context, Intent intent) {
                 if (GBDevice.ACTION_DEVICE_CHANGED.equals(intent.getAction())) {
                     GBDevice device = intent.getParcelableExtra(GBDevice.EXTRA_DEVICE);
-                    LOG.debug("Pairing receiver: device changed: " + device);
+                    LOG.debug("Pairing receiver: device changed: {}", device);
                     if (device != null && device.getAddress().equals(activity.getMacAddress())) {
                         if (device.isInitialized()) {
                             LOG.info("Device is initialized, finish things up");
@@ -122,8 +123,8 @@ public class BondingUtil {
 
                     LOG.info("Bond state changed for {} from {} to {}, target address {}",
                             device,
-                            BleNamesResolver.getBondStateString(bondState),
                             BleNamesResolver.getBondStateString(prevBondState),
+                            BleNamesResolver.getBondStateString(bondState),
                             bondingMacAddress
                     );
 
@@ -216,33 +217,36 @@ public class BondingUtil {
      * Checks the type of bonding needed for the device and continues accordingly
      */
     public static void initiateCorrectBonding(final BondingInterface bondingInterface, final GBDeviceCandidate deviceCandidate, DeviceCoordinator coordinator) {
-        int bondingStyle = coordinator.getBondingStyle();
-        if (bondingStyle == DeviceCoordinator.BONDING_STYLE_NONE ||
-            bondingStyle == DeviceCoordinator.BONDING_STYLE_LAZY ) {
-            // Do nothing
-            return;
-        } else if (bondingStyle == DeviceCoordinator.BONDING_STYLE_ASK) {
-            new MaterialAlertDialogBuilder(bondingInterface.getContext())
-                    .setCancelable(true)
-                    .setTitle(bondingInterface.getContext().getString(R.string.discovery_pair_title, deviceCandidate.getName()))
-                    .setMessage(bondingInterface.getContext().getString(R.string.discovery_pair_question))
-                    .setPositiveButton(bondingInterface.getContext().getString(R.string.discovery_yes_pair), new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
+        final int bondingStyle = coordinator.getBondingStyle();
+        LOG.debug("Initiating correct bonding for bonding style {}", bondingStyle);
+
+        switch (bondingStyle) {
+            case DeviceCoordinator.BONDING_STYLE_NONE:
+            case DeviceCoordinator.BONDING_STYLE_LAZY:
+                LOG.info("No bonding needed, according to coordinator, so connecting right away");
+                BondingUtil.connectThenComplete(bondingInterface, deviceCandidate);
+                return;
+            case DeviceCoordinator.BONDING_STYLE_ASK:
+                new MaterialAlertDialogBuilder(bondingInterface.getContext())
+                        .setCancelable(false)
+                        .setTitle(bondingInterface.getContext().getString(R.string.discovery_pair_title, deviceCandidate.getName()))
+                        .setMessage(bondingInterface.getContext().getString(R.string.discovery_pair_question))
+                        .setPositiveButton(bondingInterface.getContext().getString(R.string.discovery_yes_pair), (dialog, which) -> {
+                            LOG.info("Will attempt to pair");
                             BondingUtil.tryBondThenComplete(bondingInterface, deviceCandidate.getDevice());
-                        }
-                    })
-                    .setNegativeButton(R.string.discovery_dont_pair, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
+                        })
+                        .setNegativeButton(R.string.discovery_dont_pair, (dialog, which) -> {
+                            LOG.info("Will not attempt to pair");
                             BondingUtil.connectThenComplete(bondingInterface, deviceCandidate);
-                        }
-                    })
-                    .show();
-        } else {
-            BondingUtil.tryBondThenComplete(bondingInterface, deviceCandidate.getDevice());
+                        })
+                        .show();
+                return;
+            case DeviceCoordinator.BONDING_STYLE_BOND:
+            case DeviceCoordinator.BONDING_STYLE_REQUIRE_KEY:
+            default:
+                LOG.debug("Bonding initiated");
+                BondingUtil.tryBondThenComplete(bondingInterface, deviceCandidate.getDevice());
         }
-        LOG.debug("Bonding initiated");
     }
 
     /**
@@ -466,13 +470,12 @@ public class BondingUtil {
         } else {
             bluetoothBond(bondingInterface, device);
         }
-
-        GB.toast(bondingInterface.getContext(), bondingInterface.getContext().getString(R.string.pairing_bonding_under_way), Toast.LENGTH_LONG, GB.INFO);
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     private static void askCompanionPairing(BondingInterface bondingInterface, BluetoothDevice device) {
         new MaterialAlertDialogBuilder(bondingInterface.getContext())
+                .setCancelable(false)
                 .setTitle(R.string.companion_pairing_request_title)
                 .setMessage(R.string.companion_pairing_request_description)
                 .setPositiveButton(R.string.yes, (dialog, whichButton) -> {
@@ -501,7 +504,7 @@ public class BondingUtil {
             }
 
             @Override
-            public void onDeviceFound(IntentSender chooserLauncher) {
+            public void onDeviceFound(@NonNull IntentSender chooserLauncher) {
                 try {
                     startIntentSenderForResult((Activity) bondingInterface.getContext(),
                             chooserLauncher,

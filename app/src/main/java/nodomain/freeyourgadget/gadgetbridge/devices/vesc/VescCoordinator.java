@@ -68,11 +68,6 @@ public class VescCoordinator extends AbstractBLEDeviceCoordinator {
     }
 
     @Override
-    public Class<? extends Activity> getPairingActivity() {
-        return null;
-    }
-
-    @Override
     public boolean supportsActivityDataFetching() {
         return true;
     }

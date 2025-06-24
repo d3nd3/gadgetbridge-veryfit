@@ -46,6 +46,7 @@ public class G1DeviceCoordinator extends AbstractBLEDeviceCoordinator {
         return G1DeviceSupport.class;
     }
 
+    @NonNull
     @Override
     public Class<? extends Activity> getPairingActivity() {
         return G1PairingActivity.class;

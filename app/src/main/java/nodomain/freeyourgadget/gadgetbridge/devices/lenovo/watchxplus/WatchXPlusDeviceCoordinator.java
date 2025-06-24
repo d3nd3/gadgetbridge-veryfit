@@ -93,7 +93,7 @@ public class WatchXPlusDeviceCoordinator extends AbstractBLEDeviceCoordinator {
         return false;
     }
 
-    @Nullable
+    @NonNull
     @Override
     public Class<? extends Activity> getPairingActivity() {
         return LenovoWatchPairingActivity.class;

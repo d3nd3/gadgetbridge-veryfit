@@ -68,6 +68,7 @@ public class PebbleCoordinator extends AbstractBLClassicDeviceCoordinator {
         return Pattern.compile("Pebble.*");
     }
 
+    @NonNull
     @Override
     public Class<? extends Activity> getPairingActivity() {
         return PebblePairingActivity.class;

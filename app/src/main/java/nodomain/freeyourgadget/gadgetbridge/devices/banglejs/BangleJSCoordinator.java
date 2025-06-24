@@ -21,7 +21,6 @@ package nodomain.freeyourgadget.gadgetbridge.devices.banglejs;
 import android.app.Activity;
 import android.bluetooth.le.ScanFilter;
 import android.content.Context;
-import android.net.Uri;
 import android.os.ParcelUuid;
 
 import androidx.annotation.NonNull;
@@ -41,11 +40,9 @@ import nodomain.freeyourgadget.gadgetbridge.BuildConfig;
 import nodomain.freeyourgadget.gadgetbridge.R;
 import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSpecificSettingsCustomizer;
 import nodomain.freeyourgadget.gadgetbridge.devices.AbstractBLEDeviceCoordinator;
-import nodomain.freeyourgadget.gadgetbridge.devices.InstallHandler;
 import nodomain.freeyourgadget.gadgetbridge.devices.SampleProvider;
 import nodomain.freeyourgadget.gadgetbridge.devices.SleepAsAndroidFeature;
 import nodomain.freeyourgadget.gadgetbridge.entities.DaoSession;
-import nodomain.freeyourgadget.gadgetbridge.entities.Device;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivitySample;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivitySummaryParser;
@@ -176,11 +173,6 @@ public class BangleJSCoordinator extends AbstractBLEDeviceCoordinator {
     @Override
     public boolean suggestUnbindBeforePair() {
         return false;
-    }
-
-    @Override
-    public Class<? extends Activity> getPairingActivity() {
-        return null;
     }
 
     @Override

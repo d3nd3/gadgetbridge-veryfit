@@ -18,15 +18,7 @@
 
 package nodomain.freeyourgadget.gadgetbridge.devices.fitpro;
 
-import android.app.Activity;
-import android.content.Context;
-import android.net.Uri;
-
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.EnumSet;
 import java.util.regex.Pattern;
@@ -35,7 +27,6 @@ import de.greenrobot.dao.query.QueryBuilder;
 import nodomain.freeyourgadget.gadgetbridge.GBException;
 import nodomain.freeyourgadget.gadgetbridge.R;
 import nodomain.freeyourgadget.gadgetbridge.devices.AbstractBLEDeviceCoordinator;
-import nodomain.freeyourgadget.gadgetbridge.devices.InstallHandler;
 import nodomain.freeyourgadget.gadgetbridge.devices.SampleProvider;
 import nodomain.freeyourgadget.gadgetbridge.entities.DaoSession;
 import nodomain.freeyourgadget.gadgetbridge.entities.Device;
@@ -47,9 +38,6 @@ import nodomain.freeyourgadget.gadgetbridge.service.ServiceDeviceSupport;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.fitpro.FitProDeviceSupport;
 
 public class FitProDeviceCoordinator extends AbstractBLEDeviceCoordinator {
-    private static final Logger LOG = LoggerFactory.getLogger(FitProDeviceCoordinator.class);
-
-
     @Override
     protected void deleteDevice(@NonNull GBDevice gbDevice, @NonNull Device device, @NonNull DaoSession session) throws GBException {
         Long deviceId = device.getId();
@@ -69,12 +57,6 @@ public class FitProDeviceCoordinator extends AbstractBLEDeviceCoordinator {
         return BONDING_STYLE_ASK;
     }
 
-    @Nullable
-    @Override
-    public Class<? extends Activity> getPairingActivity() {
-        return null;
-    }
-
     @Override
     public boolean supportsActivityDataFetching() {
         return true;
@@ -91,11 +73,6 @@ public class FitProDeviceCoordinator extends AbstractBLEDeviceCoordinator {
     }
 
     @Override
-    public boolean supportsScreenshots(final GBDevice device) {
-        return false;
-    }
-
-    @Override
     public int getAlarmSlotCount(GBDevice device) {
         return 8;
     }
@@ -108,22 +85,6 @@ public class FitProDeviceCoordinator extends AbstractBLEDeviceCoordinator {
     @Override
     public String getManufacturer() {
         return "FitPro";
-    }
-
-    @Override
-    public boolean supportsAppsManagement(final GBDevice device) {
-        return false;
-    }
-
-    @Override
-    public Class<? extends Activity> getAppsManagementActivity() {
-        return null;
-
-    }
-
-    @Override
-    public boolean supportsCalendarEvents() {
-        return false;
     }
 
     @Override

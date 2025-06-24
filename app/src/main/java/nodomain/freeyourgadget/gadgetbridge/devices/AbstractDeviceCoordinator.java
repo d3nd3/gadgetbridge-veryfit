@@ -54,6 +54,7 @@ import de.greenrobot.dao.query.QueryBuilder;
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.GBException;
 import nodomain.freeyourgadget.gadgetbridge.R;
+import nodomain.freeyourgadget.gadgetbridge.activities.DefaultPairingActivity;
 import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSpecificSettings;
 import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSpecificSettingsCustomizer;
 import nodomain.freeyourgadget.gadgetbridge.capabilities.HeartRateCapability;
@@ -881,10 +882,10 @@ public abstract class AbstractDeviceCoordinator implements DeviceCoordinator {
         return null;
     }
 
-    @Nullable
+    @NonNull
     @Override
     public Class<? extends Activity> getPairingActivity() {
-        return null;
+        return DefaultPairingActivity.class;
     }
 
     @Nullable

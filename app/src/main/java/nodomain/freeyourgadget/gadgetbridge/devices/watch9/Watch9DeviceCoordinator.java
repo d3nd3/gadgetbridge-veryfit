@@ -67,7 +67,7 @@ public class Watch9DeviceCoordinator extends AbstractBLEDeviceCoordinator {
         return BONDING_STYLE_NONE;
     }
 
-    @Nullable
+    @NonNull
     @Override
     public Class<? extends Activity> getPairingActivity() {
         return Watch9PairingActivity.class;

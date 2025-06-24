@@ -80,6 +80,7 @@ import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.HuamiVibration
 import nodomain.freeyourgadget.gadgetbridge.util.Prefs;
 
 public abstract class HuamiCoordinator extends AbstractBLEDeviceCoordinator {
+    @NonNull
     @Override
     public Class<? extends Activity> getPairingActivity() {
         return MiBandPairingActivity.class;

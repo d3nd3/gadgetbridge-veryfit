@@ -18,10 +18,6 @@
 /*  Based on code from BlueWatcher, https://github.com/masterjc/bluewatcher */
 package nodomain.freeyourgadget.gadgetbridge.devices.casio.gbx100;
 
-import android.app.Activity;
-import android.content.Context;
-import android.net.Uri;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +28,6 @@ import java.util.regex.Pattern;
 import de.greenrobot.dao.query.QueryBuilder;
 import nodomain.freeyourgadget.gadgetbridge.GBException;
 import nodomain.freeyourgadget.gadgetbridge.R;
-import nodomain.freeyourgadget.gadgetbridge.devices.InstallHandler;
 import nodomain.freeyourgadget.gadgetbridge.devices.SampleProvider;
 import nodomain.freeyourgadget.gadgetbridge.devices.casio.Casio2C2DDeviceCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.entities.CasioGBX100ActivitySampleDao;
@@ -60,21 +55,14 @@ public class CasioGBX100DeviceCoordinator extends Casio2C2DDeviceCoordinator {
             GBX_100_SUB_MODEL,
             GBD_200_SUB_MODEL,
             GBD_100_SUB_MODEL,
-            GBD_H1000_SUB_MODEL};
+            GBD_H1000_SUB_MODEL,
+    };
 
     protected static final Logger LOG = LoggerFactory.getLogger(CasioGBX100DeviceCoordinator.class);
 
     @Override
     protected Pattern getSupportedDeviceName() {
-        String pattern = CASIO_IDENTIFIER + ".*(";
-        for (int i = 0; i < VARIANTS.length; i++) {
-            pattern += VARIANTS[i];
-            if (i < VARIANTS.length - 1) {
-                pattern += "|";
-            }
-        }
-        pattern += ")";
-        return Pattern.compile(pattern);
+        return Pattern.compile(CASIO_IDENTIFIER + ".*(" + String.join("|", VARIANTS) + ")");
     }
 
     @Override
@@ -85,11 +73,6 @@ public class CasioGBX100DeviceCoordinator extends Casio2C2DDeviceCoordinator {
     @Override
     public boolean supportsAlarmSnoozing() {
         return true;
-    }
-
-    @Override
-    public Class<? extends Activity> getPairingActivity() {
-        return null;
     }
 
     @Override

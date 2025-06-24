@@ -109,6 +109,7 @@ public class MiBandCoordinator extends AbstractBLEDeviceCoordinator {
         qb.where(MiBandActivitySampleDao.Properties.DeviceId.eq(deviceId)).buildDelete().executeDeleteWithoutDetachingEntities();
     }
 
+    @NonNull
     @Override
     public Class<? extends Activity> getPairingActivity() {
         return MiBandPairingActivity.class;

@@ -55,7 +55,7 @@ public class GreeAcCoordinator extends AbstractBLEDeviceCoordinator {
         return false;
     }
 
-    @Nullable
+    @NonNull
     @Override
     public Class<? extends Activity> getPairingActivity() {
         return GreeAcPairingActivity.class;

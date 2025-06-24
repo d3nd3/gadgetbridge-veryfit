@@ -649,6 +649,7 @@ public class DiscoveryActivityV2 extends AbstractGBActivity implements AdapterVi
 
         if (coordinator.suggestUnbindBeforePair() && deviceCandidate.isBonded()) {
             new MaterialAlertDialogBuilder(getContext())
+                    .setCancelable(false)
                     .setTitle(R.string.unbind_before_pair_title)
                     .setMessage(R.string.unbind_before_pair_message)
                     .setIcon(R.drawable.ic_warning_gray)
@@ -664,26 +665,13 @@ public class DiscoveryActivityV2 extends AbstractGBActivity implements AdapterVi
 
     private void startPair(final GBDeviceCandidate deviceCandidate, final DeviceCoordinator coordinator) {
         final Class<? extends Activity> pairingActivity = coordinator.getPairingActivity();
-        if (pairingActivity != null) {
-            final Intent intent = new Intent(this, pairingActivity);
-            intent.putExtra(DeviceCoordinator.EXTRA_DEVICE_CANDIDATE, deviceCandidate);
-            intent.putParcelableArrayListExtra(DeviceCoordinator.EXTRA_DEVICE_ALL_CANDIDATES, deviceCandidates);
-            startActivityForResult(intent, CHILD_RESULT);
-        } else {
-            if (coordinator.getBondingStyle() == DeviceCoordinator.BONDING_STYLE_NONE ||
-                    coordinator.getBondingStyle() == DeviceCoordinator.BONDING_STYLE_LAZY) {
-                LOG.info("No bonding needed, according to coordinator, so connecting right away");
-                BondingUtil.connectThenComplete(this, deviceCandidate);
-                return;
-            }
 
-            try {
-                this.deviceTarget = deviceCandidate;
-                BondingUtil.initiateCorrectBonding(this, deviceCandidate, coordinator);
-            } catch (final Exception e) {
-                LOG.error("Error pairing device {}", deviceCandidate.getMacAddress(), e);
-            }
-        }
+        LOG.debug("Starting pairing activity {}", pairingActivity);
+
+        final Intent intent = new Intent(this, pairingActivity);
+        intent.putExtra(DeviceCoordinator.EXTRA_DEVICE_CANDIDATE, deviceCandidate);
+        intent.putParcelableArrayListExtra(DeviceCoordinator.EXTRA_DEVICE_ALL_CANDIDATES, deviceCandidates);
+        startActivityForResult(intent, CHILD_RESULT);
     }
 
     private void copyDetailsToClipboard(final GBDeviceCandidate deviceCandidate) {

@@ -190,9 +190,9 @@ public interface DeviceCoordinator {
      * Returns the Activity class to be started in order to perform a pairing of a
      * given device after its discovery.
      *
-     * @return the activity class for pairing/initial authentication, or null if none
+     * @return the activity class for pairing/initial authentication
      */
-    @Nullable
+    @NonNull
     Class<? extends Activity> getPairingActivity();
 
     @Nullable

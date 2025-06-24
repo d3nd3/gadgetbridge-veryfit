@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
 
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.R;
+import nodomain.freeyourgadget.gadgetbridge.activities.DefaultPairingActivity;
 import nodomain.freeyourgadget.gadgetbridge.activities.appmanager.AppManagerActivity;
 import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsUtils;
 import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSpecificSettings;
@@ -344,6 +345,12 @@ public abstract class ZeppOsCoordinator extends HuamiCoordinator {
     @Override
     public int getContactsSlotCount(final GBDevice device) {
         return getPrefs(device).getInt(ZeppOsContactsService.PREF_CONTACTS_SLOT_COUNT, 0);
+    }
+
+    @NonNull
+    @Override
+    public Class<? extends Activity> getPairingActivity() {
+        return DefaultPairingActivity.class;
     }
 
     @Override
