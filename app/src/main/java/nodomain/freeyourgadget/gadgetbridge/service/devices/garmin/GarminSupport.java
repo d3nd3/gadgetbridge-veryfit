@@ -343,7 +343,7 @@ public class GarminSupport extends AbstractBTLESingleDeviceSupport implements IC
             final FileTransferHandler.DirectoryEntry entry = ((FileDownloadedDeviceEvent) deviceEvent).directoryEntry;
             final String filename = entry.getFileName();
             LOG.debug("FILE DOWNLOAD COMPLETE {}", filename);
-            transferNotification.incrementTotalProgress(entry.getFileSize());
+            transferNotification.setProgress(0, transferNotification.getTotalProgress() + entry.getFileSize());
 
             if (entry.getFiletype().isFitFile()) {
                 try (DBHandler handler = GBApplication.acquireDB()) {
@@ -689,7 +689,7 @@ public class GarminSupport extends AbstractBTLESingleDeviceSupport implements IC
             // isBusyFetching so we do not start multiple processors
             isBusyFetching = false;
 
-            transferNotification.start(R.string.busy_task_processing_files, 0);
+            transferNotification.start(R.string.busy_task_parsing_files, 0);
             transferNotification.setTotalSize(filesToProcess.size());
 
             final FitAsyncProcessor fitAsyncProcessor = new FitAsyncProcessor(getContext(), getDevice());
@@ -1064,7 +1064,7 @@ public class GarminSupport extends AbstractBTLESingleDeviceSupport implements IC
 
         GB.toast(getContext(), "Check notification for progress", Toast.LENGTH_LONG, GB.INFO);
 
-        transferNotification.start(R.string.busy_task_processing_files, 0);
+        transferNotification.start(R.string.busy_task_parsing_files, 0);
         transferNotification.setTotalSize(fitFiles.size());
 
         //try (DBHandler handler = GBApplication.acquireDB()) {

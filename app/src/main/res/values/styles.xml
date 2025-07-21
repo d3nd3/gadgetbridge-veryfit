@@ -221,4 +221,8 @@
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_rowWeight">1</item>
     </style>
+
+    <style name="progressBarSecondaryText" parent="@style/Theme.AppCompat">
+        <item name="colorAccent">@color/secondarytext</item>
+    </style>
 </resources>

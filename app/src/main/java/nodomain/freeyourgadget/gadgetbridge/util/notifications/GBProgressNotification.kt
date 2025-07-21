@@ -34,8 +34,7 @@ import kotlin.math.roundToInt
 /**
  * A helper class to keep a transfer notification updated, with utility functions to handle throttling and progress.
  * <p>
- * It is assumed that a chunk is in the same unit as the total progress, and not included in it until the chunk finishes.
- * At any point, the progress percentage of the notification corresponds to (totalProgress + chunkProgress) / totalSize.
+ * At any point, the progress of the notification corresponds to (totalProgress + chunkProgress) / totalSize.
  */
 class GBProgressNotification(
     private val context: Context,
@@ -66,6 +65,7 @@ class GBProgressNotification(
     ) {
         this.titleRes = titleRes
         this.textRes = textRes
+        this.visible = true
         this.chunkProgress = 0
         this.totalProgress = 0
         this.totalSize = 0
@@ -118,6 +118,10 @@ class GBProgressNotification(
         refresh(false)
     }
 
+    fun getTotalProgress(): Long {
+        return totalProgress
+    }
+
     fun getProgressPercentage(): Int {
         var percentage = 0f
 
@@ -137,15 +141,22 @@ class GBProgressNotification(
 
         LOG.debug("Finishing notification id={}", notificationId)
 
-        GB.removeNotification(notificationId, context)
+        update(
+            title = null,
+            text = "",
+            ongoing = false,
+            percentage = 100
+        )
     }
 
     private fun refresh(force: Boolean) {
         val percentage = getProgressPercentage()
 
-        LOG.debug("Updating notification, percentage={}", percentage)
+        val shouldBeVisible = percentage < 100
 
-        if (visible) {
+        LOG.debug("Updating notification, percentage={}, shouldBeVisible={}", percentage, shouldBeVisible)
+
+        if (visible && shouldBeVisible) {
             val now = System.currentTimeMillis()
             if (now - lastNotificationUpdateTs < MIN_TIME_BETWEEN_UPDATES && !force) {
                 LOG.debug("Throttling notification update")
@@ -154,8 +165,6 @@ class GBProgressNotification(
 
             lastNotificationUpdateTs = now
         }
-
-        visible = true
 
         val title: CharSequence = if (titleRes != 0) context.getString(titleRes) else "Unknown transfer"
         val text = if (textRes != 0) {
@@ -175,8 +184,8 @@ class GBProgressNotification(
     }
 
     private fun update(
-        title: CharSequence,
-        text: CharSequence,
+        title: CharSequence?,
+        text: CharSequence?,
         ongoing: Boolean,
         percentage: Int
     ) {

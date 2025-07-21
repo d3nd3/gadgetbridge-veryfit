@@ -354,10 +354,12 @@ public class GBDeviceAdapterv2 extends ListAdapter<GBDevice, GBDeviceAdapterv2.V
 
         if (device.isBusy()) {
             holder.deviceStatusLabel.setText(device.getBusyTask());
+            holder.fetchActivityData.setVisibility(View.GONE);
             holder.busyIndicator.setVisibility(View.VISIBLE);
         } else {
             holder.deviceStatusLabel.setText(device.getStateString(context));
-            holder.busyIndicator.setVisibility(View.INVISIBLE);
+            holder.fetchActivityData.setVisibility(View.VISIBLE);
+            holder.busyIndicator.setVisibility(View.GONE);
         }
 
         //begin of action row
