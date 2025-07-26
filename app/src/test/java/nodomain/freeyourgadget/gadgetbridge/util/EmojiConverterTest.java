@@ -13,7 +13,7 @@ import nodomain.freeyourgadget.gadgetbridge.test.TestBase;
 public class EmojiConverterTest extends TestBase {
     @Test
     public void testConvert() {
-        final Map<String, String> snippets = new HashMap<String, String>() {{
+        final Map<String, String> snippets = new HashMap<>() {{
             put(
                     "no emoji",
                     "no emoji"
@@ -36,7 +36,7 @@ public class EmojiConverterTest extends TestBase {
 
             put(
                     "also \uD83D\uDE36 with words \uD83D\uDCAA\uD83C\uDFFC in-between \uD83D\uDE09",
-                    "also :no_mouth: with words :muscle: in-between ;-)"
+                    "also :no_mouth: with words :muscle_tone2: in-between ;-)"
             );
         }};
 
