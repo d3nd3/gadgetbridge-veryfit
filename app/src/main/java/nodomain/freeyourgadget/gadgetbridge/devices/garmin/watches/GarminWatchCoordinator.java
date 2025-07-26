@@ -2,12 +2,18 @@ package nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches;
 
 import nodomain.freeyourgadget.gadgetbridge.R;
 import nodomain.freeyourgadget.gadgetbridge.devices.garmin.GarminCoordinator;
+import nodomain.freeyourgadget.gadgetbridge.devices.vivomovehr.GarminCapability;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
 
 public abstract class GarminWatchCoordinator extends GarminCoordinator {
     @Override
     public int getDefaultIconResource() {
         return R.drawable.ic_device_zetime;
+    }
+
+    @Override
+    public int getAlarmSlotCount(final GBDevice device) {
+        return supports(device, GarminCapability.REALTIME_SETTINGS) ? 0 : 20;
     }
 
     @Override
