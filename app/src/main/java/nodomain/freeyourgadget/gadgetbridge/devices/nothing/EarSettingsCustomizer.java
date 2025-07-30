@@ -74,6 +74,13 @@ public class EarSettingsCustomizer implements DeviceSpecificSettingsCustomizer {
                 ((ListPreference) audioModePref).setEntryValues(entryValues.toArray(new CharSequence[0]));
             }
         }
+
+        if (!earCoordinator.supportsInEarDetection()) {
+            final Preference inEar = handler.findPreference(DeviceSettingsPreferenceConst.PREF_NOTHING_EAR1_INEAR);
+            if (inEar != null) {
+                inEar.setVisible(false);
+            }
+        }
     }
 
     @Override
