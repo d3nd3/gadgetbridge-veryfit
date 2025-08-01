@@ -37,7 +37,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.Calendar
 
-class GenericHeartRateSupport : AbstractBTLESingleDeviceSupport(LOG) {
+open class GenericHeartRateSupport : AbstractBTLESingleDeviceSupport(LOG) {
     private val deviceInfoProfile: DeviceInfoProfile<GenericHeartRateSupport>
     private val batteryInfoProfile: BatteryInfoProfile<GenericHeartRateSupport>
     private val heartRateProfile: HeartRateProfile<GenericHeartRateSupport>

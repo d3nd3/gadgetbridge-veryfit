@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <EditTextPreference
+        android:defaultValue="180"
+        android:inputType="number"
+        android:key="max_heart_rate"
+        android:maxLength="3"
+        android:title="@string/activity_prefs_alarm_max_heart_rate"
+        app:iconSpaceReserved="false"
+        app:useSimpleSummaryProvider="true" />
+
+</PreferenceScreen>

@@ -523,6 +523,8 @@ public class DeviceSettingsPreferenceConst {
     public static final String PREF_SHOKZ_CONTROLS_LONG_PRESS_MULTI_FUNCTION = "shokz_controls_long_press_multi_function";
     public static final String PREF_SHOKZ_CONTROLS_SIMULTANEOUS_VOLUME_UP_DOWN = "shokz_controls_simultaneous_volume_up_down";
 
+    public static final String PREF_MAX_HEART_RATE = "max_heart_rate";
+
     public static final String PREF_OVERRIDE_FEATURES_ENABLED = "override_features_enabled";
     public static final String PREF_OVERRIDE_FEATURES_LIST = "override_features_list";
 

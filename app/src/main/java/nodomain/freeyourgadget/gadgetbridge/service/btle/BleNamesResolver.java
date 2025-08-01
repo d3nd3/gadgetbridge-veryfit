@@ -484,6 +484,7 @@ public class BleNamesResolver {
         mServices.put("00001859-0000-1000-8000-00805f9b34fb", "Mesh Proxy Solicitation");
         mServices.put("0000185a-0000-1000-8000-00805f9b34fb", "Industrial Measurement Device");
         mServices.put("0000185b-0000-1000-8000-00805f9b34fb", "Ranging");
+        mServices.put("0000fd00-0000-1000-8000-00805f9b34fb", "FUTEK Advanced Sensor Technology, Inc.");
 
         mServices.put("00001101-0000-1000-8000-00805f9b34fb", "SPP (Serial Port Profile)");
         mServices.put("0000111e-0000-1000-8000-00805f9b34fb", "HFP HS (Hands-Free Profile)");

@@ -3,6 +3,7 @@ package nodomain.freeyourgadget.gadgetbridge.devices.coospo
 import de.greenrobot.dao.AbstractDao
 import de.greenrobot.dao.Property
 import nodomain.freeyourgadget.gadgetbridge.R
+import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSpecificSettings
 import nodomain.freeyourgadget.gadgetbridge.devices.AbstractBLEDeviceCoordinator
 import nodomain.freeyourgadget.gadgetbridge.devices.SampleProvider
 import nodomain.freeyourgadget.gadgetbridge.devices.generic_hr.GenericHeartRateActivitySampleProvider
@@ -11,7 +12,7 @@ import nodomain.freeyourgadget.gadgetbridge.entities.DaoSession
 import nodomain.freeyourgadget.gadgetbridge.entities.GenericHeartRateSampleDao
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice
 import nodomain.freeyourgadget.gadgetbridge.service.DeviceSupport
-import nodomain.freeyourgadget.gadgetbridge.service.devices.generic_hr.GenericHeartRateSupport
+import nodomain.freeyourgadget.gadgetbridge.service.devices.coospo.CoospoSupport
 
 /**
  * This class pulls most of the logic from the
@@ -36,7 +37,7 @@ abstract class CoospoHeartRateCoordinator: AbstractBLEDeviceCoordinator() {
     }
 
     override fun getDeviceSupportClass(device: GBDevice?): Class<out DeviceSupport> {
-        return GenericHeartRateSupport::class.java
+        return CoospoSupport::class.java
     }
 
     override fun getDefaultIconResource(): Int {
@@ -77,5 +78,13 @@ abstract class CoospoHeartRateCoordinator: AbstractBLEDeviceCoordinator() {
                 put(session.genericHeartRateSampleDao, GenericHeartRateSampleDao.Properties.DeviceId)
             }
         }
+    }
+
+    override fun getDeviceSpecificSettings(device: GBDevice): DeviceSpecificSettings {
+        val deviceSpecificSettings = DeviceSpecificSettings()
+
+        deviceSpecificSettings.addRootScreen(R.xml.devicesettings_coospo)
+
+        return deviceSpecificSettings
     }
 }

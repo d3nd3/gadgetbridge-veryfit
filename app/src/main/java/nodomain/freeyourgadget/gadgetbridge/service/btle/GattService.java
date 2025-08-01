@@ -56,6 +56,7 @@ public class GattService {
     public static final UUID UUID_SERVICE_TX_POWER = UUID.fromString((String.format(AbstractBTLEDeviceSupport.BASE_UUID, "1804")));
     public static final UUID UUID_SERVICE_USER_DATA = UUID.fromString((String.format(AbstractBTLEDeviceSupport.BASE_UUID, "181C")));
     public static final UUID UUID_SERVICE_WEIGHT_SCALE = UUID.fromString((String.format(AbstractBTLEDeviceSupport.BASE_UUID, "181D")));
+    public static final UUID UUID_FUTEK_ADVANCED_SENSOR_TECHNOLOGY = UUID.fromString((String.format(AbstractBTLEDeviceSupport.BASE_UUID, "FD00")));
 
     //do we need this?
 

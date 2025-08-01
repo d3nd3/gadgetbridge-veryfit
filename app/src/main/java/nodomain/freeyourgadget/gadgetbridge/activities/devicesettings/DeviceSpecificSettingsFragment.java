@@ -839,6 +839,9 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
         addPreferenceHandlerFor(PREF_SHOKZ_CONTROLS_LONG_PRESS_MULTI_FUNCTION);
         addPreferenceHandlerFor(PREF_SHOKZ_CONTROLS_SIMULTANEOUS_VOLUME_UP_DOWN);
 
+        addPreferenceHandlerFor(PREF_MAX_HEART_RATE);
+        setInputTypeFor(PREF_MAX_HEART_RATE, InputType.TYPE_CLASS_NUMBER);
+
         addPreferenceHandlerFor(PREF_SOUNDCORE_AMBIENT_SOUND_CONTROL);
         addPreferenceHandlerFor(PREF_SOUNDCORE_WIND_NOISE_REDUCTION);
         addPreferenceHandlerFor(PREF_SOUNDCORE_TRANSPARENCY_VOCAL_MODE);
