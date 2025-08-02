@@ -13,10 +13,6 @@ class CoospoSupport : GenericHeartRateSupport() {
         addSupportedService(GattService.UUID_FUTEK_ADVANCED_SENSOR_TECHNOLOGY)
     }
 
-    override fun initializeDevice(builder: TransactionBuilder): TransactionBuilder {
-        return builder
-    }
-
     override fun onSendConfiguration(config: String) {
         when (config) {
             DeviceSettingsPreferenceConst.PREF_MAX_HEART_RATE -> {
