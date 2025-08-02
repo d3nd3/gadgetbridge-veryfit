@@ -233,22 +233,7 @@ public abstract class GarminCoordinator extends AbstractBLEDeviceCoordinator {
     }
 
     @Override
-    public boolean supportsCalendarEvents() {
-        return true;
-    }
-
-    @Override
-    public boolean supportsActivityDataFetching() {
-        return true;
-    }
-
-    @Override
     public boolean supportsActivityTracking() {
-        return true;
-    }
-
-    @Override
-    public boolean supportsActivityTracks() {
         return true;
     }
 
@@ -379,11 +364,6 @@ public abstract class GarminCoordinator extends AbstractBLEDeviceCoordinator {
 
     @Override
     public boolean supportsFindDevice() {
-        return true;
-    }
-
-    @Override
-    public boolean supportsWeather() {
         return true;
     }
 
