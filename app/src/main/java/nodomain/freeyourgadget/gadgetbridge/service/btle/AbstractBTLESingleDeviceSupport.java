@@ -330,7 +330,7 @@ public abstract class AbstractBTLESingleDeviceSupport extends AbstractBTLEDevice
                     logger.info("    characteristic: {}: {} ({})", BleNamesResolver.resolveCharacteristicName(characteristic.getUuid().toString()), characteristic.getUuid(), BleNamesResolver.getCharacteristicPropertyString(characteristic.getProperties()));
 
                     if (prefs_device_gatt_synchronous_writes && characteristic.getWriteType() == BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE) {
-                        if (0 != (characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_WRITE)) {
+                        if (true) { // FIXME: HACK: DO NOT MERGE
                             // if both PROPERTY_WRITE and PROPERTY_WRITE_NO_RESPONSE are set Android
                             // defaults to WRITE_TYPE_NO_RESPONSE and then calls onCharacteristicWrite
                             // when the write has been queued on the mobile but potentially not yet
