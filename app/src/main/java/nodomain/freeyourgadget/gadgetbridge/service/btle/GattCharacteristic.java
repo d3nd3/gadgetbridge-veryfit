@@ -359,6 +359,8 @@ public class GattCharacteristic {
     public static final UUID UUID_CHARACTERISTIC_DEVICE_TIME_CONTROL_POINT = UUID.fromString((String.format(AbstractBTLEDeviceSupport.BASE_UUID, "2B91")));
     public static final UUID UUID_CHARACTERISTIC_TIME_CHANGE_LOG_DATA = UUID.fromString((String.format(AbstractBTLEDeviceSupport.BASE_UUID, "2B92")));
     public static final UUID UUID_CHARACTERISTIC_LUMINOSTICS = UUID.fromString((String.format(AbstractBTLEDeviceSupport.BASE_UUID, "FD0A")));
+    public static final UUID UUID_CHARACTERISTIC_COUSINS_AND_SEARS_LLC = UUID.fromString((String.format(AbstractBTLEDeviceSupport.BASE_UUID, "FD09")));
+    public static final UUID UUID_CHARACTERISTIC_SMITH_AND_NEPHEW_MEDICAL_LIMITED = UUID.fromString((String.format(AbstractBTLEDeviceSupport.BASE_UUID, "FD19")));
 
     private static Map<UUID, String> GATTCHARACTERISTIC_DEBUG;
 

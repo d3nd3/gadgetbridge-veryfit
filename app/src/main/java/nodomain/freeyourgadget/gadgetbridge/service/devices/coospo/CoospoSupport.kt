@@ -1,5 +1,7 @@
 package nodomain.freeyourgadget.gadgetbridge.service.devices.coospo
 
+import android.bluetooth.BluetoothGatt
+import android.bluetooth.BluetoothGattCharacteristic
 import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst
 import nodomain.freeyourgadget.gadgetbridge.service.btle.GattCharacteristic
 import nodomain.freeyourgadget.gadgetbridge.service.btle.GattService
@@ -15,6 +17,9 @@ class CoospoSupport : GenericHeartRateSupport() {
 
     override fun initializeDevice(builder: TransactionBuilder): TransactionBuilder {
         super.initializeDevice(builder)
+        // FIXME super marks as initialized
+        builder.notify(getCharacteristic(GattCharacteristic.UUID_CHARACTERISTIC_COUSINS_AND_SEARS_LLC), true);
+        builder.notify(getCharacteristic(GattCharacteristic.UUID_CHARACTERISTIC_SMITH_AND_NEPHEW_MEDICAL_LIMITED), true)
         builder.write(GattCharacteristic.UUID_CHARACTERISTIC_LUMINOSTICS, *byteArrayOf(
             0xa2.toByte(),
             0x04,
@@ -37,6 +42,22 @@ class CoospoSupport : GenericHeartRateSupport() {
         }
 
         super.onSendConfiguration(config)
+    }
+
+    override fun onCharacteristicChanged(
+        gatt: BluetoothGatt,
+        characteristic: BluetoothGattCharacteristic,
+        value: ByteArray
+    ): Boolean {
+        when (characteristic.uuid) {
+            GattCharacteristic.UUID_CHARACTERISTIC_COUSINS_AND_SEARS_LLC,
+            GattCharacteristic.UUID_CHARACTERISTIC_SMITH_AND_NEPHEW_MEDICAL_LIMITED-> {
+                LOG.warn("Unhandled characteristic: {}", characteristic.uuid)
+                return true
+            }
+        }
+
+        return super.onCharacteristicChanged(gatt, characteristic, value)
     }
 
     companion object {
