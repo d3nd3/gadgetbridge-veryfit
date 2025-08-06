@@ -18,15 +18,22 @@ package nodomain.freeyourgadget.gadgetbridge.util.gpx.model;
 
 import androidx.annotation.Nullable;
 
+import java.util.Date;
+
 import nodomain.freeyourgadget.gadgetbridge.model.GPSCoordinate;
 
 public class GpxWaypoint extends GPSCoordinate {
     @Nullable
     private final String name;
+    @Nullable
+    private final Date time;
+    private final String symbol;
 
-    public GpxWaypoint(final double longitude, final double latitude, final double altitude, @Nullable final String name) {
+    public GpxWaypoint(final double longitude, final double latitude, final double altitude, @Nullable final String name, @Nullable final Date time, final String sym) {
         super(longitude, latitude, altitude);
         this.name = name;
+        this.time = time;
+        this.symbol = sym;
     }
 
     @Nullable
@@ -34,11 +41,22 @@ public class GpxWaypoint extends GPSCoordinate {
         return name;
     }
 
+    public String getSymbol() {
+        return symbol;
+    }
+
+    @Nullable
+    public Date getTime() {
+        return time;
+    }
+
     public static class Builder {
         private double longitude;
         private double latitude;
         private double altitude;
         private String name;
+        private Date time;
+        private String symbol;
 
         public Builder withLongitude(final double longitude) {
             this.longitude = longitude;
@@ -60,8 +78,17 @@ public class GpxWaypoint extends GPSCoordinate {
             return this;
         }
 
+        public Builder withTime(final Date time) {
+            this.time = time;
+            return this;
+        }
+        public Builder withSymbol(final String sym) {
+            this.symbol = sym;
+            return this;
+        }
+
         public GpxWaypoint build() {
-            return new GpxWaypoint(longitude, latitude, altitude, name);
+            return new GpxWaypoint(longitude, latitude, altitude, name, time, symbol);
         }
     }
 }

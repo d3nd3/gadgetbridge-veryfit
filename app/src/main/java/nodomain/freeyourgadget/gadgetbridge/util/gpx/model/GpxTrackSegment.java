@@ -45,5 +45,9 @@ public class GpxTrackSegment {
         public GpxTrackSegment build() {
             return new GpxTrackSegment(trackPoints);
         }
+
+        public GpxTrackPoint getTrackPointAtIndex(final int index) {
+            return trackPoints.get(index);
+        }
     }
 }

@@ -165,6 +165,10 @@ public class GpxParser {
                         final GpxTrackPoint trackPoint = parseTrackPoint();
                         segmentBuilder.withTrackPoint(trackPoint);
                         continue;
+                    case "extensions":
+                        if (true) //TODO: add checkbox in the GUI to allow the user to switch this behavior on and off? Or only turn on for devices which do support the feature?
+                            parseExtensionsOsmAndRoute(segmentBuilder);
+                        continue;
                 }
             }
 
@@ -236,6 +240,42 @@ public class GpxParser {
         }
     }
 
+    private void parseExtensionsOsmAndRoute(GpxTrackSegment.Builder segmentBuilder) throws Exception {
+        while (eventType != XmlPullParser.END_TAG || !parser.getName().equals("extensions")) {
+            if (parser.getEventType() == XmlPullParser.START_TAG && "osmand".equals(parser.getPrefix()) && "route".equals(parser.getName())) {
+                    while (eventType != XmlPullParser.END_TAG || !parser.getName().equals("route")) {
+                        if (eventType == XmlPullParser.START_TAG && "segment".equals(parser.getName())) {
+                            final String turnType = parser.getAttributeValue(null, "turnType");
+                            if(!(null == turnType) && turnType.startsWith("T")){
+                                final GpxTrackPoint reference = segmentBuilder.getTrackPointAtIndex(Integer.valueOf(parser.getAttributeValue(null, "startTrkptIdx")));
+                                final GpxWaypoint.Builder waypointBuilder = waypointBuilderFromTrackPoint(reference, turnType);
+                                fileBuilder.withWaypoints(waypointBuilder.build());
+                            }
+                        }
+                        eventType = parser.next();
+                    }
+            }
+            eventType = parser.next();
+        }
+    }
+
+    private static GpxWaypoint.Builder waypointBuilderFromTrackPoint(GpxTrackPoint reference, String turnType) {
+        final GpxWaypoint.Builder waypointBuilder = new GpxWaypoint.Builder();
+        waypointBuilder.withLatitude(reference.getLatitude());
+        waypointBuilder.withLongitude(reference.getLongitude());
+        switch (turnType) {
+            case "TL" -> waypointBuilder.withSymbol("Left");
+            case "TR" -> waypointBuilder.withSymbol("Right");
+            case "TSLL" -> waypointBuilder.withSymbol("Left_slight");
+            case "TSLR" -> waypointBuilder.withSymbol("Right_slight");
+            case "TSHL" -> waypointBuilder.withSymbol("Left_sharp");
+            case "TSHR" -> waypointBuilder.withSymbol("Right_sharp");
+            case "TU", "TRU" -> waypointBuilder.withSymbol("UTurn");
+            default -> waypointBuilder.withSymbol("Generic");
+        }
+        return waypointBuilder;
+    }
+
     private void parseTrackPointExtensions(final GpxTrackPoint.Builder trackPointBuilder) throws Exception {
         while (eventType != XmlPullParser.END_TAG || !parser.getName().equals("TrackPointExtension")) {
             if (parser.getEventType() == XmlPullParser.START_TAG) {
@@ -266,6 +306,12 @@ public class GpxParser {
                         continue;
                     case "name":
                         waypointBuilder.withName(parseStringContent("name"));
+                        continue;
+                    case "sym":
+                        waypointBuilder.withSymbol(parseStringContent("sym"));
+                        continue;
+                    case "time":
+                        waypointBuilder.withTime(parseTime());
                         continue;
                 }
             }
