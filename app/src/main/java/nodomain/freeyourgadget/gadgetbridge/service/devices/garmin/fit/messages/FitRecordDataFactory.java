@@ -28,6 +28,7 @@ public class FitRecordDataFactory {
             case 23 -> new FitDeviceInfo(recordDefinition, recordHeader);
             case 26 -> new FitWorkout(recordDefinition, recordHeader);
             case 31 -> new FitCourse(recordDefinition, recordHeader);
+            case 32 -> new FitCoursePoint(recordDefinition, recordHeader);
             case 34 -> new FitActivity(recordDefinition, recordHeader);
             case 49 -> new FitFileCreator(recordDefinition, recordHeader);
             case 55 -> new FitMonitoring(recordDefinition, recordHeader);

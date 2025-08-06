@@ -4,6 +4,7 @@ import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.baseTypes
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.fieldDefinitions.FieldDefinitionAlarm;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.fieldDefinitions.FieldDefinitionArray;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.fieldDefinitions.FieldDefinitionCoordinate;
+import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.fieldDefinitions.FieldDefinitionCoursePoint;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.fieldDefinitions.FieldDefinitionDayOfWeek;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.fieldDefinitions.FieldDefinitionExerciseCategory;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.fieldDefinitions.FieldDefinitionFileType;
@@ -65,6 +66,8 @@ public class FieldDefinitionFactory {
                 return new FieldDefinitionCoordinate(localNumber, size, baseType, name);
             case SWIM_STYLE:
                 return new FieldDefinitionSwimStyle(localNumber, size, baseType, name);
+            case COURSE_POINT:
+                return new FieldDefinitionCoursePoint(localNumber, size, baseType, name);
             default:
                 return new FieldDefinition(localNumber, size, baseType, name);
         }
@@ -90,5 +93,6 @@ public class FieldDefinitionFactory {
         WEATHER_AQI,
         COORDINATE,
         SWIM_STYLE,
+        COURSE_POINT,
     }
 }

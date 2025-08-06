@@ -269,6 +269,16 @@ public class GlobalFITMessage {
             new FieldDefinitionPrimitive(5, BaseType.STRING, 16, "name")
     ));
 
+    //https://github.com/mshroyer/coursepointer/blob/d0eb541c1368f6bfdde8406a3a6cb91f6dacc4d2/src/fit.rs
+    public static GlobalFITMessage COURSE_POINT = new GlobalFITMessage(32, "COURSE_POINT", Arrays.asList(
+            new FieldDefinitionPrimitive(1, BaseType.UINT32, "timestamp", FieldDefinitionFactory.FIELD.TIMESTAMP),
+            new FieldDefinitionPrimitive(2, BaseType.SINT32, "latitude", FieldDefinitionFactory.FIELD.COORDINATE),
+            new FieldDefinitionPrimitive(3, BaseType.SINT32, "longitude", FieldDefinitionFactory.FIELD.COORDINATE),
+            new FieldDefinitionPrimitive(4, BaseType.UINT32, "distance", 100, 0), // m
+            new FieldDefinitionPrimitive(5, BaseType.ENUM, "type", FieldDefinitionFactory.FIELD.COURSE_POINT),
+            new FieldDefinitionPrimitive(6, BaseType.STRING, 16, "name")
+    ));
+
     public static GlobalFITMessage ACTIVITY = new GlobalFITMessage(34, "ACTIVITY", Arrays.asList(
             new FieldDefinitionPrimitive(0, BaseType.UINT32, "total_timer_time"),
             new FieldDefinitionPrimitive(1, BaseType.UINT16, "num_sessions"),
@@ -591,6 +601,7 @@ public class GlobalFITMessage {
         put(23, DEVICE_INFO);
         put(26, WORKOUT);
         put(31, COURSE);
+        put(32, COURSE_POINT);
         put(34, ACTIVITY);
         put(49, FILE_CREATOR);
         put(55, MONITORING);

@@ -11,9 +11,12 @@ import java.util.stream.Collectors;
 import nodomain.freeyourgadget.gadgetbridge.model.GPSCoordinate;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.FileType;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.enums.GarminSport;
+import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.fieldDefinitions.FieldDefinitionCoursePoint;
+import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.messages.FitCoursePoint;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.messages.FitRecordDataFactory;
 import nodomain.freeyourgadget.gadgetbridge.util.gpx.model.GpxFile;
 import nodomain.freeyourgadget.gadgetbridge.util.gpx.model.GpxTrackPoint;
+import nodomain.freeyourgadget.gadgetbridge.util.gpx.model.GpxWaypoint;
 
 public class GpxRouteFileConverter {
     private static final Logger LOG = LoggerFactory.getLogger(GpxRouteFileConverter.class);
@@ -51,6 +54,27 @@ public class GpxRouteFileConverter {
 
     public boolean isValid() {
         return this.convertedFile != null;
+    }
+
+    private static List<RecordData> parseGpxWaypoints(GpxFile gpxFile) {
+        List<RecordData> gpxWayDataRecords = new ArrayList<>();
+        final List<GpxWaypoint> gpxWaypointList = gpxFile.getWaypoints();
+        for (GpxWaypoint waypoint : gpxWaypointList) {
+            final FitCoursePoint.Builder fitCoursePointBuilder = new FitCoursePoint.Builder()
+                    .setLatitude(waypoint.getLatitude())
+                    .setLongitude(waypoint.getLongitude())
+                    .setType(FieldDefinitionCoursePoint.CoursePoint.fromSymbol(waypoint.getSymbol()));
+
+            if (null != waypoint.getTime()) //TODO: possibly a CoursePoint with no time is counterproductive, maybe ignore those
+                fitCoursePointBuilder.setTimestamp(waypoint.getTime().getTime() / 1000);
+
+            if (null != waypoint.getName() && !waypoint.getName().isEmpty()) {
+                fitCoursePointBuilder.setName(waypoint.getName());
+            }
+
+            gpxWayDataRecords.add(fitCoursePointBuilder.build());
+        }
+        return gpxWayDataRecords;
     }
 
     private FitFile convertGpxToRoute(GpxFile gpxFile) {
@@ -119,6 +143,10 @@ public class GpxRouteFileConverter {
         courseFileDataRecords.add(getEventRecordData(eventRecordDefinition, eventRecordHeader, runningTs, 9));
 
         courseFileDataRecords.addAll(gpxPointDataRecords);
+
+        final List<RecordData> gpxWayDataRecords = parseGpxWaypoints(gpxFile);
+        if (!gpxWayDataRecords.isEmpty())
+            courseFileDataRecords.addAll(gpxWayDataRecords);
 
         return new FitFile(courseFileDataRecords);
     }
