@@ -243,12 +243,19 @@ public class GpxParser {
     private void parseExtensionsOsmAndRoute(GpxTrackSegment.Builder segmentBuilder) throws Exception {
         while (eventType != XmlPullParser.END_TAG || !parser.getName().equals("extensions")) {
             if (parser.getEventType() == XmlPullParser.START_TAG && "osmand".equals(parser.getPrefix()) && "route".equals(parser.getName())) {
+                final GpxTrackPoint startPoint = segmentBuilder.getTrackPointAtIndex(0);
+                Date referenceTime = (null == startPoint.getTime()) ? new Date() : startPoint.getTime();
+                final GpxWaypoint.Builder startWaypoint = new GpxWaypoint.Builder().withLatitude(startPoint.getLatitude()).withLongitude(startPoint.getLongitude()).withTime(referenceTime);
+                fileBuilder.withWaypoints(startWaypoint.build());
                     while (eventType != XmlPullParser.END_TAG || !parser.getName().equals("route")) {
                         if (eventType == XmlPullParser.START_TAG && "segment".equals(parser.getName())) {
                             final String turnType = parser.getAttributeValue(null, "turnType");
+                            referenceTime = Date.from(referenceTime.toInstant().plusSeconds((int) Double.parseDouble(parser.getAttributeValue(null, "segmentTime"))));
+                            LOG.info("TIME IS {}", referenceTime);
                             if(!(null == turnType) && turnType.startsWith("T")){
                                 final GpxTrackPoint reference = segmentBuilder.getTrackPointAtIndex(Integer.valueOf(parser.getAttributeValue(null, "startTrkptIdx")));
                                 final GpxWaypoint.Builder waypointBuilder = waypointBuilderFromTrackPoint(reference, turnType);
+                                waypointBuilder.withTime(referenceTime);
                                 fileBuilder.withWaypoints(waypointBuilder.build());
                             }
                         }
@@ -263,6 +270,7 @@ public class GpxParser {
         final GpxWaypoint.Builder waypointBuilder = new GpxWaypoint.Builder();
         waypointBuilder.withLatitude(reference.getLatitude());
         waypointBuilder.withLongitude(reference.getLongitude());
+        waypointBuilder.withTime(reference.getTime());
         switch (turnType) {
             case "TL" -> waypointBuilder.withSymbol("Left");
             case "TR" -> waypointBuilder.withSymbol("Right");
