@@ -18,7 +18,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        card_view:cardElevation="3dp"
+        card_view:cardElevation="1dp"
         card_view:contentPadding="4dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -57,7 +57,7 @@
         app:layout_constraintEnd_toStartOf="@id/card_widget_top_right"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/card_layout"
-        card_view:cardElevation="3dp"
+        card_view:cardElevation="1dp"
         card_view:contentPadding="4dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -96,7 +96,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/card_widget_top_left"
         app:layout_constraintTop_toBottomOf="@id/card_layout"
-        card_view:cardElevation="3dp"
+        card_view:cardElevation="1dp"
         card_view:contentPadding="4dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -135,7 +135,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/card_widget_top_right"
-        card_view:cardElevation="3dp"
+        card_view:cardElevation="1dp"
         card_view:contentPadding="4dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -174,7 +174,7 @@
         app:layout_constraintEnd_toStartOf="@id/card_widget_bottom_right"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/card_widget_center"
-        card_view:cardElevation="3dp"
+        card_view:cardElevation="1dp"
         card_view:contentPadding="4dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -213,7 +213,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/card_widget_bottom_left"
         app:layout_constraintTop_toBottomOf="@id/card_widget_center"
-        card_view:cardElevation="3dp"
+        card_view:cardElevation="1dp"
         card_view:contentPadding="4dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout

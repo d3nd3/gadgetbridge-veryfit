@@ -18,7 +18,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        card_view:cardElevation="3dp"
+        card_view:cardElevation="1dp"
         card_view:contentPadding="4dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -57,7 +57,7 @@
         app:layout_constraintEnd_toStartOf="@id/card_time"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/card_repeat"
-        card_view:cardElevation="3dp"
+        card_view:cardElevation="1dp"
         card_view:contentPadding="4dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -97,7 +97,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/card_date"
         app:layout_constraintTop_toBottomOf="@id/card_repeat"
-        card_view:cardElevation="3dp"
+        card_view:cardElevation="1dp"
         card_view:contentPadding="4dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -136,7 +136,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/card_date"
-        card_view:cardElevation="3dp"
+        card_view:cardElevation="1dp"
         card_view:contentPadding="4dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout

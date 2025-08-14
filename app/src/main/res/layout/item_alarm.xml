@@ -13,7 +13,7 @@
         android:layout_margin="8dp"
         android:foreground="?android:attr/selectableItemBackground"
         app:cardBackgroundColor="?attr/cardview_background_color"
-        app:cardElevation="3dp">
+        app:cardElevation="1dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
