@@ -546,7 +546,7 @@ public class DashboardTodayWidget extends AbstractDashboardWidget {
                         List<? extends ActivitySample> activitySamples = DashboardUtils.getAllSamples(dbHandler, dev, dashboardData);
                         allActivitySamples.addAll(activitySamples);
                         StepAnalysis stepAnalysis = new StepAnalysis();
-                        stepSessions.addAll(stepAnalysis.calculateStepSessions(activitySamples));
+                        stepSessions.addAll(stepAnalysis.calculateStepSessions(activitySamples, Collections.emptyList()));
                     }
                 }
                 activitySummaries = DashboardUtils.getWorkoutSamples(dbHandler, dashboardData);

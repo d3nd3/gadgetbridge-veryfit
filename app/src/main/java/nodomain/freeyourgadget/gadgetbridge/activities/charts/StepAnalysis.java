@@ -21,22 +21,40 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.activities.HeartRateUtils;
+import nodomain.freeyourgadget.gadgetbridge.entities.BaseActivitySummary;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivityKind;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivitySample;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivitySession;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivityUser;
+import nodomain.freeyourgadget.gadgetbridge.util.RangeMap;
 
 public class StepAnalysis {
     protected static final Logger LOG = LoggerFactory.getLogger(StepAnalysis.class);
     private int totalDailySteps = 0;
 
-    public List<ActivitySession> calculateStepSessions(List<? extends ActivitySample> samples) {
-        LOG.debug("get all samples activity sessions: {}", samples.size());
+    public List<ActivitySession> calculateStepSessions(List<? extends ActivitySample> samples, final List<BaseActivitySummary> workouts) {
+        LOG.debug("get all samples activity sessions: {}, workouts: {}", samples.size(), workouts.size());
+
+        // First, exclude all explicit samples that match workouts
+        final RangeMap<Long, Boolean> workoutsMap = new RangeMap<>(RangeMap.Mode.LOWER_BOUND);
+        workoutsMap.put(0L, false);
+        for (BaseActivitySummary workout : workouts) {
+            workoutsMap.put(workout.getStartTime().getTime(), true);
+            workoutsMap.put(workout.getEndTime().getTime(), false);
+        }
+        samples = samples.stream()
+                .filter(s -> {
+                    Boolean isWorkout = workoutsMap.get(s.getTimestamp() * 1000L);
+                    return isWorkout == null || !isWorkout;
+                }).collect(Collectors.toList());
+
         List<ActivitySession> result = new ArrayList<>();
         ActivityUser activityUser = new ActivityUser();
         final int MIN_SESSION_LENGTH = 60 * GBApplication.getPrefs().getInt("chart_list_min_session_length", 5);
@@ -169,7 +187,7 @@ public class StepAnalysis {
             int session_length = current - starting - durationSinceLastActiveStep;
 
             if (session_length >= MIN_SESSION_LENGTH) {
-                int heartRateAverage = heartRateSum.size() > 0 ? calculateSumOfInts(heartRateSum) / heartRateSum.size() : 0;
+                int heartRateAverage = !heartRateSum.isEmpty() ? calculateSumOfInts(heartRateSum) / heartRateSum.size() : 0;
                 float distance = activeDistanceCm * 0.01f;
                 sessionEnd = getDateFromSample(previousSample);
                 activityKind = detect_activity_kind(session_length, activeSteps, heartRateAverage, activeIntensity);
@@ -178,7 +196,14 @@ public class StepAnalysis {
                 result.add(ongoingActivity);
             }
         }
-        return result;
+
+        for (BaseActivitySummary workout : workouts) {
+            result.add(new ActivitySession(workout));
+        }
+
+        return result.stream()
+                .sorted(Comparator.comparing(ActivitySession::getStartTime))
+                .collect(Collectors.toList());
     }
 
     public ActivitySession calculateSummary(Collection<ActivitySession> sessions, boolean empty) {

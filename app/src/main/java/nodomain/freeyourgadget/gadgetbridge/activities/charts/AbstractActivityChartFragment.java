@@ -33,19 +33,28 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 
+import de.greenrobot.dao.query.QueryBuilder;
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.R;
 import nodomain.freeyourgadget.gadgetbridge.activities.HeartRateUtils;
 import nodomain.freeyourgadget.gadgetbridge.database.DBHandler;
+import nodomain.freeyourgadget.gadgetbridge.database.DBHelper;
 import nodomain.freeyourgadget.gadgetbridge.devices.DeviceCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.SampleProvider;
 import nodomain.freeyourgadget.gadgetbridge.entities.AbstractActivitySample;
+import nodomain.freeyourgadget.gadgetbridge.entities.BaseActivitySummary;
+import nodomain.freeyourgadget.gadgetbridge.entities.BaseActivitySummaryDao;
+import nodomain.freeyourgadget.gadgetbridge.entities.Device;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivityKind;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivitySample;
+import nodomain.freeyourgadget.gadgetbridge.model.ActivitySummaryData;
+import nodomain.freeyourgadget.gadgetbridge.model.ActivitySummaryJsonSummary;
+import nodomain.freeyourgadget.gadgetbridge.model.ActivitySummaryParser;
 import nodomain.freeyourgadget.gadgetbridge.util.Prefs;
 
 public abstract class AbstractActivityChartFragment<D extends ChartsData> extends AbstractChartFragment<D> {
@@ -409,6 +418,29 @@ public abstract class AbstractActivityChartFragment<D extends ChartsData> extend
 //        }
 //        return samples2;
         return samples;
+    }
+
+    protected List<BaseActivitySummary> getAllWorkouts(DBHandler db, GBDevice device) {
+        Calendar day = Calendar.getInstance();
+        day.setTimeInMillis(getTSEnd() * 1000L); //we need today initially, which is the end of the time range
+        day.set(Calendar.HOUR_OF_DAY, 0); //and we set time for the start and end of the same day
+        day.set(Calendar.MINUTE, 0);
+        day.set(Calendar.SECOND, 0);
+        int tsFrom = (int) (day.getTimeInMillis() / 1000);
+        int tsTo = tsFrom + 24 * 60 * 60 - 1;
+        BaseActivitySummaryDao summaryDao = db.getDaoSession().getBaseActivitySummaryDao();
+        Device dbDevice = DBHelper.findDevice(device, db.getDaoSession());
+        QueryBuilder<BaseActivitySummary> qb = summaryDao.queryBuilder();
+        qb.where(BaseActivitySummaryDao.Properties.DeviceId.eq(dbDevice.getId()));
+        qb.where(BaseActivitySummaryDao.Properties.StartTime.gt(new Date(tsFrom * 1000L)));
+        qb.where(BaseActivitySummaryDao.Properties.EndTime.lt(new Date(tsTo * 1000L)));
+        qb.orderAsc(BaseActivitySummaryDao.Properties.StartTime);
+        final List<BaseActivitySummary> summaries = qb.build().list();
+        final ActivitySummaryParser summaryParser = device.getDeviceCoordinator().getActivitySummaryParser(device, getContext());
+        for (BaseActivitySummary summary : summaries) {
+            summaryParser.parseBinaryData(summary, false);
+        }
+        return summaries;
     }
 
     protected List<? extends ActivitySample> getSamplesHighRes(DBHandler db, GBDevice device) {
