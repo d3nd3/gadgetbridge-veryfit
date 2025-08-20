@@ -78,6 +78,7 @@ public class ZeppOsWeatherHandler {
             .registerTypeAdapter(UnitValue.class, new UnitValue.Serializer())
             .registerTypeAdapter(HourlyResponse.class, new HourlyResponse.Serializer())
             .registerTypeAdapter(AlertsResponse.class, new AlertsResponse.Serializer())
+            .registerTypeAdapter(Alert.class, new Alert.Serializer())
             .registerTypeAdapter(TideResponse.class, new TideResponse.Serializer())
             .registerTypeAdapter(TideDataEntry.class, new TideDataEntry.Serializer())
             .registerTypeAdapter(TideTableEntry.class, new TideTableEntry.Serializer())
@@ -749,7 +750,7 @@ public class ZeppOsWeatherHandler {
     // isGlobal=true
     // locationKey=00.000,-0.000,xiaomi_accu:000000
     public static class AlertsResponse extends Response {
-        public List<Object> alerts = new ArrayList<>();
+        public List<Alert> alerts = new ArrayList<>();
 
         public AlertsResponse(final WeatherSpec weatherSpec) {
 
@@ -760,6 +761,29 @@ public class ZeppOsWeatherHandler {
             public JsonElement serialize(final AlertsResponse obj, final Type type, final JsonSerializationContext context) {
                 final JsonObject object = new JsonObject();
                 object.add("alerts", context.serialize(obj.alerts));
+                return object;
+            }
+        }
+    }
+
+    public static class Alert {
+        public String pubTime;
+        public String alertId; // 3
+        public String title; // 2
+        public String type; // test
+        public String level; // 3
+        public String detail; // 5
+
+        public static class Serializer implements JsonSerializer<Alert> {
+            @Override
+            public JsonElement serialize(final Alert obj, final Type type, final JsonSerializationContext context) {
+                final JsonObject object = new JsonObject();
+                object.add("pubTime", context.serialize(obj.pubTime));
+                object.add("alertId", context.serialize(obj.alertId));
+                object.add("title", context.serialize(obj.title));
+                object.add("type", context.serialize(obj.type));
+                object.add("level", context.serialize(obj.level));
+                object.add("detail", context.serialize(obj.detail));
                 return object;
             }
         }
