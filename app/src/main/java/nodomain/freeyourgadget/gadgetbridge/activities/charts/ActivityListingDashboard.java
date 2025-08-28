@@ -17,7 +17,6 @@
 package nodomain.freeyourgadget.gadgetbridge.activities.charts;
 
 import android.app.DatePickerDialog;
-import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -161,7 +160,7 @@ public class ActivityListingDashboard extends MaterialDialogFragment {
                 battery_status_time_span_text.setText(text);
                 battery_status_date_from_text.setText(DateTimeUtils.formatDate(new Date(timeFrom * 1000L)));
                 battery_status_date_to_text.setText(DateTimeUtils.formatDate(new Date(timeTo * 1000L)));
-                createRefreshTask("Visualizing step sessions", getActivity()).execute();
+                refresh();
             }
 
             @Override
@@ -204,8 +203,37 @@ public class ActivityListingDashboard extends MaterialDialogFragment {
         battery_status_time_span_seekbar.setProgress(2);
     }
 
-    protected RefreshTask createRefreshTask(String task, Context context) {
-        return new RefreshTask(task, context);
+    private void refresh() {
+        DBAccess<ActivitySession> refreshTask = new DBAccess("Visualizing step sessions", getActivity()) {
+            @Override
+            protected void onPreExecute() {
+                // onPreExecute logic is overridden here
+                indicate_progress(true);
+            }
+                    @Override
+                    protected ActivitySession doInBackground(DBHandler handler) throws Exception {
+                        return get_data(gbDevice, handler, timeFrom, timeTo);
+                    }
+                };
+                refreshTask.execute(new DBAccess.Callback<>() {
+                    @Override
+                    public void onComplete(ActivitySession data) {
+                        FragmentActivity activity = getActivity();
+                        if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+                            stepSessionsSummary = data;
+                            populateData(data);
+                            indicate_progress(false);
+                        } else {
+                            LOG.info("Not filling data because activity is not available anymore");
+                        }
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        LOG.error("Unable to get charts data right now:", e);
+                        refreshTask.displayError(e);
+                    }
+        });
     }
 
     private ActivitySession get_data(GBDevice gbDevice, DBHandler db, int timeFrom, int timeTo) {
@@ -298,32 +326,4 @@ public class ActivityListingDashboard extends MaterialDialogFragment {
         }
     }
 
-    public class RefreshTask extends DBAccess {
-
-        public RefreshTask(String task, Context context) {
-            super(task, context);
-        }
-
-        @Override
-        protected void doInBackground(DBHandler db) {
-            stepSessionsSummary = get_data(gbDevice, db, timeFrom, timeTo);
-        }
-
-        @Override
-        protected void onPreExecute() {
-            indicate_progress(true);
-        }
-
-        @Override
-        protected void onPostExecute(Object o) {
-            super.onPostExecute(o);
-            FragmentActivity activity = getActivity();
-            if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
-                populateData(stepSessionsSummary);
-                indicate_progress(false);
-            } else {
-                LOG.info("Not filling data because activity is not available anymore");
-            }
-        }
-    }
 }

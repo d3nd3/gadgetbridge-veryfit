@@ -94,12 +94,129 @@ public class ActivitySummariesChartFragment extends AbstractActivityChartFragmen
         this.gbDevice = gbDevice;
         if (this.view != null) {
             setupChart();
-            createLocalRefreshTask("getting hr and activity", getActivity()).execute();
+            refreshChartsData();
         }
     }
 
-    protected RefreshTask createLocalRefreshTask(String task, Context context) {
-        return new RefreshTask(task, context);
+
+    private void refreshChartsData() {
+        DBAccess<DefaultChartsData> refreshTask = new DBAccess<>("getting hr and activity", requireContext()) {
+            @Override
+            protected DefaultChartsData<?> doInBackground(DBHandler handler) throws Exception {
+                final DefaultChartsData<LineData> activitySamplesData = buildChartFromSamples(handler);
+
+                if (trackFile != null) {
+                    final List<ActivityPoint> activityPoints = MapsTrackViewModel.Companion.getActivityPoints(trackFile)
+                            .stream()
+                            .filter(ap -> ap.getHeartRate() > 0)
+                            .collect(Collectors.toList());
+
+                    if (!activityPoints.isEmpty()) {
+                        return buildHeartRateChart(activityPoints, activitySamplesData);
+                    } else {
+                        return activitySamplesData;
+                    }
+                } else {
+                    return activitySamplesData;
+                }
+            }
+
+            private DefaultChartsData<LineData> buildChartFromSamples(DBHandler handler) {
+                final List<? extends ActivitySample> samples = getAllSamples(handler, gbDevice, startTime, endTime);
+                final List<? extends ActivitySample> highResSamples = getAllSamplesHighRes(handler, gbDevice, startTime, endTime);
+
+                try {
+                    if (highResSamples == null)
+                        return refresh(gbDevice, samples);
+                    return refresh(gbDevice, samples, highResSamples);
+                } catch (Exception e) {
+                    LOG.error("Unable to get charts data right now", e);
+                }
+
+                return null;
+            }
+
+            private DefaultChartsData<LineData> buildHeartRateChart(final List<ActivityPoint> activityPoints,
+                                                                    final DefaultChartsData<LineData> activitySamplesData) {
+                // If we have data from activity samples, we need to use the same TimestampTranslation so
+                // that the HR chart is aligned
+                // This is not ideal...
+                final TimestampTranslation tsTranslation;
+                if (activitySamplesData != null) {
+                    final ValueFormatter xValueFormatter = activitySamplesData.getXValueFormatter();
+                    if (xValueFormatter instanceof SampleXLabelFormatter) {
+                        tsTranslation = ((SampleXLabelFormatter) xValueFormatter).getTsTranslation();
+                    } else {
+                        LOG.error("Unable to get TimestampTranslation from x value formatter - class changed?");
+                        tsTranslation = new TimestampTranslation();
+                    }
+                } else {
+                    tsTranslation = new TimestampTranslation();
+                }
+
+                final List<Entry> heartRateEntries = new ArrayList<>(activityPoints.size());
+                final List<ILineDataSet> heartRateDataSets = new ArrayList<>();
+                int lastTsShorten = 0;
+                for (final ActivityPoint activityPoint : activityPoints) {
+                    int tsShorten = tsTranslation.shorten((int) (activityPoint.getTime().getTime() / 1000));
+                    if (lastTsShorten == 0 || (tsShorten - lastTsShorten) <= 60 * HeartRateUtils.MAX_HR_MEASUREMENTS_GAP_MINUTES) {
+                        heartRateEntries.add(new Entry(tsShorten, activityPoint.getHeartRate()));
+                    } else {
+                        if (!heartRateEntries.isEmpty()) {
+                            List<Entry> clone = new ArrayList<>(heartRateEntries.size());
+                            clone.addAll(heartRateEntries);
+                            heartRateDataSets.add(createHeartrateSet(clone, "Heart Rate"));
+                            heartRateEntries.clear();
+                        }
+                    }
+                    lastTsShorten = tsShorten;
+                    heartRateEntries.add(new Entry(tsShorten, activityPoint.getHeartRate()));
+                }
+                if (!heartRateEntries.isEmpty()) {
+                    heartRateDataSets.add(createHeartrateSet(heartRateEntries, "Heart Rate"));
+                }
+
+                if (activitySamplesData != null) {
+                    // if we have activity samples, replace the heart rate dataset
+                    LineData data = activitySamplesData.getData();
+                    List<ILineDataSet> dataSets = data.getDataSets();
+                    for (final ILineDataSet dataSet : dataSets) {
+                        if ("Heart Rate".equals(dataSet.getLabel())) {
+                            dataSets.remove(dataSet);
+                            dataSets.addAll(heartRateDataSets);
+                            return activitySamplesData;
+                        }
+                    }
+                    // We failed to find a heart rate dataset. We can't append ours, or it will crash
+                    //dataSets.add(heartRateSet);
+                    return activitySamplesData;
+                } else {
+                    final LineData lineData = new LineData(heartRateDataSets);
+                    final ValueFormatter xValueFormatter = new SampleXLabelFormatter(tsTranslation, "HH:mm");
+                    return new DefaultChartsData<>(lineData, xValueFormatter);
+                }
+            }
+        };
+
+        refreshTask.execute(new DBAccess.Callback<DefaultChartsData>() {
+            @Override
+            public void onComplete(DefaultChartsData dcd) {
+                if (dcd != null) {
+                    mChart.setData(null); // workaround for https://github.com/PhilJay/MPAndroidChart/issues/2317
+                    mChart.getXAxis().setValueFormatter(dcd.getXValueFormatter());
+                    mChart.setData((LineData) dcd.getData());
+                }
+                mChart.invalidate();
+
+            }
+
+            @Override
+            public void onError(Exception e) {
+                refreshTask.displayError(e);
+            }
+
+
+        });
     }
 
     @Override
@@ -117,7 +234,7 @@ public class ActivitySummariesChartFragment extends AbstractActivityChartFragmen
         this.view = view;
         if (this.trackFile != null || this.gbDevice != null) {
             setupChart();
-            createLocalRefreshTask("getting hr and activity", getActivity()).execute();
+            refreshChartsData();
         }
     }
 
@@ -215,118 +332,4 @@ public class ActivitySummariesChartFragment extends AbstractActivityChartFragmen
     protected void updateChartsnUIThread(ChartsData chartsData) {
     }
 
-    public class RefreshTask extends DBAccess {
-
-        public RefreshTask(String task, Context context) {
-            super(task, context);
-        }
-
-        @Override
-        protected void doInBackground(DBHandler handler) {
-            final DefaultChartsData<?> dcd;
-            final DefaultChartsData<LineData> activitySamplesData = buildChartFromSamples(handler);
-
-            if (trackFile != null) {
-                final List<ActivityPoint> activityPoints = MapsTrackViewModel.Companion.getActivityPoints(trackFile)
-                        .stream()
-                        .filter(ap -> ap.getHeartRate() > 0)
-                        .collect(Collectors.toList());
-
-                if (!activityPoints.isEmpty()) {
-                    dcd = buildHeartRateChart(activityPoints, activitySamplesData);
-                } else {
-                    dcd = activitySamplesData;
-                }
-            } else {
-                dcd = activitySamplesData;
-            }
-
-            if (dcd != null) {
-                mChart.setData(null); // workaround for https://github.com/PhilJay/MPAndroidChart/issues/2317
-                mChart.getXAxis().setValueFormatter(dcd.getXValueFormatter());
-                mChart.setData((LineData) dcd.getData());
-            }
-        }
-
-        @Override
-        protected void onPostExecute(Object o) {
-            mChart.invalidate();
-        }
-
-        private DefaultChartsData<LineData> buildChartFromSamples(DBHandler handler) {
-            final List<? extends ActivitySample> samples = getAllSamples(handler, gbDevice, startTime, endTime);
-            final List<? extends ActivitySample> highResSamples = getAllSamplesHighRes(handler, gbDevice, startTime, endTime);
-
-            try {
-                if (highResSamples == null)
-                    return refresh(gbDevice, samples);
-                return refresh(gbDevice, samples, highResSamples);
-            } catch (Exception e) {
-                LOG.error("Unable to get charts data right now", e);
-            }
-
-            return null;
-        }
-
-        private DefaultChartsData<LineData> buildHeartRateChart(final List<ActivityPoint> activityPoints,
-                                                                final DefaultChartsData<LineData> activitySamplesData) {
-            // If we have data from activity samples, we need to use the same TimestampTranslation so
-            // that the HR chart is aligned
-            // This is not ideal...
-            final TimestampTranslation tsTranslation;
-            if (activitySamplesData != null) {
-                final ValueFormatter xValueFormatter = activitySamplesData.getXValueFormatter();
-                if (xValueFormatter instanceof SampleXLabelFormatter) {
-                    tsTranslation = ((SampleXLabelFormatter) xValueFormatter).getTsTranslation();
-                } else {
-                    LOG.error("Unable to get TimestampTranslation from x value formatter - class changed?");
-                    tsTranslation = new TimestampTranslation();
-                }
-            } else {
-                tsTranslation = new TimestampTranslation();
-            }
-
-            final List<Entry> heartRateEntries = new ArrayList<>(activityPoints.size());
-            final List<ILineDataSet> heartRateDataSets = new ArrayList<>();
-            int lastTsShorten = 0;
-            for (final ActivityPoint activityPoint : activityPoints) {
-                int tsShorten = tsTranslation.shorten((int) (activityPoint.getTime().getTime() / 1000));
-                if (lastTsShorten == 0 || (tsShorten - lastTsShorten) <= 60 * HeartRateUtils.MAX_HR_MEASUREMENTS_GAP_MINUTES) {
-                    heartRateEntries.add(new Entry(tsShorten, activityPoint.getHeartRate()));
-                } else {
-                    if (!heartRateEntries.isEmpty()) {
-                        List<Entry> clone = new ArrayList<>(heartRateEntries.size());
-                        clone.addAll(heartRateEntries);
-                        heartRateDataSets.add(createHeartrateSet(clone, "Heart Rate"));
-                        heartRateEntries.clear();
-                    }
-                }
-                lastTsShorten = tsShorten;
-                heartRateEntries.add(new Entry(tsShorten, activityPoint.getHeartRate()));
-            }
-            if (!heartRateEntries.isEmpty()) {
-                heartRateDataSets.add(createHeartrateSet(heartRateEntries, "Heart Rate"));
-            }
-
-            if (activitySamplesData != null) {
-                // if we have activity samples, replace the heart rate dataset
-                LineData data = activitySamplesData.getData();
-                List<ILineDataSet> dataSets = data.getDataSets();
-                for (final ILineDataSet dataSet : dataSets) {
-                    if ("Heart Rate".equals(dataSet.getLabel())) {
-                        dataSets.remove(dataSet);
-                        dataSets.addAll(heartRateDataSets);
-                        return activitySamplesData;
-                    }
-                }
-                // We failed to find a heart rate dataset. We can't append ours, or it will crash
-                //dataSets.add(heartRateSet);
-                return activitySamplesData;
-            } else {
-                final LineData lineData = new LineData(heartRateDataSets);
-                final ValueFormatter xValueFormatter = new SampleXLabelFormatter(tsTranslation, "HH:mm");
-                return new DefaultChartsData<>(lineData, xValueFormatter);
-            }
-        }
-    }
 }

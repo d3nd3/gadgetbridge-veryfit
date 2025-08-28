@@ -1,4 +1,4 @@
-/*  Copyright (C) 2015-2024 Andreas Shimokawa, Carsten Pfeiffer, Daniele
+/* Copyright (C) 2015-2024 Andreas Shimokawa, Carsten Pfeiffer, Daniele
     Gobbetti, Dikay900, José Rebelo, Pavel Elagin, Petr Vaněk, walkjivefly
 
     This file is part of Gadgetbridge.
@@ -22,7 +22,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.format.DateUtils;
 import android.view.View;
@@ -84,7 +83,6 @@ public abstract class AbstractChartFragment<D extends ChartsData> extends Abstra
     };
 
     private boolean mChartDirty = true;
-    private AsyncTask refreshTask;
 
     protected AbstractChartFragment(String... intentFilterActions) {
         mIntentFilterActions = new HashSet<>();
@@ -328,59 +326,39 @@ public abstract class AbstractChartFragment<D extends ChartsData> extends Abstra
      * #renderCharts
      */
     protected void refresh() {
+        mChartDirty = false;
         LOG.info("Refreshing data for {} from {} to {}", getTitle(), sdf.format(getStartDate()), sdf.format(getEndDate()));
 
         ChartsHost chartsHost = getChartsHost();
-        if (chartsHost != null) {
-            if (chartsHost.getDevice() != null) {
-                mChartDirty = false;
-                if (refreshTask != null && refreshTask.getStatus() != AsyncTask.Status.FINISHED) {
-                    refreshTask.cancel(true);
-                }
-                refreshTask = createRefreshTask("Visualizing data", getActivity()).execute();
-            }
+        if (chartsHost != null && chartsHost.getDevice() != null) {
+            refreshChartData(chartsHost, chartsHost.getDevice());
         }
     }
 
-    private RefreshTask createRefreshTask(final String task, final Context context) {
-        return new RefreshTask(task, context);
-    }
-
-    @SuppressLint("StaticFieldLeak")
-    private final class RefreshTask extends DBAccess {
-        private D chartsData;
-
-        public RefreshTask(final String task, final Context context) {
-            super(task, context);
-        }
-
-        @Override
-        protected void doInBackground(final DBHandler db) {
-            final ChartsHost chartsHost = getChartsHost();
-            if (chartsHost != null) {
-                chartsData = refreshInBackground(chartsHost, db, chartsHost.getDevice());
-            } else {
-                cancel(true);
-            }
-        }
-
-        @Override
-        protected void onPostExecute(final Object o) {
-            super.onPostExecute(o);
-            final FragmentActivity activity = getActivity();
-            if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-                LOG.info("Not rendering charts because activity is not available anymore");
-                return;
-            }
-            if (getTaskError() != null) {
-                // Async task failed - we will have no data, so avoid NPE crashes
-                // a log + toast were already displayed by the DBAccess class
-                return;
+    private void refreshChartData(ChartsHost chartsHost, GBDevice device) {
+        DBAccess<D> refreshTask = new DBAccess<D>("Visualizing data", getActivity()) {
+            @Override
+            protected D doInBackground(DBHandler handler) throws Exception {
+                return refreshInBackground(chartsHost, handler, device);
             }
 
-            updateChartsnUIThread(chartsData);
-            renderCharts();
-        }
+        };
+
+        refreshTask.execute(new DBAccess.Callback<D>() {
+            @Override
+            public void onComplete(D chartsData) {
+                if (getActivity() == null || getActivity().isFinishing()) return;
+                updateChartsnUIThread(chartsData);
+                renderCharts();
+            }
+
+            @Override
+            public void onError(Exception e) {
+                LOG.debug("Unable to get charts data right now:", e);
+                if (getActivity() == null || getActivity().isFinishing()) return;
+                refreshTask.displayError(e);
+            }
+        });
     }
 
     /**

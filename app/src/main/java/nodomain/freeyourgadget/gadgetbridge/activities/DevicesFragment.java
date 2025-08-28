@@ -77,7 +77,7 @@ public class DevicesFragment extends Fragment {
                 case DeviceManager.ACTION_DEVICES_CHANGED:
                 case GBApplication.ACTION_NEW_DATA:
                     if (action.equals(GBApplication.ACTION_NEW_DATA)) {
-                        createRefreshTask("get activity data", requireContext(), device).execute();
+                        refresh("get activity data", device);
                     }
                     if (device != null) {
                         // Refresh only this device
@@ -129,7 +129,7 @@ public class DevicesFragment extends Fragment {
             @Override
             public void run() {
                 if (getContext() != null) {
-                    createRefreshTask("get activity data", getContext(), null).execute();
+                    refresh("get activity data", null);
                 }
             }
         });
@@ -238,45 +238,45 @@ public class DevicesFragment extends Fragment {
         }
     }
 
-    public RefreshTask createRefreshTask(String task, Context context, GBDevice device) {
-        return new RefreshTask(task, context, device);
-    }
+    private void refresh(String task, GBDevice device) {
+        DBAccess<Void> refreshTask = new DBAccess(task, requireContext()) {
+            @Override
+            protected Object doInBackground(DBHandler handler) throws Exception {
+                if (device != null) {
+                    updateDevice(handler, device);
+                } else {
+                    for (GBDevice gbDevice : deviceList) {
+                        updateDevice(handler, gbDevice);
+                    }
+                }
+                return null;
+            }
 
-    public class RefreshTask extends DBAccess {
-        private final GBDevice device;
-
-        public RefreshTask(final String task, final Context context, final GBDevice device) {
-            super(task, context);
-            this.device = device;
-        }
-
-        @Override
-        protected void doInBackground(final DBHandler db) {
-            if (device != null) {
-                updateDevice(db, device);
-            } else {
-                for (GBDevice gbDevice : deviceList) {
-                    updateDevice(db, gbDevice);
+            private void updateDevice(final DBHandler db, final GBDevice gbDevice) {
+                final DeviceCoordinator coordinator = gbDevice.getDeviceCoordinator();
+                final boolean showActivityCard = GBApplication.getDevicePrefs(gbDevice).getBoolean(DeviceSettingsPreferenceConst.PREFS_ACTIVITY_IN_DEVICE_CARD, true);
+                if ((coordinator.supportsStepCounter(gbDevice) || coordinator.supportsSleepMeasurement(gbDevice)) && showActivityCard) {
+                    final DailyTotals stepsAndSleepData = getSteps(gbDevice, db);
+                    deviceActivityHashMap.put(gbDevice.getAddress(), stepsAndSleepData);
                 }
             }
-        }
 
-        private void updateDevice(final DBHandler db, final GBDevice gbDevice) {
-            final DeviceCoordinator coordinator = gbDevice.getDeviceCoordinator();
-            final boolean showActivityCard = GBApplication.getDevicePrefs(gbDevice).getBoolean(DeviceSettingsPreferenceConst.PREFS_ACTIVITY_IN_DEVICE_CARD, true);
-            if ((coordinator.supportsStepCounter(gbDevice) || coordinator.supportsSleepMeasurement(gbDevice)) && showActivityCard) {
-                final DailyTotals stepsAndSleepData = getSteps(gbDevice, db);
-                deviceActivityHashMap.put(gbDevice.getAddress(), stepsAndSleepData);
+        };
+        refreshTask.execute(new DBAccess.Callback<>() {
+            @Override
+            public void onComplete(Void result) {
+                if (device != null) {
+                    refreshSingleDevice(device);
+                } else {
+                    refreshPairedDevices();
+                }
             }
-        }
 
-        @Override
-        protected void onPostExecute(final Object o) {
-            if (device != null) {
-                refreshSingleDevice(device);
-            } else {
-                refreshPairedDevices();
+            @Override
+            public void onError(Exception e) {
+                refreshTask.displayError(e);
             }
-        }
+        });
     }
+
 }

@@ -21,7 +21,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -51,6 +50,7 @@ import nodomain.freeyourgadget.gadgetbridge.R;
 import nodomain.freeyourgadget.gadgetbridge.activities.DashboardFragment;
 import nodomain.freeyourgadget.gadgetbridge.activities.HeartRateUtils;
 import nodomain.freeyourgadget.gadgetbridge.activities.charts.StepAnalysis;
+import nodomain.freeyourgadget.gadgetbridge.database.DBAccess;
 import nodomain.freeyourgadget.gadgetbridge.database.DBHandler;
 import nodomain.freeyourgadget.gadgetbridge.entities.BaseActivitySummary;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
@@ -71,8 +71,9 @@ public class DashboardTodayWidget extends AbstractDashboardWidget {
 
     private View todayView;
     private ImageView todayChart;
-
     private boolean mode_24h;
+    private final HashMap<Long, ActivityKind> activityTimestamps = new HashMap<>();
+
 
     public DashboardTodayWidget() {
         // Required empty public constructor
@@ -134,7 +135,9 @@ public class DashboardTodayWidget extends AbstractDashboardWidget {
     @Override
     public void onResume() {
         super.onResume();
-        if (todayChart != null) fillData();
+        if (todayChart != null) {
+            fillData();
+        }
     }
 
     private void draw() {
@@ -378,7 +381,7 @@ public class DashboardTodayWidget extends AbstractDashboardWidget {
     }
 
     protected void fillData() {
-        if (todayView == null) return;
+        if (todayView == null || getContext() == null) return;
 
         Prefs prefs = GBApplication.getPrefs();
         if (prefs.getBoolean("dashboard_widget_today_show_yesterday", false)) {
@@ -390,157 +393,17 @@ public class DashboardTodayWidget extends AbstractDashboardWidget {
             }
         }
 
-        todayView.post(new Runnable() {
+        DBAccess<Void> fillDataTask = new DBAccess<Void>("Filling dashboard data", getContext()) {
             @Override
-            public void run() {
-                FillDataAsyncTask myAsyncTask = new FillDataAsyncTask();
-                myAsyncTask.execute();
-            }
-        });
-    }
-
-    private class FillDataAsyncTask extends AsyncTask<Void, Void, Void> {
-        private final HashMap<Long, ActivityKind> activityTimestamps = new HashMap<>();
-
-        /**
-         * Add per-second activities to `activityTimestamps`
-         */
-        private void addActivity(long timeFrom, long timeTo, ActivityKind activityKind) {
-            for (long i = timeFrom; i <= timeTo; i++) {
-                // If the current timestamp isn't saved yet, do so immediately
-                if (activityTimestamps.get(i) == null) {
-                    activityTimestamps.put(i, activityKind);
-                    continue;
-                }
-                // If the current timestamp is already saved, compare the activity kinds and
-                // keep the most 'important' one
-                switch (activityTimestamps.get(i)) {
-                    case EXERCISE:
-                        break;
-                    case ACTIVITY:
-                        if (activityKind == ActivityKind.EXERCISE)
-                            activityTimestamps.put(i, activityKind);
-                        break;
-                    case DEEP_SLEEP:
-                        if (activityKind == ActivityKind.EXERCISE ||
-                                activityKind == ActivityKind.ACTIVITY)
-                            activityTimestamps.put(i, activityKind);
-                        break;
-                    case LIGHT_SLEEP:
-                        if (activityKind == ActivityKind.EXERCISE ||
-                                activityKind == ActivityKind.ACTIVITY ||
-                                activityKind == ActivityKind.DEEP_SLEEP)
-                            activityTimestamps.put(i, activityKind);
-                        break;
-                    case REM_SLEEP:
-                        if (activityKind == ActivityKind.EXERCISE ||
-                                activityKind == ActivityKind.ACTIVITY ||
-                                activityKind == ActivityKind.DEEP_SLEEP ||
-                                activityKind == ActivityKind.LIGHT_SLEEP)
-                            activityTimestamps.put(i, activityKind);
-                        break;
-                    case AWAKE_SLEEP:
-                        if (activityKind == ActivityKind.EXERCISE ||
-                                activityKind == ActivityKind.ACTIVITY ||
-                                activityKind == ActivityKind.DEEP_SLEEP ||
-                                activityKind == ActivityKind.LIGHT_SLEEP ||
-                                activityKind == ActivityKind.REM_SLEEP)
-                            activityTimestamps.put(i, activityKind);
-                        break;
-                    case SLEEP_ANY:
-                    case NOT_MEASURED:
-                        if (activityKind == ActivityKind.EXERCISE ||
-                                activityKind == ActivityKind.ACTIVITY ||
-                                activityKind == ActivityKind.DEEP_SLEEP ||
-                                activityKind == ActivityKind.LIGHT_SLEEP ||
-                                activityKind == ActivityKind.REM_SLEEP ||
-                                activityKind == ActivityKind.AWAKE_SLEEP)
-                            activityTimestamps.put(i, activityKind);
-                        break;
-                    default:
-                        activityTimestamps.put(i, activityKind);
-                        break;
-                }
-            }
-        }
-
-        /**
-         * Add NOT_MEASURED (worn) activities for every successful heart rate measurement
-         */
-        private void calculateWornSessions(List<ActivitySample> samples) {
-            int firstTimestamp = 0;
-            int lastTimestamp = 0;
-
-            for (ActivitySample sample : samples) {
-                if (sample.getHeartRate() < 10 && firstTimestamp == 0) continue;
-                if (firstTimestamp == 0) firstTimestamp = sample.getTimestamp();
-                if (lastTimestamp == 0) lastTimestamp = sample.getTimestamp();
-                if (HeartRateUtils.getInstance().isValidHeartRateValue(sample.getHeartRate())
-                        && sample.getTimestamp() > lastTimestamp + dashboardData.hrIntervalSecs
-                        && firstTimestamp != lastTimestamp) {
-                    LOG.debug("Registered worn session from {} to {}", firstTimestamp, lastTimestamp);
-                    addActivity(firstTimestamp, lastTimestamp, ActivityKind.NOT_MEASURED);
-                    if (sample.getHeartRate() < 10) {
-                        firstTimestamp = 0;
-                        lastTimestamp = 0;
-                    } else {
-                        firstTimestamp = sample.getTimestamp();
-                        lastTimestamp = sample.getTimestamp();
-                    }
-                    continue;
-                }
-                if (HeartRateUtils.getInstance().isValidHeartRateValue(sample.getHeartRate())) {
-                    lastTimestamp = sample.getTimestamp();
-                }
-            }
-            if (firstTimestamp != lastTimestamp) {
-                LOG.debug("Registered worn session from {} to {}", firstTimestamp, lastTimestamp);
-                addActivity(firstTimestamp, lastTimestamp, ActivityKind.NOT_MEASURED);
-            }
-        }
-
-        /**
-         * Merge per-second activities from `activityTimestamps` into generalized activity ranges
-         * with minute-based resolution
-         */
-        private void createGeneralizedActivities() {
-            long currentTime = Calendar.getInstance().getTimeInMillis() / 1000;
-            long midDaySecond = dashboardData.timeTo - (12 * 60 * 60);
-            DashboardFragment.DashboardData.GeneralizedActivity previous = null;
-            List<Map.Entry<Long, ActivityKind>> sortedActivityTimestamps = activityTimestamps.entrySet()
-                    .stream()
-                    .sorted(Map.Entry.comparingByKey())
-                    .collect(Collectors.toList());
-            for (Map.Entry<Long, ActivityKind> activity : sortedActivityTimestamps) {
-                long timestamp = activity.getKey();
-                ActivityKind activityKind = activity.getValue();
-                // Start a new merged activity on certain conditions
-                if (previous == null ||
-                        previous.activityKind != activityKind ||
-                        (!mode_24h && timestamp == midDaySecond) ||
-                        (!mode_24h && timestamp == midDaySecond - 86400) ||
-                        timestamp == dashboardData.timeTo - 86400 ||
-                        timestamp == currentTime - 86400 ||
-                        previous.timeTo < timestamp - 60) {
-                    previous = new DashboardFragment.DashboardData.GeneralizedActivity(activityKind, timestamp, timestamp);
-                    dashboardData.generalizedActivities.add(previous);
-                } else {
-                    previous.timeTo = timestamp;
-                }
-            }
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            final long nanoStart = System.nanoTime();
-
-            // Retrieve activity data
-            dashboardData.generalizedActivities.clear();
-            List<GBDevice> devices = GBApplication.app().getDeviceManager().getDevices();
-            List<ActivitySample> allActivitySamples = new ArrayList<>();
-            List<ActivitySession> stepSessions = new ArrayList<>();
-            List<BaseActivitySummary> activitySummaries = null;
-            try (DBHandler dbHandler = GBApplication.acquireDB()) {
+            protected Void doInBackground(DBHandler dbHandler) throws Exception {
+                final long nanoStart = System.nanoTime();
+                activityTimestamps.clear();
+                // Retrieve activity data
+                dashboardData.generalizedActivities.clear();
+                List<GBDevice> devices = GBApplication.app().getDeviceManager().getDevices();
+                List<ActivitySample> allActivitySamples = new ArrayList<>();
+                List<ActivitySession> stepSessions = new ArrayList<>();
+                List<BaseActivitySummary> activitySummaries = null;
                 for (GBDevice dev : devices) {
                     if ((dashboardData.showAllDevices || dashboardData.showDeviceList.contains(dev.getAddress())) && dev.getDeviceCoordinator().supportsActivityTracking(dev)) {
                         List<? extends ActivitySample> activitySamples = DashboardUtils.getAllSamples(dbHandler, dev, dashboardData);
@@ -550,48 +413,180 @@ public class DashboardTodayWidget extends AbstractDashboardWidget {
                     }
                 }
                 activitySummaries = DashboardUtils.getWorkoutSamples(dbHandler, dashboardData);
-            } catch (Exception e) {
-                LOG.warn("Could not retrieve activity amounts: ", e);
-            }
-            Collections.sort(allActivitySamples, (lhs, rhs) -> Integer.valueOf(lhs.getTimestamp()).compareTo(rhs.getTimestamp()));
+                Collections.sort(allActivitySamples, (lhs, rhs) -> Integer.valueOf(lhs.getTimestamp()).compareTo(rhs.getTimestamp()));
 
-            // Determine worn sessions from heart rate samples
-            calculateWornSessions(allActivitySamples);
+                // Determine worn sessions from heart rate samples
+                calculateWornSessions(allActivitySamples);
 
-            // Integrate various data from multiple devices
-            for (ActivitySample sample : allActivitySamples) {
-                // Handle only TYPE_NOT_WORN and TYPE_SLEEP (including variants) here
-                if (sample.getKind() != ActivityKind.NOT_WORN && (sample.getKind() == ActivityKind.NOT_MEASURED || !ActivityKind.isSleep(sample.getKind())))
-                    continue;
-                // Add to day results
-                addActivity(sample.getTimestamp(), sample.getTimestamp() + 60, sample.getKind());
+                // Integrate various data from multiple devices
+                for (ActivitySample sample : allActivitySamples) {
+                    if (sample.getKind() != ActivityKind.NOT_WORN && (sample.getKind() == ActivityKind.NOT_MEASURED || !ActivityKind.isSleep(sample.getKind())))
+                        continue;
+                    addActivity(sample.getTimestamp(), sample.getTimestamp() + 60, sample.getKind());
+                }
+                if (activitySummaries != null) {
+                    for (BaseActivitySummary baseActivitySummary : activitySummaries) {
+                        addActivity(baseActivitySummary.getStartTime().getTime() / 1000, baseActivitySummary.getEndTime().getTime() / 1000, ActivityKind.EXERCISE);
+                    }
+                }
+                for (ActivitySession session : stepSessions) {
+                    addActivity(session.getStartTime().getTime() / 1000, session.getEndTime().getTime() / 1000, ActivityKind.ACTIVITY);
+                }
+
+                // Merge per-second activities
+                createGeneralizedActivities();
+
+                final long nanoEnd = System.nanoTime();
+                final long executionTime = (nanoEnd - nanoStart) / 1000000;
+                LOG.debug("fillData for {} took {}ms", DashboardTodayWidget.this.getClass().getSimpleName(), executionTime);
+                return null;
             }
-            if (activitySummaries != null) {
-                for (BaseActivitySummary baseActivitySummary : activitySummaries) {
-                    addActivity(baseActivitySummary.getStartTime().getTime() / 1000, baseActivitySummary.getEndTime().getTime() / 1000, ActivityKind.EXERCISE);
+        };
+
+        fillDataTask.execute(new DBAccess.Callback<Void>() {
+            @Override
+            public void onComplete(Void result) {
+                if (getContext() == null) return;
+                try {
+                    draw();
+                } catch (final Exception e) {
+                    LOG.error("calling draw() failed", e);
                 }
             }
-            for (ActivitySession session : stepSessions) {
-                addActivity(session.getStartTime().getTime() / 1000, session.getEndTime().getTime() / 1000, ActivityKind.ACTIVITY);
+
+            @Override
+            public void onError(Exception e) {
+                if (getContext() == null) return;
+                LOG.warn("Could not retrieve activity amounts: ", e);
+                fillDataTask.displayError(e);
             }
+        });
+    }
 
-            // Merge per-second activities
-            createGeneralizedActivities();
-
-            final long nanoEnd = System.nanoTime();
-            final long executionTime = (nanoEnd - nanoStart) / 1000000;
-            LOG.debug("fillData for {} took {}ms", DashboardTodayWidget.this.getClass().getSimpleName(), executionTime);
-
-            return null;
+    /**
+     * Add per-second activities to `activityTimestamps`
+     */
+    private void addActivity(long timeFrom, long timeTo, ActivityKind activityKind) {
+        for (long i = timeFrom; i <= timeTo; i++) {
+            // If the current timestamp isn't saved yet, do so immediately
+            if (activityTimestamps.get(i) == null) {
+                activityTimestamps.put(i, activityKind);
+                continue;
+            }
+            // If the current timestamp is already saved, compare the activity kinds and
+            // keep the most 'important' one
+            switch (activityTimestamps.get(i)) {
+                case EXERCISE:
+                    break;
+                case ACTIVITY:
+                    if (activityKind == ActivityKind.EXERCISE)
+                        activityTimestamps.put(i, activityKind);
+                    break;
+                case DEEP_SLEEP:
+                    if (activityKind == ActivityKind.EXERCISE ||
+                            activityKind == ActivityKind.ACTIVITY)
+                        activityTimestamps.put(i, activityKind);
+                    break;
+                case LIGHT_SLEEP:
+                    if (activityKind == ActivityKind.EXERCISE ||
+                            activityKind == ActivityKind.ACTIVITY ||
+                            activityKind == ActivityKind.DEEP_SLEEP)
+                        activityTimestamps.put(i, activityKind);
+                    break;
+                case REM_SLEEP:
+                    if (activityKind == ActivityKind.EXERCISE ||
+                            activityKind == ActivityKind.ACTIVITY ||
+                            activityKind == ActivityKind.DEEP_SLEEP ||
+                            activityKind == ActivityKind.LIGHT_SLEEP)
+                        activityTimestamps.put(i, activityKind);
+                    break;
+                case AWAKE_SLEEP:
+                    if (activityKind == ActivityKind.EXERCISE ||
+                            activityKind == ActivityKind.ACTIVITY ||
+                            activityKind == ActivityKind.DEEP_SLEEP ||
+                            activityKind == ActivityKind.LIGHT_SLEEP ||
+                            activityKind == ActivityKind.REM_SLEEP)
+                        activityTimestamps.put(i, activityKind);
+                    break;
+                case SLEEP_ANY:
+                case NOT_MEASURED:
+                    if (activityKind == ActivityKind.EXERCISE ||
+                            activityKind == ActivityKind.ACTIVITY ||
+                            activityKind == ActivityKind.DEEP_SLEEP ||
+                            activityKind == ActivityKind.LIGHT_SLEEP ||
+                            activityKind == ActivityKind.REM_SLEEP ||
+                            activityKind == ActivityKind.AWAKE_SLEEP)
+                        activityTimestamps.put(i, activityKind);
+                    break;
+                default:
+                    activityTimestamps.put(i, activityKind);
+                    break;
+            }
         }
+    }
 
-        @Override
-        protected void onPostExecute(final Void unused) {
-            super.onPostExecute(unused);
-            try {
-                draw();
-            } catch (final Exception e) {
-                LOG.error("calling draw() failed", e);
+    /**
+     * Add NOT_MEASURED (worn) activities for every successful heart rate measurement
+     */
+    private void calculateWornSessions(List<ActivitySample> samples) {
+        int firstTimestamp = 0;
+        int lastTimestamp = 0;
+
+        for (ActivitySample sample : samples) {
+            if (sample.getHeartRate() < 10 && firstTimestamp == 0) continue;
+            if (firstTimestamp == 0) firstTimestamp = sample.getTimestamp();
+            if (lastTimestamp == 0) lastTimestamp = sample.getTimestamp();
+            if (HeartRateUtils.getInstance().isValidHeartRateValue(sample.getHeartRate())
+                    && sample.getTimestamp() > lastTimestamp + dashboardData.hrIntervalSecs
+                    && firstTimestamp != lastTimestamp) {
+                LOG.debug("Registered worn session from {} to {}", firstTimestamp, lastTimestamp);
+                addActivity(firstTimestamp, lastTimestamp, ActivityKind.NOT_MEASURED);
+                if (sample.getHeartRate() < 10) {
+                    firstTimestamp = 0;
+                    lastTimestamp = 0;
+                } else {
+                    firstTimestamp = sample.getTimestamp();
+                    lastTimestamp = sample.getTimestamp();
+                }
+                continue;
+            }
+            if (HeartRateUtils.getInstance().isValidHeartRateValue(sample.getHeartRate())) {
+                lastTimestamp = sample.getTimestamp();
+            }
+        }
+        if (firstTimestamp != lastTimestamp) {
+            LOG.debug("Registered worn session from {} to {}", firstTimestamp, lastTimestamp);
+            addActivity(firstTimestamp, lastTimestamp, ActivityKind.NOT_MEASURED);
+        }
+    }
+
+    /**
+     * Merge per-second activities from `activityTimestamps` into generalized activity ranges
+     * with minute-based resolution
+     */
+    private void createGeneralizedActivities() {
+        long currentTime = Calendar.getInstance().getTimeInMillis() / 1000;
+        long midDaySecond = dashboardData.timeTo - (12 * 60 * 60);
+        DashboardFragment.DashboardData.GeneralizedActivity previous = null;
+        List<Map.Entry<Long, ActivityKind>> sortedActivityTimestamps = activityTimestamps.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey())
+                .collect(Collectors.toList());
+        for (Map.Entry<Long, ActivityKind> activity : sortedActivityTimestamps) {
+            long timestamp = activity.getKey();
+            ActivityKind activityKind = activity.getValue();
+            // Start a new merged activity on certain conditions
+            if (previous == null ||
+                    previous.activityKind != activityKind ||
+                    (!mode_24h && timestamp == midDaySecond) ||
+                    (!mode_24h && timestamp == midDaySecond - 86400) ||
+                    timestamp == dashboardData.timeTo - 86400 ||
+                    timestamp == currentTime - 86400 ||
+                    previous.timeTo < timestamp - 60) {
+                previous = new DashboardFragment.DashboardData.GeneralizedActivity(activityKind, timestamp, timestamp);
+                dashboardData.generalizedActivities.add(previous);
+            } else {
+                previous.timeTo = timestamp;
             }
         }
     }

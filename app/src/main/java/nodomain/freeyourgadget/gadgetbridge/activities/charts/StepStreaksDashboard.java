@@ -142,8 +142,8 @@ public class StepStreaksDashboard extends MaterialDialogFragment {
                 populateData();
             }
         }
-        createTaskCalculateLatestStepsStreak("Visualizing data current", getActivity(), PERIOD_CURRENT).execute();
-        createTaskCalculateLatestStepsStreak("Visualizing data maximum", getActivity(), PERIOD_TOTALS).execute();
+        refresh("Visualizing data current", getActivity(), PERIOD_CURRENT);
+        refresh("Visualizing data maximum", getActivity(), PERIOD_TOTALS);
     }
 
     void indicate_progress(boolean inProgress) {
@@ -234,50 +234,47 @@ public class StepStreaksDashboard extends MaterialDialogFragment {
         }
     }
 
-    protected TaskCalculateLatestStepsStreak createTaskCalculateLatestStepsStreak(String taskName, Context context, String period) {
-        return new TaskCalculateLatestStepsStreak(taskName, context, period);
-    }
-
-    public class TaskCalculateLatestStepsStreak extends DBAccess {
-        String period;
-
-        public TaskCalculateLatestStepsStreak(String taskName, Context context, String period) {
-            super(taskName, context);
-            this.period = period;
-        }
-
-        @Override
-        protected void doInBackground(DBHandler db) {
-            switch (period) {
-                case PERIOD_CURRENT:
-                    calculateStreakData(db, PERIOD_CURRENT, gbDevice, stepsGoal);
-
-                    break;
-                case PERIOD_TOTALS:
-                    calculateStreakData(db, PERIOD_TOTALS, gbDevice, stepsGoal);
-                    break;
+    private void refresh(String taskName, Context context, String period) {
+        DBAccess<Void> refreshTask = new DBAccess(taskName, getActivity()) {
+            @Override
+            protected void onPreExecute() {
+                indicate_progress(true);
             }
-        }
+            @Override
+            protected Object doInBackground(DBHandler handler) throws Exception {
+                switch (period) {
+                    case PERIOD_CURRENT:
+                        calculateStreakData(handler, PERIOD_CURRENT, gbDevice, stepsGoal);
 
-        @Override
-        protected void onPreExecute() {
-            indicate_progress(true);
-        }
-
-        @Override
-        protected void onPostExecute(Object o) {
-            super.onPostExecute(o);
-            FragmentActivity activity = getActivity();
-            if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
-                if (period.equals(PERIOD_TOTALS)) {
-                    backgroundTaskFinished = true;
-                    indicate_progress(false);
+                        break;
+                    case PERIOD_TOTALS:
+                        calculateStreakData(handler, PERIOD_TOTALS, gbDevice, stepsGoal);
+                        break;
                 }
-                populateData();
-            } else {
-                LOG.info("Not filling data because activity is not available anymore");
+                return null;
             }
-        }
+        };
+        refreshTask.execute(new DBAccess.Callback<>() {
+            @Override
+            public void onComplete(Void result) {
+                FragmentActivity activity = getActivity();
+                if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+                    if (period.equals(PERIOD_TOTALS)) {
+                        backgroundTaskFinished = true;
+                        indicate_progress(false);
+                    }
+                    populateData();
+                } else {
+                    LOG.info("Not filling data because activity is not available anymore");
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                LOG.debug("Unable to get charts data right now:", e);
+                refreshTask.displayError(e);
+            }
+        });
     }
 
     private void calculateStreakData(DBHandler db, String period, GBDevice device, int goal) {

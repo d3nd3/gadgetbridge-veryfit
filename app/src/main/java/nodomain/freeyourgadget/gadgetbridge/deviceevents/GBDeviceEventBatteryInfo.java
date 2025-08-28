@@ -104,7 +104,7 @@ public class GBDeviceEventBatteryInfo extends GBDeviceEvent {
                 GB.removeBatteryFullNotification(context);
             }
         } else {
-            new StoreDataTask("Storing battery data", context, device, this).execute();
+            storeData(context, device);
 
             final boolean batteryNotifyLowEnabled = devicePrefs.getBatteryNotifyLowEnabled(batteryConfig);
             final boolean isBatteryLow = this.level <= devicePrefs.getBatteryNotifyLowThreshold(batteryConfig) &&
@@ -139,27 +139,34 @@ public class GBDeviceEventBatteryInfo extends GBDeviceEvent {
         device.sendDeviceUpdateIntent(context);
     }
 
-    public static class StoreDataTask extends DBAccess {
-        GBDeviceEventBatteryInfo deviceEvent;
-        GBDevice gbDevice;
+    private void storeData(Context context, final GBDevice device) {
+        DBAccess<Void> storeTask = new DBAccess("Storing battery data", context) {
+            @Override
+            protected Object doInBackground(DBHandler handler) throws Exception {
+                DaoSession daoSession = handler.getDaoSession();
+                Device dbDevice = DBHelper.getDevice(device, daoSession);
+                int ts = (int) (System.currentTimeMillis() / 1000);
+                BatteryLevel batteryLevel = new BatteryLevel();
+                batteryLevel.setTimestamp(ts);
+                batteryLevel.setBatteryIndex(batteryIndex);
+                batteryLevel.setDevice(dbDevice);
+                batteryLevel.setLevel(level);
+                handler.getDaoSession().getBatteryLevelDao().insert(batteryLevel);
+                return null;
+            }
+        };
 
-        public StoreDataTask(String task, Context context, GBDevice device, GBDeviceEventBatteryInfo deviceEvent) {
-            super(task, context);
-            this.deviceEvent = deviceEvent;
-            this.gbDevice = device;
-        }
+        storeTask.execute(new DBAccess.Callback<Void>() {
+            @Override
+            public void onComplete(Void result) {
+                LOG.debug("Battery data stored successfully.");
+            }
 
-        @Override
-        protected void doInBackground(DBHandler handler) {
-            DaoSession daoSession = handler.getDaoSession();
-            Device device = DBHelper.getDevice(gbDevice, daoSession);
-            int ts = (int) (System.currentTimeMillis() / 1000);
-            BatteryLevel batteryLevel = new BatteryLevel();
-            batteryLevel.setTimestamp(ts);
-            batteryLevel.setBatteryIndex(deviceEvent.batteryIndex);
-            batteryLevel.setDevice(device);
-            batteryLevel.setLevel(deviceEvent.level);
-            handler.getDaoSession().getBatteryLevelDao().insert(batteryLevel);
-        }
+            @Override
+            public void onError(Exception e) {
+                LOG.error("Error storing battery data", e);
+                storeTask.displayError(e);
+            }
+        });
     }
 }

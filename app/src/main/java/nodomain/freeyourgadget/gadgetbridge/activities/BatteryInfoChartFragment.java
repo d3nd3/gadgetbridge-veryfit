@@ -1,4 +1,4 @@
-/*  Copyright (C) 2021-2024 José Rebelo, Petr Vaněk
+/* Copyright (C) 2021-2024 José Rebelo, Petr Vaněk
 
     This file is part of Gadgetbridge.
 
@@ -22,8 +22,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
-import androidx.core.content.ContextCompat;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Legend;
@@ -81,21 +79,47 @@ public class BatteryInfoChartFragment extends AbstractGBFragment {
         this.endTime = (int) endTime;
         this.gbDevice = gbDevice;
         this.batteryIndex = batteryIndex;
-        try {
-            createRefreshTask("Visualizing data", getActivity()).execute();
-        } catch (Exception e) {
-            LOG.debug("Unable to fill charts data right now:", e);
-        }
+        refreshChartData();
     }
 
+    private void refreshChartData() {
+        if (!isAdded()) {
+            return;
+        }
 
-    protected RefreshTask createRefreshTask(String task, Context context) {
-        return new RefreshTask(task, context);
+        // We are expecting 'DefaultBatteryChartsData' back from the database task.
+        DBAccess<DefaultBatteryChartsData> refreshTask = new DBAccess<DefaultBatteryChartsData>("Visualizing battery data", requireActivity()) {
+
+            @Override
+            protected DefaultBatteryChartsData doInBackground(DBHandler handler) throws Exception {
+                List<? extends BatteryLevel> samples = getBatteryLevels(handler, gbDevice, batteryIndex, startTime, endTime);
+                return fill_dcd(samples);
+            }
+        };
+
+        refreshTask.execute(new DBAccess.Callback<DefaultBatteryChartsData>() {
+            @Override
+            public void onComplete(DefaultBatteryChartsData dcd) {
+                if (dcd != null && mChart != null && getContext() != null) {
+                    mChart.setTouchEnabled(true);
+                    mChart.setMarker(new batteryValuesAndDateMarker(getContext(), R.layout.custom_chart_marker, dcd.firstTs));
+                    mChart.getXAxis().setValueFormatter(dcd.getXValueFormatter());
+                    mChart.setData((LineData) dcd.getData());
+                    mChart.invalidate();
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                LOG.debug("Unable to get charts data right now:", e);
+                refreshTask.displayError(e);
+            }
+        });
     }
 
     private DefaultBatteryChartsData fill_dcd(List<? extends BatteryLevel> samples) {
         TimestampTranslation tsTranslation = new TimestampTranslation();
-        List<Entry> entries = new ArrayList<Entry>();
+        List<Entry> entries = new ArrayList<>();
         int firstTs = 0;
 
         for (BatteryLevel sample : samples) {
@@ -113,7 +137,6 @@ public class BatteryInfoChartFragment extends AbstractGBFragment {
         dataSet.setCircleRadius(2f);
         dataSet.setDrawValues(true);
         dataSet.setValueTextColor(CHART_TEXT_COLOR);
-        dataSet.setHighlightEnabled(true);
         dataSet.setHighlightEnabled(true);
         LineData lineData = new LineData(dataSet);
 
@@ -136,7 +159,7 @@ public class BatteryInfoChartFragment extends AbstractGBFragment {
         mChart = rootView.findViewById(R.id.activitysleepchart);
         if (this.gbDevice != null) {
             setupChart();
-            createRefreshTask("Visualizing data", getActivity()).execute();
+            refreshChartData();
         }
         return rootView;
     }
@@ -186,9 +209,7 @@ public class BatteryInfoChartFragment extends AbstractGBFragment {
         qb.where(BatteryLevelDao.Properties.Timestamp.gt(tsFrom));
         qb.where(BatteryLevelDao.Properties.Timestamp.lt(tsTo));
 
-        List<BatteryLevel> levels = new ArrayList<>();
-        levels.addAll(qb.build().list());
-        return levels;
+        return qb.build().list();
     }
 
     protected static class customFormatter extends ValueFormatter {
@@ -207,35 +228,6 @@ public class BatteryInfoChartFragment extends AbstractGBFragment {
             cal.setTimeInMillis(tsTranslation.toOriginalValue(ts) * 1000L);
             Date date = cal.getTime();
             return annotationDateFormat.format(date);
-        }
-    }
-
-    public class RefreshTask extends DBAccess {
-
-        public RefreshTask(String task, Context context) {
-            super(task, context);
-        }
-
-        @Override
-        protected void doInBackground(DBHandler handler) {
-            List<? extends BatteryLevel> samples = getBatteryLevels(handler, gbDevice, batteryIndex, startTime, endTime);
-            DefaultBatteryChartsData dcd = null;
-            try {
-                dcd = fill_dcd(samples);
-            } catch (Exception e) {
-                LOG.debug("Unable to get charts data right now:", e);
-            }
-            if (dcd != null && mChart != null) {
-                mChart.setTouchEnabled(true);
-                mChart.setMarker(new batteryValuesAndDateMarker(getContext(), R.layout.custom_chart_marker, dcd.firstTs));
-                mChart.getXAxis().setValueFormatter(dcd.getXValueFormatter());
-                mChart.setData((LineData) dcd.getData());
-            }
-        }
-
-        @Override
-        protected void onPostExecute(Object o) {
-            mChart.invalidate();
         }
     }
 

@@ -17,60 +17,112 @@
 package nodomain.freeyourgadget.gadgetbridge.database;
 
 import android.content.Context;
-import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
 import android.widget.Toast;
-
-import androidx.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.R;
 import nodomain.freeyourgadget.gadgetbridge.util.GB;
 
-public abstract class DBAccess extends AsyncTask {
+/**
+ * This class uses a dedicated background thread to perform database operations
+ * and delivers results back to the UI thread via a callback.
+ *
+ * @param <T> The type of the result expected from the background operation.
+ */
+public abstract class DBAccess<T> {
     private static final Logger LOG = LoggerFactory.getLogger(DBAccess.class);
 
-    private final String mTask;
+    // 1. A single-threaded executor to ensure all database operations are sequential.
+    private static final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
+
+    // 2. A handler to post results back to the application's main thread.
+    private static final Handler mainThreadHandler = new Handler(Looper.getMainLooper());
+
     private final Context mContext;
-    private Exception mError;
+    private final String mTask;
 
     public DBAccess(String task, Context context) {
-        mTask = task;
-        mContext = context;
+        // Use the application context to prevent memory leaks from Activities/Fragments
+        this.mContext = context.getApplicationContext();
+        this.mTask = task;
     }
 
     public Context getContext() {
         return mContext;
     }
 
-    protected abstract void doInBackground(DBHandler handler);
+    /**
+     * This method is executed on a background thread. Implement the database
+     * logic here.
+     *
+     * @param handler The DBHandler to perform database operations.
+     * @return The result of the background operation.
+     * @throws Exception if an error occurs during the operation.
+     */
+    protected abstract T doInBackground(DBHandler handler) throws Exception;
 
-    @Override
-    protected Object doInBackground(Object[] params) {
-        try (DBHandler db = GBApplication.acquireDB()) {
-            doInBackground(db);
-        } catch (Exception e) {
-            LOG.error("Error during DBAccess for {}", mTask, e);
-            mError = e;
-        }
-        return null;
+    /**
+     * This method is called on the UI thread before the background task starts.
+     * Subclasses can override this to, for example, show a progress indicator.
+     */
+    protected void onPreExecute() {
     }
 
-    @Override
-    protected void onPostExecute(Object o) {
-        if (mError != null) {
-            displayError(mError);
-        }
+    /**
+     * Executes the database task. The results are delivered via the provided callback.
+     *
+     * @param callback The callback to handle completion or errors on the UI thread.
+     */
+    public void execute(Callback<T> callback) {
+        // Run pre-execution logic on the current thread (which should be the UI thread).
+        onPreExecute();
+
+        // Submit the background task to the executor.
+        databaseExecutor.execute(() -> {
+            try (DBHandler db = GBApplication.acquireDB()) {
+                final T result = doInBackground(db);
+                mainThreadHandler.post(() -> callback.onComplete(result));
+            } catch (Exception e) {
+                LOG.error("Error during DBAccess for {}", mTask, e);
+                mainThreadHandler.post(() -> callback.onError(e));
+            }
+        });
     }
 
-    @Nullable
-    public Exception getTaskError() {
-        return mError;
+    /**
+     * A callback interface to receive results from the DBAccess task.
+     *
+     * @param <T> The type of the result.
+     */
+    public interface Callback<T> {
+        /**
+         * Called on the UI thread when the task completes successfully.
+         * @param result The result from doInBackground.
+         */
+        void onComplete(T result);
+
+        /**
+         * Called on the UI thread when the task fails.
+         * @param e The exception that occurred.
+         */
+        void onError(Exception e);
     }
 
-    protected void displayError(Throwable error) {
-        GB.toast(getContext(), getContext().getString(R.string.dbaccess_error_executing, error.getLocalizedMessage()), Toast.LENGTH_LONG, GB.ERROR, error);
+    /**
+     * A helper method to display a standardized error toast.
+     * @param error The error to display.
+     */
+    public void displayError(Throwable error) {
+        String message = getContext().getString(R.string.dbaccess_error_executing, error.getLocalizedMessage());
+        GB.toast(getContext(), message, Toast.LENGTH_LONG, GB.ERROR, error);
     }
 }
+
