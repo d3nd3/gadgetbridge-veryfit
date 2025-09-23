@@ -28,9 +28,13 @@ public class FitMonitoringInfo extends RecordData {
 
     @Nullable
     public Number[] getActivityType() {
-        final Object[] objectsArray = (Object[]) getFieldByNumber(1);
-        if (objectsArray == null)
+        final Object object = getFieldByNumber(1);
+        if (object == null)
             return null;
+        if (!object.getClass().isArray()) {
+            return new Number[]{(Number) object};
+        }
+        final Object[] objectsArray = (Object[]) object;
         final Number[] ret = new Number[objectsArray.length];
         for (int i = 0; i < objectsArray.length; i++) {
             ret[i] = (Number) objectsArray[i];
@@ -40,9 +44,13 @@ public class FitMonitoringInfo extends RecordData {
 
     @Nullable
     public Number[] getStepsToDistance() {
-        final Object[] objectsArray = (Object[]) getFieldByNumber(3);
-        if (objectsArray == null)
+        final Object object = getFieldByNumber(3);
+        if (object == null)
             return null;
+        if (!object.getClass().isArray()) {
+            return new Number[]{(Number) object};
+        }
+        final Object[] objectsArray = (Object[]) object;
         final Number[] ret = new Number[objectsArray.length];
         for (int i = 0; i < objectsArray.length; i++) {
             ret[i] = (Number) objectsArray[i];
@@ -52,9 +60,13 @@ public class FitMonitoringInfo extends RecordData {
 
     @Nullable
     public Number[] getStepsToCalories() {
-        final Object[] objectsArray = (Object[]) getFieldByNumber(4);
-        if (objectsArray == null)
+        final Object object = getFieldByNumber(4);
+        if (object == null)
             return null;
+        if (!object.getClass().isArray()) {
+            return new Number[]{(Number) object};
+        }
+        final Object[] objectsArray = (Object[]) object;
         final Number[] ret = new Number[objectsArray.length];
         for (int i = 0; i < objectsArray.length; i++) {
             ret[i] = (Number) objectsArray[i];

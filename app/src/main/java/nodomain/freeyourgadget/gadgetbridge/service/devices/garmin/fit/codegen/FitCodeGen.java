@@ -198,9 +198,13 @@ public class FitCodeGen {
                 // Special case for arrays, since these are decoded in RecordData and we can't easily decode them with the correct type
                 // FIXME this should be refactored...
                 final String simpleTypeName = fieldTypeName.replace("[]", "");
-                sb.append("        final Object[] objectsArray = (Object[]) getFieldByNumber(").append(primitive.getNumber()).append(");\n");
-                sb.append("        if (objectsArray == null)\n");
+                sb.append("        final Object object = getFieldByNumber(").append(primitive.getNumber()).append(");\n");
+                sb.append("        if (object == null)\n");
                 sb.append("            return null;\n");
+                sb.append("        if (!object.getClass().isArray()) {\n");
+                sb.append("            return new ").append(simpleTypeName).append("[]{(").append(simpleTypeName).append(") object};\n");
+                sb.append("        }\n");
+                sb.append("        final Object[] objectsArray = (Object[]) object;\n");
                 sb.append("        final ").append(fieldTypeName).append(" ret = new ").append(simpleTypeName).append("[objectsArray.length];\n");
                 sb.append("        for (int i = 0; i < objectsArray.length; i++) {\n");
                 sb.append("            ret[i] = (").append(simpleTypeName).append(") objectsArray[i];\n");

@@ -49,9 +49,13 @@ public class FitSet extends RecordData {
 
     @Nullable
     public ExerciseCategory[] getCategory() {
-        final Object[] objectsArray = (Object[]) getFieldByNumber(7);
-        if (objectsArray == null)
+        final Object object = getFieldByNumber(7);
+        if (object == null)
             return null;
+        if (!object.getClass().isArray()) {
+            return new ExerciseCategory[]{(ExerciseCategory) object};
+        }
+        final Object[] objectsArray = (Object[]) object;
         final ExerciseCategory[] ret = new ExerciseCategory[objectsArray.length];
         for (int i = 0; i < objectsArray.length; i++) {
             ret[i] = (ExerciseCategory) objectsArray[i];

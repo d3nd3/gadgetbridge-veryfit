@@ -48,9 +48,13 @@ public class FitDeviceSettings extends RecordData {
 
     @Nullable
     public Number[] getAlarmsTime() {
-        final Object[] objectsArray = (Object[]) getFieldByNumber(8);
-        if (objectsArray == null)
+        final Object object = getFieldByNumber(8);
+        if (object == null)
             return null;
+        if (!object.getClass().isArray()) {
+            return new Number[]{(Number) object};
+        }
+        final Object[] objectsArray = (Object[]) object;
         final Number[] ret = new Number[objectsArray.length];
         for (int i = 0; i < objectsArray.length; i++) {
             ret[i] = (Number) objectsArray[i];
@@ -60,9 +64,13 @@ public class FitDeviceSettings extends RecordData {
 
     @Nullable
     public Number[] getAlarmsUnk5() {
-        final Object[] objectsArray = (Object[]) getFieldByNumber(9);
-        if (objectsArray == null)
+        final Object object = getFieldByNumber(9);
+        if (object == null)
             return null;
+        if (!object.getClass().isArray()) {
+            return new Number[]{(Number) object};
+        }
+        final Object[] objectsArray = (Object[]) object;
         final Number[] ret = new Number[objectsArray.length];
         for (int i = 0; i < objectsArray.length; i++) {
             ret[i] = (Number) objectsArray[i];
@@ -77,9 +85,13 @@ public class FitDeviceSettings extends RecordData {
 
     @Nullable
     public Number[] getAlarmsEnabled() {
-        final Object[] objectsArray = (Object[]) getFieldByNumber(28);
-        if (objectsArray == null)
+        final Object object = getFieldByNumber(28);
+        if (object == null)
             return null;
+        if (!object.getClass().isArray()) {
+            return new Number[]{(Number) object};
+        }
+        final Object[] objectsArray = (Object[]) object;
         final Number[] ret = new Number[objectsArray.length];
         for (int i = 0; i < objectsArray.length; i++) {
             ret[i] = (Number) objectsArray[i];
@@ -139,9 +151,13 @@ public class FitDeviceSettings extends RecordData {
 
     @Nullable
     public Number[] getAlarmsRepeat() {
-        final Object[] objectsArray = (Object[]) getFieldByNumber(92);
-        if (objectsArray == null)
+        final Object object = getFieldByNumber(92);
+        if (object == null)
             return null;
+        if (!object.getClass().isArray()) {
+            return new Number[]{(Number) object};
+        }
+        final Object[] objectsArray = (Object[]) object;
         final Number[] ret = new Number[objectsArray.length];
         for (int i = 0; i < objectsArray.length; i++) {
             ret[i] = (Number) objectsArray[i];

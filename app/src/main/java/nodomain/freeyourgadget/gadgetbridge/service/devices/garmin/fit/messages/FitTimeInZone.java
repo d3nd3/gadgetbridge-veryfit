@@ -33,9 +33,13 @@ public class FitTimeInZone extends RecordData {
 
     @Nullable
     public Double[] getTimeInZone() {
-        final Object[] objectsArray = (Object[]) getFieldByNumber(2);
-        if (objectsArray == null)
+        final Object object = getFieldByNumber(2);
+        if (object == null)
             return null;
+        if (!object.getClass().isArray()) {
+            return new Double[]{(Double) object};
+        }
+        final Object[] objectsArray = (Object[]) object;
         final Double[] ret = new Double[objectsArray.length];
         for (int i = 0; i < objectsArray.length; i++) {
             ret[i] = (Double) objectsArray[i];
@@ -45,9 +49,13 @@ public class FitTimeInZone extends RecordData {
 
     @Nullable
     public Integer[] getHrZoneHighBoundary() {
-        final Object[] objectsArray = (Object[]) getFieldByNumber(6);
-        if (objectsArray == null)
+        final Object object = getFieldByNumber(6);
+        if (object == null)
             return null;
+        if (!object.getClass().isArray()) {
+            return new Integer[]{(Integer) object};
+        }
+        final Object[] objectsArray = (Object[]) object;
         final Integer[] ret = new Integer[objectsArray.length];
         for (int i = 0; i < objectsArray.length; i++) {
             ret[i] = (Integer) objectsArray[i];
