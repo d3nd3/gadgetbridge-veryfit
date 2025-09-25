@@ -53,6 +53,9 @@ import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.ScatterData
 import com.github.mikephil.charting.listener.ChartTouchListener
 import com.github.mikephil.charting.listener.OnChartGestureListener
+import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
+import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
+import com.patrykandpatrick.vico.views.cartesian.CartesianChartView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -167,7 +170,13 @@ class WorkoutDetailsFragment : Fragment(), MenuProvider {
 
         showLoading(true)
 
+        val modelProducer = CartesianChartModelProducer()
+
         lifecycleScope.launch {
+            modelProducer.runTransaction {
+                // Learn more: https://patrykandpatrick.com/vmml6t.
+                lineSeries { series(13, 8, 7, 12, 0, 1, 15, 14, 0, 11, 6, 12, 0, 11, 12, 11) }
+            }
             try {
                 currentWorkout = withContext(Dispatchers.IO) {
                     val summary = GBApplication.acquireDB().use { dbHandler ->
@@ -217,6 +226,9 @@ class WorkoutDetailsFragment : Fragment(), MenuProvider {
                     updateWorkoutHeader(workout.summary)
                     updateWorkoutDetails(workout)
                     updateFragments(workout)
+                    val cartesianChartView = CartesianChartView(requireContext())
+                    cartesianChartView.modelProducer = modelProducer
+                    binding.dynamicCharts.addView(cartesianChartView)
                     showLoading(false)
                 } ?: run {
                     showError("Workout not found")
