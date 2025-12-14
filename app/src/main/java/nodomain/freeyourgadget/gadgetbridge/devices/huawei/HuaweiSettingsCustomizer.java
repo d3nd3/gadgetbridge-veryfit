@@ -215,6 +215,13 @@ public class HuaweiSettingsCustomizer implements DeviceSpecificSettingsCustomize
             countryCodeList.setEntries(countries.keySet().toArray(new String[0]));
             countryCodeList.setEntryValues(countries.values().toArray(new String[0]));
         }
+
+        if (coordinator.supportsDictSleepSync()) {
+            final Preference truSleepWarning = handler.findPreference("screen_trusleep_warning");
+            if (truSleepWarning != null) {
+                truSleepWarning.setVisible(false);
+            }
+        }
     }
 
     @Override
