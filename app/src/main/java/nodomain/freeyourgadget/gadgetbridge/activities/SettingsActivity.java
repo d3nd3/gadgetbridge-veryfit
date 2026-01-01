@@ -393,6 +393,15 @@ public class SettingsActivity extends AbstractSettingsActivityV2 {
                 });
             }
 
+            pref = findPreference("pref_category_endurain");
+            if (pref != null) {
+                pref.setOnPreferenceClickListener(preference -> {
+                    Intent enableIntent = new Intent(requireContext(), EndurainPreferencesActivity.class);
+                    startActivity(enableIntent);
+                    return true;
+                });
+            }
+
             pref = findPreference("pref_category_notifications");
             if (pref != null) {
                 pref.setOnPreferenceClickListener(preference -> {
