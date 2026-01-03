@@ -90,32 +90,44 @@ public final class LiveviewConstants {
     public static final byte MSG_GETSCREENMODE = 66;
     public static final byte MSG_GETSCREENMODE_RESP = 67;
 
-    public static final int DEVICESTATUS_OFF = 0;
-    public static final int DEVICESTATUS_ON = 1;
-    public static final int DEVICESTATUS_MENU = 2;
+    public static final byte FORMAT_PLAINTEXT = 0;
+    public static final byte FORMAT_BITMAP = 1;
 
-    public static final byte RESULT_OK = 0;
-    public static final byte RESULT_ERROR = 1;
-    public static final byte RESULT_OOM = 2;
-    public static final byte RESULT_EXIT = 3;
-    public static final byte RESULT_CANCEL = 4;
+    public enum DEVICESTATUS {
+        OFF,
+        ON,
+        MENU
+    }
+    public enum RESULT {
+        OK,
+        ERROR,
+        OOM,
+        EXIT,
+        CANCEL
+    }
 
-    public static final int NAVACTION_PRESS = 0;
-    public static final int NAVACTION_LONGPRESS = 1;
-    public static final int NAVACTION_DOUBLEPRESS = 2;
+    public enum NAVACTION {
+        PRESS,
+        LONGPRESS,
+        DOUBLEPRESS
+    }
 
-    public static final int NAVTYPE_UP = 0;
-    public static final int NAVTYPE_DOWN = 1;
-    public static final int NAVTYPE_LEFT = 2;
-    public static final int NAVTYPE_RIGHT = 3;
-    public static final int NAVTYPE_SELECT = 4;
-    public static final int NAVTYPE_MENUSELECT = 5;
+    public enum NAVTYPE {
+        UP,
+        DOWN,
+        LEFT,
+        RIGHT,
+        SELECT,
+        MENUSELECT
+    }
 
-    public static final int ALERTACTION_CURRENT = 0;
-    public static final int ALERTACTION_FIRST = 1;
-    public static final int ALERTACTION_LAST = 2;
-    public static final int ALERTACTION_NEXT = 3;
-    public static final int ALERTACTION_PREV = 4;
+    public enum ALERTACTION {
+        CURRENT,
+        FIRST,
+        LAST,
+        NEXT,
+        PREV
+    }
 
     public static final int BRIGHTNESS_OFF = 49;
     public static final int BRIGHTNESS_DIM = 50;
