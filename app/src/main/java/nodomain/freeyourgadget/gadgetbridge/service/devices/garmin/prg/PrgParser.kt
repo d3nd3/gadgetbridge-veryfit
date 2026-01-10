@@ -10,9 +10,12 @@ object PrgParser {
         val buf = ByteBuffer.wrap(data)
 
         val sections: MutableList<PrgSectionContainer> = mutableListOf()
-
-        while (buf.position() < buf.remaining()) {
-            sections.add(readSection(buf))
+        try {
+            while (buf.position() < buf.remaining()) {
+                sections.add(readSection(buf))
+            }
+        } catch (e: Exception) {
+            throw PrgException("Failed to parse prg", e)
         }
 
         return sections

@@ -6,7 +6,3 @@ import java.nio.ByteBuffer
 fun ByteBuffer.stringUntilNullTerminator(): String? {
     return StringUtils.untilNullTerminator(this)
 }
-
-fun ByteBuffer.getUInt(): UInt {
-    return this.int.toUInt()
-}

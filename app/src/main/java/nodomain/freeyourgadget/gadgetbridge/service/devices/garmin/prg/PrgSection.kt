@@ -2,7 +2,7 @@ package nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.prg
 
 class PrgSectionContainer(
     val magic: PrgSectionMagic,
-    val length: UInt,
+    val length: Int,
     val content: PrgSection,
 )
 
@@ -33,22 +33,22 @@ data class PrgSectionHead(
     val backgroundOffset: PrgOffset,
     // Optional
     val appLockIndicator: UByte?,
-    val unused1: UInt?,
-    val unused2: UInt?,
+    val unused1: Int?,
+    val unused2: Int?,
     val glanceOffsets: PrgOffset?,
-    val flags: UInt?
+    val flags: Int?
 ) : PrgSection() {
     fun appLock(): Boolean {
         return appLockIndicator != null && appLockIndicator != 0.toUByte()
     }
 
     fun glanceSupport(): Boolean {
-        return flags != null && (flags and 0x01.toUInt()) != 0.toUInt()
+        return flags != null && (flags and 0x01) != 0
     }
 
     fun profilingEnabled(): Boolean {
-        return flags != null && (flags and 0x02.toUInt()) != 0.toUInt()
+        return flags != null && (flags and 0x02) != 0
     }
 }
 
-data class PrgOffset(val dataOffset: UInt, val codeOffset: UInt)
+data class PrgOffset(val dataOffset: Int, val codeOffset: Int)
