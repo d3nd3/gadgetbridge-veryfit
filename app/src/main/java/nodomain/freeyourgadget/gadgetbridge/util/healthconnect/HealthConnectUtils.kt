@@ -573,6 +573,10 @@ class HealthConnectUtils {
                             healthConnectClient, gbDevice, metadata, offset,
                             currentSliceStartTs, currentSliceEndTs, grantedPermissions, activityBasedSamples
                         ))
+                        sliceStats.add(ActiveCaloriesSyncer.sync(
+                            healthConnectClient, gbDevice, metadata, offset,
+                            currentSliceStartTs, currentSliceEndTs, grantedPermissions, activityBasedSamples
+                        ))
                     }
                 }
                 HealthConnectPermissionManager.HealthConnectDataType.SLEEP -> {
