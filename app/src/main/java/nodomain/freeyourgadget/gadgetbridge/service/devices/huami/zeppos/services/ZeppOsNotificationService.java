@@ -524,9 +524,8 @@ public class ZeppOsNotificationService extends AbstractZeppOsService {
 
         // FIXME: On the GTR 4, the band sends 358 on the url, but the actual image has 368 width
         //  if sent as requested, it gets all corrupted...
-        final int targetWidth = width + 10;
-        final int targetHeight = (int) Math.round(bmp.getHeight() * ((double) targetWidth / bmp.getWidth()));
-        final byte[] tga = format.encode(bmp, targetWidth, targetHeight);
+        final int targetHeight = (int) Math.round(bmp.getHeight() * ((double) width / bmp.getWidth()));
+        final byte[] tga = format.encode(bmp, width, targetHeight);
         if (tga == null) {
             LOG.warn("Failed to encode tga from {}", picturePath);
             ackNotificationAfterPictureSent(packageName, notificationId, false);
