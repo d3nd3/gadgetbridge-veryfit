@@ -70,6 +70,7 @@ import java.util.Locale;
 import java.util.Set;
 
 import nodomain.freeyourgadget.gadgetbridge.activities.ControlCenterv2;
+import nodomain.freeyourgadget.gadgetbridge.activities.endurain.PeriodicEndurainTokenRefresher;
 import nodomain.freeyourgadget.gadgetbridge.database.DBHandler;
 import nodomain.freeyourgadget.gadgetbridge.database.DBHelper;
 import nodomain.freeyourgadget.gadgetbridge.database.PeriodicDbExporter;
@@ -279,6 +280,9 @@ public class GBApplication extends Application {
 
         // Ensure the InternetHelper is bound, so that it works on first usage
         InternetHelperSingleton.INSTANCE.ensureInternetHelperBound();
+
+        // Refresh Endurain tokens and schedule periodic refresh
+        PeriodicEndurainTokenRefresher.INSTANCE.scheduleNextExecution(context);
     }
 
     private void startNotificationCollectorMonitorService() {
