@@ -10,14 +10,28 @@ steps:
     depends_on:
       - build
     commands:
-      - ./gradlew lint
+      - ./gradlew lint || touch .lint_failed
 
   tests:
     image: codeberg.org/freeyourgadget/android-fdroid-tools:36.0.0-androguard-4.1.2-java-21
     depends_on:
-      - build
+      - lint
     commands:
-      - ./gradlew :app:testBangleDebugUnitTest :app:testMainlineDebugUnitTest
+      - ./gradlew :app:testBangleDebugUnitTest :app:testMainDebugUnitTest || touch .tests_failed
+
+  check-failures:
+    image: codeberg.org/freeyourgadget/android-fdroid-tools:36.0.0-androguard-4.1.2-java-21
+    depends_on:
+      - tests
+    commands:
+      - |
+        if [ -f .lint_failed ] || [ -f .tests_failed ]; then
+          echo "One or more steps failed:"
+          [ -f .lint_failed ] && echo "  - lint failed"
+          [ -f .tests_failed ] && echo "  - tests failed"
+          exit 1
+        fi
+        echo "All checks passed!"
 
 #when:
 #repo: Freeyourgadget/Gadgetbridge
