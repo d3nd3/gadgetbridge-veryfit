@@ -1,9 +1,23 @@
 steps:
-  lint:
+  build:
     image: codeberg.org/freeyourgadget/android-fdroid-tools:36.0.0-androguard-4.1.2-java-21
     commands:
       - pwd #bump
+      - ./gradlew assembleDebug --stacktrace
+
+  lint:
+    image: codeberg.org/freeyourgadget/android-fdroid-tools:36.0.0-androguard-4.1.2-java-21
+    depends_on:
+      - build
+    commands:
       - ./gradlew lint
+
+  tests:
+    image: codeberg.org/freeyourgadget/android-fdroid-tools:36.0.0-androguard-4.1.2-java-21
+    depends_on:
+      - build
+    commands:
+      - ./gradlew :app:testBangleDebugUnitTest :app:testMainlineDebugUnitTest
 
 #when:
 #repo: Freeyourgadget/Gadgetbridge
