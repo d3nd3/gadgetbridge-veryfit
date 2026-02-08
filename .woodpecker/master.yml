@@ -7,24 +7,18 @@ steps:
 
   lint:
     image: codeberg.org/freeyourgadget/android-fdroid-tools:36.0.0-androguard-4.1.2-java-21
-    depends_on:
-      - build
     failure: ignore
     commands:
       - ./gradlew lint || (touch .lint_failed && exit 1)
 
   tests:
     image: codeberg.org/freeyourgadget/android-fdroid-tools:36.0.0-androguard-4.1.2-java-21
-    depends_on:
-      - lint
     failure: ignore
     commands:
       - ./gradlew :app:testBangleDebugUnitTest :app:testMainDebugUnitTest || (touch .tests_failed && exit 1)
 
   check-failures:
     image: codeberg.org/freeyourgadget/android-fdroid-tools:36.0.0-androguard-4.1.2-java-21
-    depends_on:
-      - tests
     commands:
       - |
         if [ -f .lint_failed ] || [ -f .tests_failed ]; then
