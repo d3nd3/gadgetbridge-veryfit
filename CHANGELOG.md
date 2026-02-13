@@ -1,5 +1,9 @@
 ### Changelog
 
+#### 0.89.1
+
+* Garmin: Fix edge case on activity timestamp processing
+
 #### 0.89.0
 
 * Add support for Internet Helper
