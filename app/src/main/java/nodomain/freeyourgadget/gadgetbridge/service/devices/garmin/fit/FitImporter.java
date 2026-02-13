@@ -86,9 +86,9 @@ import nodomain.freeyourgadget.gadgetbridge.model.ActivitySample;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivitySummaryParser;
 import nodomain.freeyourgadget.gadgetbridge.model.Spo2Sample;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.FileType;
+import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.enums.SleepStage;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.exception.FitParseException;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.fieldDefinitions.FieldDefinitionHrvStatus;
-import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.fieldDefinitions.FieldDefinitionSleepStage;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.messages.FitDeviceStatus;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.messages.FitEvent;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.messages.FitFileId;
@@ -228,14 +228,14 @@ public class FitImporter {
                 sample.setSleepScore(score);
                 sleepStatsSamples.add(sample);
             } else if (record instanceof FitSleepStage) {
-                final FieldDefinitionSleepStage.SleepStage stage = ((FitSleepStage) record).getSleepStage();
+                final SleepStage stage = ((FitSleepStage) record).getSleepStage();
                 if (stage == null) {
                     continue;
                 }
                 LOG.trace("Sleep stage at {}: {}", ts, record);
                 final GarminSleepStageSample sample = new GarminSleepStageSample();
                 sample.setTimestamp(ts * 1000L);
-                sample.setStage(stage.getId());
+                sample.setStage(stage.ordinal());
                 sleepStageSamples.add(sample);
             } else if (record instanceof FitNap nap) {
                 if (nap.getStartTimestamp() == null || nap.getEndTimestamp() == null) {

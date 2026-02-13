@@ -22,7 +22,7 @@ import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.FitRecord
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.RecordData;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.RecordDefinition;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.RecordHeader;
-import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.fieldDefinitions.FieldDefinitionSleepStage.SleepStage;
+import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.enums.SleepStage;
 
 /**
  * WARNING: This class was auto-generated, please avoid modifying it directly.

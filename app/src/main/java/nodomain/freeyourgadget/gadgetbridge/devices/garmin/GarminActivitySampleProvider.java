@@ -37,7 +37,7 @@ import nodomain.freeyourgadget.gadgetbridge.entities.GarminSleepStageSample;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivityKind;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivitySample;
-import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.fieldDefinitions.FieldDefinitionSleepStage;
+import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.enums.SleepStage;
 import nodomain.freeyourgadget.gadgetbridge.util.RangeMap;
 
 public class GarminActivitySampleProvider extends AbstractSampleProvider<GarminActivitySample> {
@@ -231,12 +231,11 @@ public class GarminActivitySampleProvider extends AbstractSampleProvider<GarminA
     }
 
     private ActivityKind toActivityKind(final GarminSleepStageSample stageSample) {
-        final FieldDefinitionSleepStage.SleepStage sleepStage = FieldDefinitionSleepStage.SleepStage.fromId(stageSample.getStage());
-        if (sleepStage == null) {
+        if (stageSample.getStage() > SleepStage.values().length) {
             LOG.error("Unknown sleep stage for {}", stageSample.getStage());
             return ActivityKind.UNKNOWN;
         }
-
+        final SleepStage sleepStage = SleepStage.values()[stageSample.getStage()];
         return switch (sleepStage) {
             case AWAKE -> ActivityKind.AWAKE_SLEEP;
             case LIGHT -> ActivityKind.LIGHT_SLEEP;
