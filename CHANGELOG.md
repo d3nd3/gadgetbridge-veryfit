@@ -4,6 +4,8 @@
 
 * CMF Watch Pro: Fix exception on connection
 * Huawei Watch GT 6 Pro: Fix workout processing
+* Mi Band 9 Active: Fix activity fetching
+* Xiaomi-protobuf: Fix calories charts
 
 #### 0.89.1
 

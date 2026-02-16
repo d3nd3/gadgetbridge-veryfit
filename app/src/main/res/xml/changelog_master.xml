@@ -3,6 +3,8 @@
     <release version="0.89.2" versioncode="246">
         <change>CMF Watch Pro: Fix exception on connection</change>
         <change>Huawei Watch GT 6 Pro: Fix workout processing</change>
+        <change>Mi Band 9 Active: Fix activity fetching</change>
+        <change>Xiaomi-protobuf: Fix calories charts</change>
     </release>
     <release version="0.89.1" versioncode="245">
         <change>Garmin: Fix edge case on activity timestamp processing</change>
