@@ -1,5 +1,10 @@
 ### Changelog
 
+#### 0.89.2
+
+* CMF Watch Pro: Fix exception on connection
+* Huawei Watch GT 6 Pro: Fix workout processing
+
 #### 0.89.1
 
 * Garmin: Fix edge case on activity timestamp processing

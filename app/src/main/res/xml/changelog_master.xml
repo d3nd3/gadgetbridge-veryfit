@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog>
+    <release version="0.89.2" versioncode="246">
+        <change>CMF Watch Pro: Fix exception on connection</change>
+        <change>Huawei Watch GT 6 Pro: Fix workout processing</change>
+    </release>
     <release version="0.89.1" versioncode="245">
         <change>Garmin: Fix edge case on activity timestamp processing</change>
         <change>Huawei/Honor: Fix exception when processing workout data</change>
