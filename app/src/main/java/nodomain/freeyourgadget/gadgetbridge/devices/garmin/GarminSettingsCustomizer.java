@@ -22,10 +22,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -33,7 +30,6 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import nodomain.freeyourgadget.gadgetbridge.R;
@@ -42,12 +38,9 @@ import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSpec
 import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSpecificSettingsHandler;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.agps.GarminAgpsStatus;
-import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.FitAsyncProcessor;
 import nodomain.freeyourgadget.gadgetbridge.util.DateTimeUtils;
-import nodomain.freeyourgadget.gadgetbridge.util.FileUtils;
 import nodomain.freeyourgadget.gadgetbridge.util.GB;
 import nodomain.freeyourgadget.gadgetbridge.util.Prefs;
-import nodomain.freeyourgadget.gadgetbridge.util.notifications.GBProgressNotification;
 
 public class GarminSettingsCustomizer implements DeviceSpecificSettingsCustomizer {
     private static final Logger LOG = LoggerFactory.getLogger(GarminSettingsCustomizer.class);
@@ -85,48 +78,7 @@ public class GarminSettingsCustomizer implements DeviceSpecificSettingsCustomize
                     localUris -> {
                         LOG.info("Files to import: {}", localUris);
                         if (localUris != null) {
-                            final List<File> filesToProcess = new ArrayList<>(localUris.size());
-
-                            final Context context = handler.getContext();
-                            for (final Uri uri : localUris) {
-                                final File file;
-                                try {
-                                    file = File.createTempFile("activity-files-import", ".bin", context.getCacheDir());
-                                    file.deleteOnExit();
-                                    FileUtils.copyURItoFile(context, uri, file);
-                                    filesToProcess.add(file);
-                                } catch (final IOException e) {
-                                    LOG.error("Failed to create temp file for activity file", e);
-                                }
-                            }
-
-                            if (filesToProcess.isEmpty()) {
-                                return;
-                            }
-
-                            final FitAsyncProcessor fitAsyncProcessor = new FitAsyncProcessor(context, handler.getDevice());
-                            final long[] lastNotificationUpdateTs = new long[]{System.currentTimeMillis()};
-                            fitAsyncProcessor.process(filesToProcess, new FitAsyncProcessor.Callback() {
-                                @Override
-                                public void onProgress(final int i) {
-                                    final long now = System.currentTimeMillis();
-                                    if (now - lastNotificationUpdateTs[0] > 1500L) {
-                                        lastNotificationUpdateTs[0] = now;
-                                        GB.updateTransferNotification(
-                                                "Parsing fit files", "File " + i + " of " + filesToProcess.size(),
-                                                true,
-                                                (i * 100) / filesToProcess.size(), context
-                                        );
-                                    }
-                                }
-
-                                @Override
-                                public void onFinish() {
-                                    GB.updateTransferNotification("", "", false, 100, context);
-                                    GB.toast("Parsed " + filesToProcess.size() + " files", Toast.LENGTH_SHORT, GB.INFO);
-                                    handler.getDevice().sendDeviceUpdateIntent(context);
-                                }
-                            });
+                            new FitAsyncProcessor(handler.getDevice(), handler.getContext(), localUris).start();
                         }
                     }
             );
@@ -354,48 +306,7 @@ public class GarminSettingsCustomizer implements DeviceSpecificSettingsCustomize
     public void writeToParcel(@NonNull Parcel dest, int flags) {
     }
 
-    private static final AtomicBoolean PARSING_FROM_STORAGE = new AtomicBoolean(false);
-
     private static void parseAllFitFilesFromStorage(final Context context, final GBDevice device) {
-        if (!PARSING_FROM_STORAGE.compareAndSet(false, true)) {
-            GB.toast(context, "Already parsing!", Toast.LENGTH_LONG, GB.ERROR);
-            return;
-        }
-
-        LOG.info("Parsing all fit files from storage");
-
-        final List<File> fitFiles;
-        try {
-            final File exportDir = device.getDeviceCoordinator().getWritableExportDirectory(device, true);
-
-            if (!exportDir.exists() || !exportDir.isDirectory()) {
-                LOG.error("export directory {} not found", exportDir);
-                GB.toast(context, "export directory " + exportDir + " not found", Toast.LENGTH_LONG, GB.ERROR);
-                PARSING_FROM_STORAGE.set(false);
-                return;
-            }
-
-            fitFiles = FileUtils.listRecursive(exportDir, (dir, name) -> name.endsWith(".fit"));
-            if (fitFiles.isEmpty()) {
-                LOG.error("No fit files found in {}", exportDir);
-                GB.toast(context, "No fit files found in " + exportDir, Toast.LENGTH_LONG, GB.ERROR);
-                PARSING_FROM_STORAGE.set(false);
-                return;
-            }
-        } catch (final Exception e) {
-            LOG.error("Failed to parse from storage", e);
-            GB.toast(context, "Failed to parse from storage", Toast.LENGTH_LONG, GB.ERROR, e);
-            PARSING_FROM_STORAGE.set(false);
-            return;
-        }
-
-        LOG.debug("Got {} fit files to parse", fitFiles.size());
-
-        GB.toast(context, "Check notification for progress", Toast.LENGTH_LONG, GB.INFO);
-
-        final GBProgressNotification transferNotification = new GBProgressNotification(context, GB.NOTIFICATION_CHANNEL_ID_TRANSFER);
-        transferNotification.start(R.string.busy_task_processing_files, 0, fitFiles.size());
-
         //try (DBHandler handler = GBApplication.acquireDB()) {
         //    final DaoSession session = handler.getDaoSession();
         //    final Device device = DBHelper.getDevice(gbDevice, session);
@@ -404,19 +315,6 @@ public class GarminSettingsCustomizer implements DeviceSpecificSettingsCustomize
         //    GB.toast(context, "Error deleting activity data", Toast.LENGTH_LONG, GB.ERROR, e);
         //}
 
-        final FitAsyncProcessor fitAsyncProcessor = new FitAsyncProcessor(context, device);
-        fitAsyncProcessor.process(fitFiles, new FitAsyncProcessor.Callback() {
-            @Override
-            public void onProgress(final int i) {
-                transferNotification.setTotalProgress(i);
-            }
-
-            @Override
-            public void onFinish() {
-                PARSING_FROM_STORAGE.set(false);
-                transferNotification.finish();
-                GB.signalActivityDataFinish(device);
-            }
-        });
+        new FitAsyncProcessor(device, context).start();
     }
 }
