@@ -746,6 +746,8 @@ class WorkoutDetailsFragment : Fragment(), MenuProvider {
 
     private fun uploadToEndurain() {
         val workout = currentWorkout ?: return
+        val workoutName = currentWorkout!!.summary.name
+        val activityKind = ActivityKind.fromCode(currentWorkout!!.summary.activityKind)
         val gpxFile = ActivitySummaryUtils.getGpxFile(workout.summary)
 
         if (gpxFile == null) {
@@ -758,9 +760,14 @@ class WorkoutDetailsFragment : Fragment(), MenuProvider {
             val serverUrl = GBApplication.getPrefs().preferences.getString("endurain_server", null)
             val apiClient = EndurainApiClient(serverUrl!!, endurainVm.tokenManager)
             endurainVm.tokenManager.performTokenRefresh(serverUrl) {
-                apiClient.uploadActivity(gpxFile) { success ->
+                LOG.info("Uploading workout '{}' (type {}) to Endurain", workoutName, activityKind)
+                apiClient.uploadActivity(gpxFile) { newId ->
+                    if (newId != null) {
+                        // Update activity type on the server
+                        apiClient.editActivity(newId, activityKind, workoutName)
+                    }
                     activity?.runOnUiThread {
-                        if (success)
+                        if (newId != null)
                             GB.toast(
                                 "Successfully uploaded to Endurain",
                                 Toast.LENGTH_SHORT,
