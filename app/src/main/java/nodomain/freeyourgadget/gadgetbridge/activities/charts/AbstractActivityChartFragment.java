@@ -421,22 +421,26 @@ public abstract class AbstractActivityChartFragment<D extends ChartsData> extend
     }
 
     protected List<? extends ActivitySample> getSamplesofSleep(DBHandler db, GBDevice device) {
-        int SLEEP_HOUR_LIMIT = 12;
+        final int sleepResetHour = GBApplication.getPrefs().getInt("chart_sleep_range_hour", 0);
 
-        int tsStart = getTSStart();
-        Calendar day = GregorianCalendar.getInstance();
-        day.setTimeInMillis(tsStart * 1000L);
-        day.set(Calendar.HOUR_OF_DAY, SLEEP_HOUR_LIMIT);
-        day.set(Calendar.MINUTE, 0);
-        day.set(Calendar.SECOND, 0);
-        tsStart = toTimestamp(day.getTime());
+        final Calendar start = Calendar.getInstance();
+        start.setTime(getEndDate());
+        start.set(Calendar.HOUR_OF_DAY, sleepResetHour);
+        start.set(Calendar.MINUTE, 0);
+        start.set(Calendar.SECOND, 0);
+        start.add(Calendar.HOUR, 0);
+        // Go back 6h so we still capture sleep sessions that started slightly before the reset hour
+        start.add(Calendar.HOUR_OF_DAY, -6);
+        final int tsStart = toTimestamp(start.getTime());
 
-        int tsEnd = getTSEnd();
-        day.setTimeInMillis(tsEnd * 1000L);
-        day.set(Calendar.HOUR_OF_DAY, SLEEP_HOUR_LIMIT);
-        day.set(Calendar.MINUTE, 0);
-        day.set(Calendar.SECOND, 0);
-        tsEnd = toTimestamp(day.getTime());
+        final Calendar end = Calendar.getInstance();
+        end.setTime(getEndDate());
+        end.set(Calendar.HOUR_OF_DAY, sleepResetHour);
+        end.set(Calendar.MINUTE, 0);
+        end.set(Calendar.SECOND, 0);
+        end.add(Calendar.HOUR, 0);
+        end.add(Calendar.DATE, 1);
+        final int tsEnd = toTimestamp(end.getTime());
 
         List<ActivitySample> samples = (List<ActivitySample>) getSamples(db, device, tsStart, tsEnd);
         ensureStartAndEndSamples(samples, tsStart, tsEnd);

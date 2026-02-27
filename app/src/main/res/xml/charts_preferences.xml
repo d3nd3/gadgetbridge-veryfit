@@ -53,14 +53,13 @@
             android:title="@string/pref_title_charts_swipe"
             app:iconSpaceReserved="false" />
 
-        <SwitchPreferenceCompat
-            android:defaultValue="false"
-            android:key="chart_sleep_range_24h"
-            android:layout="@layout/preference_checkbox"
-            android:summaryOff="@string/pref_chart_sleep_rolling_24_off"
-            android:summaryOn="@string/pref_chart_sleep_rolling_24_on"
+        <ListPreference
+            android:entries="@array/prefs_wena3_day_start_list"
+            android:entryValues="@array/prefs_wena3_day_start_values_list"
+            android:key="chart_sleep_range_hour"
             android:title="@string/pref_title_chart_sleep_rolling_24_hour"
-            app:iconSpaceReserved="false" />
+            app:iconSpaceReserved="false"
+            app:useSimpleSummaryProvider="true" />
 
         <SwitchPreferenceCompat
             android:defaultValue="true"

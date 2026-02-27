@@ -51,7 +51,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -91,12 +90,7 @@ public class SleepDailyFragment extends SleepFragment<SleepDailyFragment.MyChart
 
     private FragmentSleepchartBinding binding;
 
-    private int mSmartAlarmFrom = -1;
-    private int mSmartAlarmTo = -1;
-    private int mTimestampFrom = -1;
-    private int mSmartAlarmGoneOff = -1;
     Prefs prefs = GBApplication.getPrefs();
-    private final boolean CHARTS_SLEEP_RANGE_24H = prefs.getBoolean("chart_sleep_range_24h", false);
     private final boolean SHOW_CHARTS_AVERAGE = prefs.getBoolean("charts_show_average", true);
     private final int sleepLinesLimit = prefs.getInt("chart_sleep_lines_limit", 6);
 
@@ -107,31 +101,13 @@ public class SleepDailyFragment extends SleepFragment<SleepDailyFragment.MyChart
 
     @Override
     protected MyChartsData refreshInBackground(ChartsHost chartsHost, DBHandler db, GBDevice device) {
-        List<? extends ActivitySample> samples;
-        if (CHARTS_SLEEP_RANGE_24H) {
-            samples = getSamples(db, device);
-        } else {
-            samples = getSamplesofSleep(db, device);
-        }
+        List<? extends ActivitySample> samples = getSamplesofSleep(db, device);
         List<? extends SleepScoreSample> sleepScoreSamples = new ArrayList<>();
         if (supportsSleepScore()) {
             sleepScoreSamples = getSleepScoreSamples(db, device, getTSStart(), getTSEnd());
         }
         MySleepChartsData mySleepChartsData = refreshSleepAmounts(samples, sleepScoreSamples);
 
-        if (!CHARTS_SLEEP_RANGE_24H) {
-            if (!mySleepChartsData.sleepSessions.isEmpty()) {
-                long tstart = mySleepChartsData.sleepSessions.get(0).getSleepStart().getTime() / 1000;
-                long tend = mySleepChartsData.sleepSessions.get(mySleepChartsData.sleepSessions.size() - 1).getSleepEnd().getTime() / 1000;
-
-                for (Iterator<? extends ActivitySample> iterator = samples.iterator(); iterator.hasNext(); ) {
-                    ActivitySample sample = iterator.next();
-                    if (sample.getTimestamp() < tstart || sample.getTimestamp() > tend) {
-                        iterator.remove();
-                    }
-                }
-            }
-        }
         DefaultChartsData<LineData> chartsData = refresh(device, samples);
         Triple<Float, Integer, Integer> hrData = calculateHrData(samples);
         Triple<Float, Float, Float> intensityData = calculateIntensityData(samples);
@@ -643,11 +619,6 @@ public class SleepDailyFragment extends SleepFragment<SleepDailyFragment.MyChart
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
         if (action != null && action.equals(ChartsHost.REFRESH)) {
-            // TODO: use LimitLines to visualize smart alarms?
-            mSmartAlarmFrom = intent.getIntExtra("smartalarm_from", -1);
-            mSmartAlarmTo = intent.getIntExtra("smartalarm_to", -1);
-            mTimestampFrom = intent.getIntExtra("recording_base_timestamp", -1);
-            mSmartAlarmGoneOff = intent.getIntExtra("alarm_gone_off", -1);
             refresh();
         } else {
             super.onReceive(context, intent);
