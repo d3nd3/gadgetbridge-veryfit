@@ -16,11 +16,17 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 package nodomain.freeyourgadget.gadgetbridge.activities.endurain
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.browser.customtabs.CustomTabsIntent
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.fragment.app.viewModels
@@ -32,11 +38,14 @@ import com.google.android.material.textfield.TextInputLayout
 import nodomain.freeyourgadget.gadgetbridge.GBApplication
 import nodomain.freeyourgadget.gadgetbridge.R
 import nodomain.freeyourgadget.gadgetbridge.util.GB
+import org.slf4j.LoggerFactory
 
 class EndurainSetupBottomSheet : BottomSheetDialogFragment() {
 
+    private val LOG = LoggerFactory.getLogger(EndurainSetupBottomSheet::class.java)
     private val prefs get() = GBApplication.getPrefs().preferences
     private val vm: EndurainSetupViewModel by viewModels()
+    private val dismissListeners = mutableListOf<() -> Unit>()
 
     private lateinit var serverLayout: TextInputLayout
     private lateinit var serverInput: TextInputEditText
@@ -52,6 +61,36 @@ class EndurainSetupBottomSheet : BottomSheetDialogFragment() {
     private lateinit var progress: View
     private lateinit var next: MaterialButton
 
+    // Broadcast receiver for SSO callback
+    private val ssoCallbackReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val sessionId = intent?.getStringExtra("session_id")
+            val success = intent?.getBooleanExtra("success", true) ?: true
+
+            if (sessionId != null && success) {
+                handleSsoCallback(sessionId)
+            } else {
+                activity?.runOnUiThread {
+                    showProgress(false)
+                    Toast.makeText(requireContext(), "SSO login failed", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+//    private val ssoLauncher = registerForActivityResult(
+//        ActivityResultContracts.StartActivityForResult()
+//    ) { result ->
+//        if (result.resultCode == Activity.RESULT_OK) {
+//            val sessionId = result.data?.getStringExtra("session_id")
+//            if (sessionId != null) {
+//                handleSsoCallback(sessionId)
+//            }
+//        } else {
+//            Toast.makeText(requireContext(), "SSO login cancelled", Toast.LENGTH_SHORT).show()
+//        }
+//    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -63,25 +102,30 @@ class EndurainSetupBottomSheet : BottomSheetDialogFragment() {
     )
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        // Initialize views
         serverLayout = view.findViewById(R.id.server_layout)
         serverInput = view.findViewById(R.id.server_input)
-
         loginTypeGroup = view.findViewById(R.id.login_type_group)
         localButton = view.findViewById(R.id.local_login_button)
         ssoButton = view.findViewById(R.id.sso_login_button)
-
         userLayout = view.findViewById(R.id.user_layout)
         passLayout = view.findViewById(R.id.password_layout)
         userInput = view.findViewById(R.id.user_input)
         passInput = view.findViewById(R.id.password_input)
-
         mfaLayout = view.findViewById(R.id.mfa_layout)
         mfaInput = view.findViewById(R.id.mfa_input)
-
         progress = view.findViewById(R.id.progress)
         next = view.findViewById(R.id.next_button)
 
         serverInput.setText(prefs.getString("endurain_server", ""))
+
+        // Register broadcast receiver for SSO callbacks
+        ContextCompat.registerReceiver(
+            requireContext(),
+            ssoCallbackReceiver,
+            IntentFilter("nodomain.freeyourgadget.gadgetbridge.ENDURAIN_SSO_CALLBACK"),
+            ContextCompat.RECEIVER_EXPORTED
+        )
 
         next.setOnClickListener {
             when (vm.step) {
@@ -102,13 +146,107 @@ class EndurainSetupBottomSheet : BottomSheetDialogFragment() {
                     mfaLayout.visibility = View.GONE
                 }
                 R.id.sso_login_button -> {
-                    vm.step = EndurainSetupViewModel.Step.SSO_LOGIN
-                    // TODO: Launch SSO flow
-                    GB.toast("SSO not yet implemented", Toast.LENGTH_SHORT, GB.INFO)
-                    dismiss()
+                    vm.step = EndurainSetupViewModel.Step.SSO_PROVIDERS
+                    startSsoFlow()
                 }
             }
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        try {
+            requireContext().unregisterReceiver(ssoCallbackReceiver)
+        } catch (e: Exception) {
+            // Already unregistered
+        }
+    }
+
+    private fun startSsoFlow() {
+        showProgress(true)
+        vm.fetchSsoProviders { success ->
+            activity?.runOnUiThread {
+                showProgress(false)
+                if (success && vm.availableProviders.size == 1) {
+                    launchSsoLogin(vm.availableProviders[0])
+                } else if (success && vm.availableProviders.isNotEmpty()) {
+                    showProviderSelection()
+                } else {
+                    Toast.makeText(
+                        requireContext(),
+                        "No SSO providers available",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+    }
+
+    private fun showProviderSelection() {
+        EndurainSsoProviderDialog(requireContext(), vm.availableProviders) { provider ->
+            launchSsoLogin(provider)
+        }.show()
+    }
+
+    private fun launchSsoLogin(provider: IdentityProvider) {
+        val ssoUrl = vm.generateSsoUrl(provider.slug)
+
+        LOG.info("Launching secure browser for SSO URL: $ssoUrl")
+
+        // Launch Custom Tab (secure browser)
+        val customTabsIntent = CustomTabsIntent.Builder()
+            .setShowTitle(true)
+            .setUrlBarHidingEnabled(false)
+            .build()
+
+        showProgress(true)
+
+        try {
+            customTabsIntent.launchUrl(requireContext(), ssoUrl.toUri())
+        } catch (e: Exception) {
+            showProgress(false)
+            Toast.makeText(
+                requireContext(),
+                "Failed to open browser: ${e.message}",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    private fun handleSsoCallback(sessionId: String) {
+        showProgress(true)
+        vm.exchangeSsoSession(sessionId) { success ->
+            activity?.runOnUiThread {
+                showProgress(false)
+                if (success) {
+                    Toast.makeText(
+                        requireContext(),
+                        "SSO login successful",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    parentFragmentManager.setFragmentResult(
+                        "endurain_login_result",
+                        Bundle().apply { putBoolean("success", true) }
+                    )
+                    dismiss()
+                } else {
+                    Toast.makeText(
+                        requireContext(),
+                        "SSO login failed",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+    }
+
+    fun addOnDismissListener(listener: () -> Unit) {
+        dismissListeners.add(listener)
+    }
+
+    override fun onDismiss(dialog: android.content.DialogInterface) {
+        super.onDismiss(dialog)
+        dismissListeners.forEach { it.invoke() }
     }
 
     private fun handleServerStep() {
