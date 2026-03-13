@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory android:title="@string/toobur_pref_category_device" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="true"
+        android:key="toobur_music_enabled"
+        android:layout="@layout/preference_checkbox"
+        android:summary="@string/toobur_pref_music_summary"
+        android:title="@string/toobur_pref_music_title" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="true"
+        android:key="toobur_call_alert_enabled"
+        android:layout="@layout/preference_checkbox"
+        android:summary="@string/toobur_pref_call_alert_summary"
+        android:title="@string/toobur_pref_call_alert_title" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="toobur_dnd_enabled"
+        android:layout="@layout/preference_checkbox"
+        android:summary="@string/toobur_pref_dnd_summary"
+        android:title="@string/toobur_pref_dnd_title" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="true"
+        android:key="toobur_raise_to_wake"
+        android:layout="@layout/preference_checkbox"
+        android:summary="@string/toobur_pref_raise_to_wake_summary"
+        android:title="@string/toobur_pref_raise_to_wake_title" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="toobur_sos_enabled"
+        android:layout="@layout/preference_checkbox"
+        android:summary="@string/toobur_pref_sos_summary"
+        android:title="@string/toobur_pref_sos_title" />
+
+    <PreferenceCategory android:title="@string/toobur_pref_category_health" />
+
+    <ListPreference
+        android:defaultValue="auto"
+        android:entries="@array/toobur_hr_mode_entries"
+        android:entryValues="@array/toobur_hr_mode_values"
+        android:key="toobur_heart_rate_mode"
+        app:useSimpleSummaryProvider="true"
+        android:summary="@string/toobur_pref_hr_mode_summary"
+        android:title="@string/toobur_pref_hr_mode_title" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="true"
+        android:key="toobur_realtime_hr_enabled"
+        android:layout="@layout/preference_checkbox"
+        android:summary="@string/toobur_pref_realtime_hr_summary"
+        android:title="@string/toobur_pref_realtime_hr_title" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="toobur_weather_enabled"
+        android:layout="@layout/preference_checkbox"
+        android:summary="@string/toobur_pref_weather_summary"
+        android:title="@string/toobur_pref_weather_title" />
+
+</androidx.preference.PreferenceScreen>

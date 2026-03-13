@@ -130,11 +130,12 @@ public class ID115Support extends AbstractBTLESingleDeviceSupport {
         }
     }
 
-    private void setInitialized(TransactionBuilder builder) {
+    private ID115Support setInitialized(TransactionBuilder builder) {
         builder.setDeviceState(GBDevice.State.INITIALIZED);
+        return this;
     }
 
-    ID115Support setTime(TransactionBuilder builder) {
+    public ID115Support setTime(TransactionBuilder builder) {
         Calendar c = Calendar.getInstance(TimeZone.getDefault());
 
         int day = c.get(Calendar.DAY_OF_WEEK);
@@ -161,7 +162,7 @@ public class ID115Support extends AbstractBTLESingleDeviceSupport {
         return this;
     }
 
-    ID115Support setWrist(TransactionBuilder builder) {
+    public ID115Support setWrist(TransactionBuilder builder) {
         String value = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getString(DeviceSettingsPreferenceConst.PREF_WEARLOCATION,
                 "left");
 
@@ -179,7 +180,7 @@ public class ID115Support extends AbstractBTLESingleDeviceSupport {
         return this;
     }
 
-    ID115Support setScreenOrientation(TransactionBuilder builder) {
+    public ID115Support setScreenOrientation(TransactionBuilder builder) {
         String value = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getString(DeviceSettingsPreferenceConst.PREF_SCREEN_ORIENTATION,
                 "horizontal");
 
@@ -197,7 +198,7 @@ public class ID115Support extends AbstractBTLESingleDeviceSupport {
         return this;
     }
 
-    private ID115Support setGoal(TransactionBuilder transaction) {
+    public ID115Support setGoal(TransactionBuilder transaction) {
         ActivityUser activityUser = new ActivityUser();
         int value = activityUser.getStepsGoal();
 

@@ -345,6 +345,17 @@
         <item>vertical</item>
     </string-array>
 
+    <string-array name="toobur_hr_mode_entries">
+        <item>Off</item>
+        <item>Auto (continuous)</item>
+        <item>Manual only</item>
+    </string-array>
+    <string-array name="toobur_hr_mode_values">
+        <item>off</item>
+        <item>auto</item>
+        <item>manual</item>
+    </string-array>
+
     <string-array name="vibration_profile">
         <item>@string/vibration_profile_default</item>
         <item>@string/vibration_profile_staccato</item>

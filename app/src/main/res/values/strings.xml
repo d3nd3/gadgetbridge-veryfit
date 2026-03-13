@@ -2039,6 +2039,7 @@
     <string name="devicetype_qhybrid" translatable="false">Fossil Q Hybrid</string>
     <string name="devicetype_mykronoz_zetime" translatable="false">MyKronoz ZeTime</string>
     <string name="devicetype_id115" translatable="false">ID115</string>
+    <string name="devicetype_toobur" translatable="false">TOOBUR</string>
     <string name="devicetype_watch9" translatable="false">Watch 9</string>
     <string name="devicetype_watchx" translatable="false">Watch X</string>
     <string name="devicetype_watchxplus" translatable="false">Watch X Plus</string>
@@ -4669,4 +4670,26 @@
     <string name="health_connect_sleep_session_notes">Sleep data from Gadgetbridge device: %1$s.</string>
     <string name="infinitime_filesystem_access_disabled">Filesystem access is disabled in InfiniTime</string>
     <string name="infinitime_resource_upload_progress_status">Performing action %d of %d\n%s %s</string>
+
+    <!-- TOOBUR device settings -->
+    <string name="toobur_pref_category_device">Device features</string>
+    <string name="toobur_pref_music_title">Music control on device</string>
+    <string name="toobur_pref_music_summary">Enable or disable music control on the watch (SET 0x03 0x2A)</string>
+    <string name="toobur_pref_call_alert_title">Call and notification alerts</string>
+    <string name="toobur_pref_call_alert_summary">Enable call and app notification alerts on the watch (SET 0x03 0x30)</string>
+    <string name="toobur_pref_dnd_title">Do not disturb</string>
+    <string name="toobur_pref_dnd_summary">Enable do not disturb mode (SET 0x03 0x29)</string>
+    <string name="toobur_pref_raise_to_wake_title">Raise to wake</string>
+    <string name="toobur_pref_raise_to_wake_summary">Turn on display when you raise your wrist (SET 0x03 0x28)</string>
+    <string name="toobur_pref_sos_title">One-key SOS</string>
+    <string name="toobur_pref_sos_summary">Enable one-key SOS emergency feature (SET 0x03 0x2C)</string>
+
+    <!-- TOOBUR heart rate (SET 0x03 0x25, 0x52) -->
+    <string name="toobur_pref_category_health">Heart rate</string>
+    <string name="toobur_pref_hr_mode_title">Heart rate monitoring</string>
+    <string name="toobur_pref_hr_mode_summary">Off: disabled. Auto: continuous (default). Manual: measure on demand only.</string>
+    <string name="toobur_pref_realtime_hr_title">Real-time heart rate stream</string>
+    <string name="toobur_pref_realtime_hr_summary">Enable real-time HR (and G-sensor) stream to the app (SET 0x03 0x52)</string>
+    <string name="toobur_pref_weather_title">Weather on watch</string>
+    <string name="toobur_pref_weather_summary">Show weather on the watch (SET 0x03 0x2D). Only if device supports it.</string>
 </resources>

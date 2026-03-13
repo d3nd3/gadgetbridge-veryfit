@@ -300,6 +300,7 @@ import nodomain.freeyourgadget.gadgetbridge.devices.huawei.huaweiwatchgtcyber.Hu
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.huaweiwatchgtrunner.HuaweiWatchGTRunnerCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.huaweiwatchultimate.HuaweiWatchUltimateCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.id115.ID115Coordinator;
+import nodomain.freeyourgadget.gadgetbridge.devices.toobur.TooburCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.idasen.IdasenCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.itag.ITagCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.jyou.BFH16DeviceCoordinator;
@@ -581,6 +582,7 @@ public enum DeviceType {
     Y5(Y5Coordinator.class),
     XWATCH(XWatchCoordinator.class),
     ZETIME(ZeTimeCoordinator.class),
+    TOOBUR(TooburCoordinator.class),
     ID115(ID115Coordinator.class),
     WATCH9(Watch9DeviceCoordinator.class),
     WATCHXPLUS(WatchXPlusDeviceCoordinator.class),
