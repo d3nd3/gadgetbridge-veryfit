@@ -63,6 +63,17 @@ public class TooburSupport extends ID115Support {
     public static final String PREF_TOOBUR_REALTIME_HR_ENABLED = "toobur_realtime_hr_enabled";
     /** Preference key: weather on watch (SET 0x03 0x2D). Only if func table weather bit is set. */
     public static final String PREF_TOOBUR_WEATHER_ENABLED = "toobur_weather_enabled";
+    /** Preference key: send bind start (BIND 0x04 0x01…) after connect — matches VeryFit flow. */
+    public static final String PREF_TOOBUR_BIND_ON_CONNECT = "toobur_bind_on_connect";
+
+    /**
+     * VeryFit bind start (evt 200): {@code 04 01 F1 01 01 02 02 01 00} — see app_fresh_launch / TOOBUR.md.
+     */
+    private static final byte[] TOOBUR_BIND_START = new byte[]{
+            ID115Constants.CMD_ID_BIND_UNBIND,
+            0x01,
+            (byte) 0xF1, 0x01, 0x01, 0x02, 0x02, 0x01, 0x00
+    };
 
     private final GBDeviceEventBatteryInfo batteryCmd = new GBDeviceEventBatteryInfo();
     private final GBDeviceEventVersionInfo versionCmd = new GBDeviceEventVersionInfo();
@@ -76,11 +87,19 @@ public class TooburSupport extends ID115Support {
 
         // Enable notifications on 0x0AF7 so we receive GET replies (battery, device info)
         builder.notify(ID115Constants.UUID_CHARACTERISTIC_NOTIFY_NORMAL, true);
+        // Health / bulk notify (0x0AF2) — required for v3 sync replies and legacy health transfer
+        builder.notify(ID115Constants.UUID_CHARACTERISTIC_NOTIFY_HEALTH, true);
 
         setTime(builder)
                 .setWrist(builder)
                 .setScreenOrientation(builder)
                 .setGoal(builder);
+
+        if (GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress())
+                .getBoolean(PREF_TOOBUR_BIND_ON_CONNECT, true)) {
+            builder.write(normalWriteCharacteristic, TOOBUR_BIND_START);
+            LOG.info("TOOBUR: sent bind start (04 01 F1…)");
+        }
 
         // Request battery info (GET 0x02 0x05); reply will arrive via onCharacteristicChanged
         builder.write(normalWriteCharacteristic, new byte[]{
@@ -111,6 +130,7 @@ public class TooburSupport extends ID115Support {
                                           byte[] data) {
         UUID uuid = characteristic.getUuid();
         if (!ID115Constants.UUID_CHARACTERISTIC_NOTIFY_NORMAL.equals(uuid)) {
+            // 0x0AF2: legacy activity fetch uses AbstractID115Operation; v3 sync not implemented here yet.
             return super.onCharacteristicChanged(gatt, characteristic, data);
         }
 
@@ -301,12 +321,18 @@ public class TooburSupport extends ID115Support {
                     });
                     break;
                 case PREF_TOOBUR_RAISE_TO_WAKE:
-                    builder.write(normalWriteCharacteristic, new byte[]{
-                            ID115Constants.CMD_ID_SETTINGS,
-                            ID115Constants.CMD_KEY_SET_UP_HAND_GESTURE,
-                            prefs.getBoolean(PREF_TOOBUR_RAISE_TO_WAKE, true) ? ID115Constants.CMD_ARG_GESTURE_ON : ID115Constants.CMD_ARG_GESTURE_OFF,
-                            3
-                    });
+                    // TOOBUR A200: 9 B payload (set_hand_gesture_wake_*.txt): 03 28 AA/55 05 01 00 00 17 3B
+                    {
+                        byte onOff = prefs.getBoolean(PREF_TOOBUR_RAISE_TO_WAKE, true)
+                                ? ID115Constants.CMD_ARG_GESTURE_ON
+                                : ID115Constants.CMD_ARG_GESTURE_OFF;
+                        builder.write(normalWriteCharacteristic, new byte[]{
+                                ID115Constants.CMD_ID_SETTINGS,
+                                ID115Constants.CMD_KEY_SET_UP_HAND_GESTURE,
+                                onOff,
+                                0x05, 0x01, 0x00, 0x00, 0x17, 0x3B
+                        });
+                    }
                     break;
                 case PREF_TOOBUR_SOS_ENABLED:
                     builder.write(normalWriteCharacteristic, new byte[]{

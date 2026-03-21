@@ -22,13 +22,27 @@ import java.util.regex.Pattern;
 
 import nodomain.freeyourgadget.gadgetbridge.R;
 import nodomain.freeyourgadget.gadgetbridge.devices.DeviceCoordinator;
+import nodomain.freeyourgadget.gadgetbridge.devices.id115.ID115Constants;
 import nodomain.freeyourgadget.gadgetbridge.devices.xiaomi.XiaomiCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
+import nodomain.freeyourgadget.gadgetbridge.impl.GBDeviceCandidate;
 
 public class MiBand8Coordinator extends XiaomiCoordinator {
     @Override
     public boolean isExperimental() {
         return true;
+    }
+
+    /**
+     * TOOBUR / IDO clones sometimes reuse a "Xiaomi Smart Band 8 …" style BLE name but speak the
+     * VeryFit/ID115 protocol (GATT 0x0AF0). Those must use the TOOBUR coordinator, not Xiaomi.
+     */
+    @Override
+    public boolean supports(@NonNull final GBDeviceCandidate candidate) {
+        if (candidate.supportsService(ID115Constants.UUID_SERVICE_ID115)) {
+            return false;
+        }
+        return super.supports(candidate);
     }
 
     @Override

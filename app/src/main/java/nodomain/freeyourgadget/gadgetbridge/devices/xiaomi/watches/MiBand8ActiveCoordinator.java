@@ -22,13 +22,23 @@ import java.util.regex.Pattern;
 
 import nodomain.freeyourgadget.gadgetbridge.R;
 import nodomain.freeyourgadget.gadgetbridge.devices.DeviceCoordinator;
+import nodomain.freeyourgadget.gadgetbridge.devices.id115.ID115Constants;
 import nodomain.freeyourgadget.gadgetbridge.devices.xiaomi.XiaomiCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
+import nodomain.freeyourgadget.gadgetbridge.impl.GBDeviceCandidate;
 
 public class MiBand8ActiveCoordinator extends XiaomiCoordinator {
     @Override
     public boolean isExperimental() {
         return true;
+    }
+
+    @Override
+    public boolean supports(@NonNull final GBDeviceCandidate candidate) {
+        if (candidate.supportsService(ID115Constants.UUID_SERVICE_ID115)) {
+            return false;
+        }
+        return super.supports(candidate);
     }
 
     @Override

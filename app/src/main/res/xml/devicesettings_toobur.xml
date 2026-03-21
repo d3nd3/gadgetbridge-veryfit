@@ -6,6 +6,13 @@
 
     <SwitchPreferenceCompat
         android:defaultValue="true"
+        android:key="toobur_bind_on_connect"
+        android:layout="@layout/preference_checkbox"
+        android:summary="@string/toobur_pref_bind_summary"
+        android:title="@string/toobur_pref_bind_title" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="true"
         android:key="toobur_music_enabled"
         android:layout="@layout/preference_checkbox"
         android:summary="@string/toobur_pref_music_summary"

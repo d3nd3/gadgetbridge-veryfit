@@ -4673,6 +4673,8 @@
 
     <!-- TOOBUR device settings -->
     <string name="toobur_pref_category_device">Device features</string>
+    <string name="toobur_pref_bind_title">Send bind on connect</string>
+    <string name="toobur_pref_bind_summary">Send BIND 0x04 0x01 (VeryFit bind start) after each connection. Disable if you pair only with another app.</string>
     <string name="toobur_pref_music_title">Music control on device</string>
     <string name="toobur_pref_music_summary">Enable or disable music control on the watch (SET 0x03 0x2A)</string>
     <string name="toobur_pref_call_alert_title">Call and notification alerts</string>

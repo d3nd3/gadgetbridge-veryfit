@@ -48,11 +48,15 @@ import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSpec
 /**
  * Coordinator for TOOBUR-family devices (Toobur, Runlio, Biggerfive, Ksix, IDW, etc.)
  * that use the IDO/Realtek 0x0AF0 GATT protocol. Reuses ID115 protocol and support.
+ * <p>
+ * Some models are sold as <strong>TOOBUR BAND 8</strong> / <strong>A200</strong> and may reuse a
+ * generic "Band 8" BLE name (similar wording to Xiaomi/Huawei products) — matching here avoids
+ * mistaken identity when the device still advertises the VeryFit service.
  */
 public class TooburCoordinator extends AbstractBLEDeviceCoordinator {
 
     private static final Pattern TOOBUR_NAME_PATTERN = Pattern.compile(
-            "Toobur|Runlio|Biggerfive|Ksix|IDW|VeryFit|Ryze",
+            "Toobur|Runlio|Biggerfive|Ksix|IDW|VeryFit|Ryze|A200|BAND\\s*8|BAND8",
             Pattern.CASE_INSENSITIVE
     );
 
