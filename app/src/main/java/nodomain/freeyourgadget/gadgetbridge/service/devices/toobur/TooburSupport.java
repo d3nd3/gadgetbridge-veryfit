@@ -18,6 +18,9 @@ package nodomain.freeyourgadget.gadgetbridge.service.devices.toobur;
 
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.os.Build;
+import android.os.Process;
+import android.os.SystemClock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,6 +80,9 @@ public class TooburSupport extends ID115Support {
 
     private final GBDeviceEventBatteryInfo batteryCmd = new GBDeviceEventBatteryInfo();
     private final GBDeviceEventVersionInfo versionCmd = new GBDeviceEventVersionInfo();
+
+    /** Set while a deferred {@code connectGatt} is scheduled (OEM discovery preference on). */
+    private volatile boolean oemDeferredGattConnectPending;
 
     @Override
     protected TransactionBuilder initializeDevice(TransactionBuilder builder) {
@@ -383,5 +389,32 @@ public class TooburSupport extends ID115Support {
         } catch (IOException e) {
             LOG.warn("Unable to send configuration {}", config, e);
         }
+    }
+
+    @Override
+    public void onGattConnectDelayScheduled(boolean pending) {
+        oemDeferredGattConnectPending = pending;
+    }
+
+    /**
+     * Used by DeviceCommunicationService to avoid re-queuing connect on every scan callback while
+     * a deferred {@code connectGatt} is pending.
+     */
+    public boolean isOemDeferredGattConnectPending() {
+        return oemDeferredGattConnectPending;
+    }
+
+    @Override
+    public long getGattConnectDelayMs() {
+        if (!GBApplication.getPrefs().getOemBleReconnectEnhancementsEnabled()) {
+            return 0L;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            final long processAgeMs = SystemClock.elapsedRealtime() - Process.getStartElapsedRealtime();
+            if (processAgeMs < 12_000L) {
+                return Math.max(0L, 10_000L - processAgeMs);
+            }
+        }
+        return 4_500L;
     }
 }

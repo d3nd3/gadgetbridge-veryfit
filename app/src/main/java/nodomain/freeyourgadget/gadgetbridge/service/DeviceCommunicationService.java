@@ -114,6 +114,7 @@ import nodomain.freeyourgadget.gadgetbridge.model.NotificationSpec;
 import nodomain.freeyourgadget.gadgetbridge.model.NotificationType;
 import nodomain.freeyourgadget.gadgetbridge.model.Reminder;
 import nodomain.freeyourgadget.gadgetbridge.model.WorldClock;
+import nodomain.freeyourgadget.gadgetbridge.service.devices.toobur.TooburSupport;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.BLEScanService;
 import nodomain.freeyourgadget.gadgetbridge.service.receivers.AutoConnectIntervalReceiver;
 import nodomain.freeyourgadget.gadgetbridge.service.receivers.GBAutoFetchReceiver;
@@ -485,6 +486,22 @@ public class DeviceCommunicationService extends Service implements SharedPrefere
                     return;
                 }
 
+                if (GBApplication.getPrefs().getOemBleReconnectEnhancementsEnabled()) {
+                    final DeviceStruct dsAddr = getDeviceStructByAddressOrNull(deviceAddress);
+                    if (dsAddr != null) {
+                        DeviceSupport sup = dsAddr.getDeviceSupport();
+                        if (sup instanceof ServiceDeviceSupport) {
+                            sup = ((ServiceDeviceSupport) sup).getDelegate();
+                        }
+                        if (sup instanceof TooburSupport
+                                && ((TooburSupport) sup).isOemDeferredGattConnectPending()) {
+                            LOG.debug("EVENT_DEVICE_FOUND: skip duplicate connect, OEM GATT delay pending for {}",
+                                    deviceAddress);
+                            return;
+                        }
+                    }
+                }
+
                 connectToDevice(target, false);
             }
         }
@@ -566,11 +583,13 @@ public class DeviceCommunicationService extends Service implements SharedPrefere
         }
 
         startForeground();
-        if(reconnectViaScan) {
+        if (reconnectViaScan) {
             scanAllDevices();
-
-            Intent scanServiceIntent = new Intent(this, BLEScanService.class);
-            startService(scanServiceIntent);
+        }
+        // Stock: scan service only when "Reconnect by BLE scan". OEM enhancement also needs the scanner
+        // when using WAITING_FOR_SCAN without that global toggle.
+        if (reconnectViaScan || getPrefs().getOemBleReconnectEnhancementsEnabled()) {
+            startService(new Intent(this, BLEScanService.class));
         }
     }
 
@@ -1303,6 +1322,19 @@ public class DeviceCommunicationService extends Service implements SharedPrefere
         return device;
     }
 
+    @Nullable
+    private DeviceStruct getDeviceStructByAddressOrNull(String deviceAddress) {
+        if (deviceAddress == null) {
+            return null;
+        }
+        for (DeviceStruct struct : deviceStructs) {
+            if (struct.getDevice().getAddress().equalsIgnoreCase(deviceAddress)) {
+                return struct;
+            }
+        }
+        return null;
+    }
+
     private DeviceSupport getDeviceSupport(GBDevice device) throws DeviceNotFoundException {
         if(device == null){
             throw new DeviceNotFoundException("null");
@@ -1650,6 +1682,14 @@ public class DeviceCommunicationService extends Service implements SharedPrefere
         if (GBPrefs.PREF_ALLOW_INTENT_API.equals(key)){
             allowBluetoothIntentApi = sharedPreferences.getBoolean(GBPrefs.PREF_ALLOW_INTENT_API, false);
             LOG.info("allowBluetoothIntentApi changed to {}", allowBluetoothIntentApi);
+        }
+        if (GBPrefs.RECONNECT_SCAN_KEY.equals(key) || GBPrefs.OEM_BLE_RECONNECT_ENHANCEMENTS_KEY.equals(key)) {
+            reconnectViaScan = getPrefs().getAutoReconnectByScan();
+            if (reconnectViaScan || getPrefs().getOemBleReconnectEnhancementsEnabled()) {
+                startService(new Intent(this, BLEScanService.class));
+            } else {
+                stopService(new Intent(this, BLEScanService.class));
+            }
         }
     }
 

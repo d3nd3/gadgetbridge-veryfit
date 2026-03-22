@@ -326,13 +326,8 @@ public final class BtLEQueue implements Thread.UncaughtExceptionHandler {
 
         LOG.info("Attempting to connect to {}", mGbDevice.getName());
 
-        mGattConnectTimeoutHandler.postDelayed(() -> {
-            LOG.warn("Timed out connecting to GATT for {}", mGbDevice.getName());
-            handleDisconnected(0x93 /* BluetoothGatt.GATT_CONNECTION_TIMEOUT */);
-        }, 5000L);
-
         mBluetoothAdapter.cancelDiscovery();
-        BluetoothDevice remoteDevice = mBluetoothAdapter.getRemoteDevice(mGbDevice.getAddress());
+        final BluetoothDevice remoteDevice = mBluetoothAdapter.getRemoteDevice(mGbDevice.getAddress());
         if(!mSupportedServerServices.isEmpty()) {
             BluetoothManager bluetoothManager = (BluetoothManager) mContext.getSystemService(Context.BLUETOOTH_SERVICE);
             if (bluetoothManager == null) {
@@ -349,17 +344,45 @@ public final class BtLEQueue implements Thread.UncaughtExceptionHandler {
             }
         }
 
+        final long delayMs = mDeviceSupport.getGattConnectDelayMs();
+        mDeviceSupport.onGattConnectDelayScheduled(delayMs > 0);
 
-        // connectGatt with true doesn't really work ;( too often connection problems
-        if (GBApplication.isRunningOreoOrLater() && !connectionForceLegacyGatt) {
-            mBluetoothGatt = remoteDevice.connectGatt(mContext, false,
-                    internalGattCallback, BluetoothDevice.TRANSPORT_LE,
-                    BluetoothDevice.PHY_LE_CODED_MASK, mReceiverHandler);
-        } else {
-            mBluetoothGatt = remoteDevice.connectGatt(mContext, false,
-                    internalGattCallback, BluetoothDevice.TRANSPORT_LE);
+        final Runnable performConnectGatt = () -> {
+            synchronized (mGattMonitor) {
+                if (mDisposed.get()) {
+                    mDeviceSupport.onGattConnectDelayScheduled(false);
+                    return;
+                }
+                if (mBluetoothGatt != null) {
+                    mDeviceSupport.onGattConnectDelayScheduled(false);
+                    return;
+                }
+                mGattConnectTimeoutHandler.removeCallbacksAndMessages(null);
+                mGattConnectTimeoutHandler.postDelayed(() -> {
+                    LOG.warn("Timed out connecting to GATT for {}", mGbDevice.getName());
+                    handleDisconnected(0x93 /* BluetoothGatt.GATT_CONNECTION_TIMEOUT */);
+                }, 5000L);
+
+                // connectGatt with true doesn't really work ;( too often connection problems
+                if (GBApplication.isRunningOreoOrLater() && !connectionForceLegacyGatt) {
+                    mBluetoothGatt = remoteDevice.connectGatt(mContext, false,
+                            internalGattCallback, BluetoothDevice.TRANSPORT_LE,
+                            BluetoothDevice.PHY_LE_CODED_MASK, mReceiverHandler);
+                } else {
+                    mBluetoothGatt = remoteDevice.connectGatt(mContext, false,
+                            internalGattCallback, BluetoothDevice.TRANSPORT_LE);
+                }
+                mDeviceSupport.onGattConnectDelayScheduled(false);
+            }
+        };
+
+        if (delayMs > 0) {
+            LOG.info("Deferring GATT connect by {} ms", delayMs);
+            mGattConnectTimeoutHandler.postDelayed(performConnectGatt, delayMs);
+            return true;
         }
 
+        performConnectGatt.run();
         return mBluetoothGatt != null;
     }
 
@@ -373,6 +396,7 @@ public final class BtLEQueue implements Thread.UncaughtExceptionHandler {
         LOG.debug("disconnecting");
         synchronized (mGattMonitor) {
             mGattConnectTimeoutHandler.removeCallbacksAndMessages(null);
+            mDeviceSupport.onGattConnectDelayScheduled(false);
             BluetoothGatt gatt = mBluetoothGatt;
             if (gatt != null) {
                 mBluetoothGatt = null;
@@ -443,7 +467,7 @@ public final class BtLEQueue implements Thread.UncaughtExceptionHandler {
         } else if (mBluetoothGatt != null) {
             // try to reconnect immediately
             if (mDeviceSupport.getAutoReconnect()) {
-                if (mDeviceSupport.getScanReconnect()) {
+                if (scanBeforeReconnect()) {
                     // connect() would first disconnect() anyway
                     forceDisconnect = true;
                 } else {
@@ -468,7 +492,7 @@ public final class BtLEQueue implements Thread.UncaughtExceptionHandler {
             if (mDeviceSupport.getAutoReconnect()) {
                 // don't reconnect immediately to give the Bluetooth stack some time to settle down
                 // use BluetoothConnectReceiver or AutoConnectIntervalReceiver instead
-                if (mDeviceSupport.getScanReconnect()) {
+                if (scanBeforeReconnect()) {
                     LOG.info("waiting for BLE scan before attempting reconnection");
                     setDeviceConnectionState(State.WAITING_FOR_SCAN);
                 } else {
@@ -479,6 +503,16 @@ public final class BtLEQueue implements Thread.UncaughtExceptionHandler {
                 setDeviceConnectionState(State.NOT_CONNECTED);
             }
         }
+    }
+
+    /**
+     * Prefer scan-then-connect when the user enabled global "Reconnect by BLE scan", or when
+     * Discovery pairing → OEM/API 29–30 scan fixes is on (same scan path; BLEScanService applies
+     * software MAC filter on older API levels).
+     */
+    private boolean scanBeforeReconnect() {
+        return mDeviceSupport.getScanReconnect()
+                || GBApplication.getPrefs().getOemBleReconnectEnhancementsEnabled();
     }
 
     public void setPaused(boolean paused) {

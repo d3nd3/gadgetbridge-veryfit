@@ -42,6 +42,10 @@ public class DiscoveryPairingPreferenceActivity extends AbstractSettingsActivity
                 GB.toast(GBApplication.getContext().getString(R.string.prompt_restart_gadgetbridge), Toast.LENGTH_LONG, GB.INFO);
                 return true;
             });
+            findPreference("prefs_oem_ble_reconnect_enhancements").setOnPreferenceChangeListener((preference, newValue) -> {
+                GB.toast(GBApplication.getContext().getString(R.string.prompt_restart_gadgetbridge), Toast.LENGTH_LONG, GB.INFO);
+                return true;
+            });
         }
     }
 }

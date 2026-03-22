@@ -88,6 +88,15 @@ public class GBPrefs extends Prefs {
     public static final String RECONNECT_SCAN_KEY = "prefs_general_key_auto_reconnect_scan";
     public static final boolean RECONNECT_SCAN_DEFAULT = false;
 
+    /**
+     * When enabled: failed GATT reconnects use WAITING_FOR_SCAN (scan-then-connect), and BLEScanService
+     * uses an unfiltered scan + software MAC allowlist on API &lt; 31; includes CONNECTING in the scan
+     * set on API 31+.
+     * Default off so stock Gadgetbridge behaviour is unchanged.
+     */
+    public static final String OEM_BLE_RECONNECT_ENHANCEMENTS_KEY = "prefs_oem_ble_reconnect_enhancements";
+    public static final boolean OEM_BLE_RECONNECT_ENHANCEMENTS_DEFAULT = false;
+
     public static final String USER_NAME = "mi_user_alias";
     public static final String USER_NAME_DEFAULT = "gadgetbridge-user";
     private static final String USER_BIRTHDAY = "";
@@ -128,6 +137,10 @@ public class GBPrefs extends Prefs {
 
     public boolean getAutoReconnectByScan() {
         return getBoolean(RECONNECT_SCAN_KEY, RECONNECT_SCAN_DEFAULT);
+    }
+
+    public boolean getOemBleReconnectEnhancementsEnabled() {
+        return getBoolean(OEM_BLE_RECONNECT_ENHANCEMENTS_KEY, OEM_BLE_RECONNECT_ENHANCEMENTS_DEFAULT);
     }
 
     public boolean getAutoStart() {

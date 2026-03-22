@@ -87,6 +87,21 @@ public abstract class AbstractBTLEDeviceSupport extends AbstractDeviceSupport
 
     abstract int getMTU(int deviceIdx);
 
+    /**
+     * Milliseconds to defer {@link android.bluetooth.BluetoothDevice#connectGatt} after a connect
+     * request (OEM stack settle when the discovery preference is enabled). Default: immediate connect.
+     */
+    public long getGattConnectDelayMs() {
+        return 0L;
+    }
+
+    /**
+     * Notified when a non-zero GATT connect delay is scheduled ({@code true}) or when the delayed
+     * connect runs / is cancelled ({@code false}).
+     */
+    public void onGattConnectDelayScheduled(boolean pending) {
+    }
+
     /// the maximum payload length supported for one write action
     @IntRange(from = 20L, to = 512L)
     public static int calcMaxWriteChunk(int mtu) {

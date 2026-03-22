@@ -52,7 +52,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.R;
@@ -98,11 +100,21 @@ public class BLEScanService extends Service {
 
     private ScanningState currentState = ScanningState.NOT_SCANNING;
 
+    /**
+     * API 31+ uses {@link ScanFilter#setDeviceAddress(String)}. On API 30 and below that API
+     * does not exist / does not filter; we scan without hardware filters and match addresses here.
+     */
+    private Set<String> scanAddressAllowlist = null;
+
     private final ScanCallback scanCallback = new ScanCallback() {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
             BluetoothDevice device = result.getDevice();
+
+            if (scanAddressAllowlist != null && !scanAddressAllowlist.contains(device.getAddress())) {
+                return;
+            }
 
             LOG.debug("onScanResult: " + result);
 
@@ -385,28 +397,61 @@ public class BLEScanService extends Service {
                 scanner.stopScan(scanCallback);
             }
         }
+        scanAddressAllowlist = null;
         ArrayList<ScanFilter> scanFilters = null;
 
         if (applyFilters) {
-            List<GBDevice> devices = GBApplication.app().getDeviceManager().getDevices();
+            final List<GBDevice> devices = GBApplication.app().getDeviceManager().getDevices();
+            final boolean oemEnhance = GBApplication.getPrefs().getOemBleReconnectEnhancementsEnabled();
 
-            scanFilters = new ArrayList<>(devices.size());
-
-            for (GBDevice device : devices) {
-                if (device.getState() == GBDevice.State.WAITING_FOR_SCAN) {
-                    scanFilters.add(new ScanFilter.Builder()
-                            .setDeviceAddress(device.getAddress())
-                            .build()
-                    );
+            if (!oemEnhance) {
+                // Stock Gadgetbridge: filtered scan by MAC only for WAITING_FOR_SCAN (API 31+ filter works).
+                scanFilters = new ArrayList<>(devices.size());
+                for (GBDevice device : devices) {
+                    if (device.getState() == GBDevice.State.WAITING_FOR_SCAN) {
+                        scanFilters.add(new ScanFilter.Builder()
+                                .setDeviceAddress(device.getAddress())
+                                .build()
+                        );
+                    }
                 }
-            }
+                if (scanFilters.isEmpty()) {
+                    LOG.debug("restartScan: stopping BLE scan, no devices");
+                    currentState = ScanningState.NOT_SCANNING;
+                    updateNotification(false, 0);
+                    return;
+                }
+            } else {
+                final ArrayList<ScanFilter> builtFilters = new ArrayList<>(devices.size());
+                final HashSet<String> waitingAddresses = new HashSet<>();
 
-            if (scanFilters.isEmpty()) {
-                // no need to start scanning
-                LOG.debug("restartScan: stopping BLE scan, no devices");
-                currentState = ScanningState.NOT_SCANNING;
-                updateNotification(false, 0);
-                return;
+                for (GBDevice device : devices) {
+                    final GBDevice.State st = device.getState();
+                    if (st == GBDevice.State.WAITING_FOR_SCAN || st == GBDevice.State.CONNECTING) {
+                        waitingAddresses.add(device.getAddress());
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            builtFilters.add(new ScanFilter.Builder()
+                                    .setDeviceAddress(device.getAddress())
+                                    .build()
+                            );
+                        }
+                    }
+                }
+
+                if (waitingAddresses.isEmpty()) {
+                    LOG.debug("restartScan: stopping BLE scan, no devices");
+                    currentState = ScanningState.NOT_SCANNING;
+                    updateNotification(false, 0);
+                    return;
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    scanFilters = builtFilters;
+                } else {
+                    scanFilters = null;
+                    scanAddressAllowlist = waitingAddresses;
+                    LOG.debug("restartScan: API < 31 — unfiltered LE scan, allowlist {} MAC(s)", waitingAddresses.size());
+                }
             }
         }
 
@@ -421,8 +466,10 @@ public class BLEScanService extends Service {
 
         scanner.startScan(scanFilters, scanSettingsBuilder.build(), scanCallback);
         if (applyFilters) {
-            LOG.debug("restartScan: started scan for {} devices", scanFilters.size());
-            updateNotification(true, scanFilters.size());
+            final int n = scanFilters != null ? scanFilters.size()
+                    : (scanAddressAllowlist != null ? scanAddressAllowlist.size() : 0);
+            LOG.debug("restartScan: started scan for {} devices", n);
+            updateNotification(true, n);
             currentState = ScanningState.SCANNING_WITH_FILTERS;
         } else {
             LOG.debug("restartScan: started scan for all devices");
