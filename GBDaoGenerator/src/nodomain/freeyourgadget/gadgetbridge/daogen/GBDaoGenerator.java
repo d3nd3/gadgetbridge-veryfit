@@ -76,7 +76,7 @@ public class GBDaoGenerator {
             outputDir.mkdirs();
         }
 
-        final Schema schema = new Schema(128, MAIN_PACKAGE + ".entities");
+        final Schema schema = new Schema(130, MAIN_PACKAGE + ".entities");
 
         final List<Entity> sampleProvidersToGenerate = new LinkedList<>();
 
@@ -895,6 +895,9 @@ public class GBDaoGenerator {
         activitySample.addIntProperty("caloriesBurnt");
         activitySample.addIntProperty("distanceMeters");
         activitySample.addIntProperty("activeTimeMinutes");
+        addHeartRateProperties(activitySample);
+        activitySample.addIntProperty("spo2");
+        activitySample.addIntProperty("stress");
         return activitySample;
     }
 

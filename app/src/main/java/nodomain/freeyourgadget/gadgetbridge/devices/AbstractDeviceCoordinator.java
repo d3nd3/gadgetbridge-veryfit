@@ -987,8 +987,14 @@ public abstract class AbstractDeviceCoordinator implements DeviceCoordinator {
 
     @Override
     public DeviceSpecificSettings getDeviceSpecificSettings(GBDevice device) {
-        final int[] settings = getSupportedDeviceSpecificSettings(device);
-        if (settings == null || settings.length == 0) {
+        int[] settings = getSupportedDeviceSpecificSettings(device);
+        if (settings == null) {
+            settings = new int[0];
+        }
+        if (getBatteryCount(device) > 0) {
+            settings = ArrayUtils.add(settings, R.xml.devicesettings_device_card_battery);
+        }
+        if (settings.length == 0) {
             return null;
         }
 

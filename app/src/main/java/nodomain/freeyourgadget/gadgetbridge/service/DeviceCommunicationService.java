@@ -1023,7 +1023,8 @@ public class DeviceCommunicationService extends Service implements SharedPrefere
             }
             case ACTION_FETCH_RECORDED_DATA: {
                 int dataTypes = intentCopy.getIntExtra(EXTRA_RECORDED_DATA_TYPES, 0);
-                deviceSupport.onFetchRecordedData(dataTypes);
+                boolean autoFetch = intentCopy.getBooleanExtra(EXTRA_RECORDED_DATA_AUTO_FETCH, false);
+                deviceSupport.onFetchRecordedData(dataTypes, autoFetch);
                 break;
             }
             case ACTION_FIND_DEVICE: {

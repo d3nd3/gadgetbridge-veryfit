@@ -22,6 +22,7 @@ import android.os.ParcelUuid;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -32,8 +33,10 @@ import de.greenrobot.dao.AbstractDao;
 import de.greenrobot.dao.Property;
 import nodomain.freeyourgadget.gadgetbridge.R;
 import nodomain.freeyourgadget.gadgetbridge.devices.AbstractBLEDeviceCoordinator;
+import nodomain.freeyourgadget.gadgetbridge.devices.DeviceCardAction;
 import nodomain.freeyourgadget.gadgetbridge.devices.DeviceCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.SampleProvider;
+import nodomain.freeyourgadget.gadgetbridge.devices.TimeSampleProvider;
 import nodomain.freeyourgadget.gadgetbridge.devices.id115.ID115Constants;
 import nodomain.freeyourgadget.gadgetbridge.devices.id115.ID115SampleProvider;
 import nodomain.freeyourgadget.gadgetbridge.entities.DaoSession;
@@ -41,6 +44,8 @@ import nodomain.freeyourgadget.gadgetbridge.entities.ID115ActivitySampleDao;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDeviceCandidate;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivitySample;
+import nodomain.freeyourgadget.gadgetbridge.model.Spo2Sample;
+import nodomain.freeyourgadget.gadgetbridge.model.StressSample;
 import nodomain.freeyourgadget.gadgetbridge.service.DeviceSupport;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.toobur.TooburSupport;
 import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSpecificSettingsCustomizer;
@@ -107,12 +112,34 @@ public class TooburCoordinator extends AbstractBLEDeviceCoordinator {
 
     @Override
     public boolean supportsRealtimeData(@NonNull GBDevice device) {
-        return true;
+        return false;
     }
 
     @Override
     public SampleProvider<? extends ActivitySample> getSampleProvider(GBDevice device, DaoSession session) {
         return new ID115SampleProvider(device, session);
+    }
+
+    @Override
+    public boolean supportsSpo2(@NonNull GBDevice device) {
+        return true;
+    }
+
+    @Override
+    public boolean supportsStressMeasurement(@NonNull GBDevice device) {
+        return true;
+    }
+
+    @Nullable
+    @Override
+    public TimeSampleProvider<? extends Spo2Sample> getSpo2SampleProvider(GBDevice device, DaoSession session) {
+        return new TooburSpo2SampleProvider(device, session);
+    }
+
+    @Nullable
+    @Override
+    public TimeSampleProvider<? extends StressSample> getStressSampleProvider(GBDevice device, DaoSession session) {
+        return new TooburStressSampleProvider(device, session);
     }
 
     @Override
@@ -167,5 +194,11 @@ public class TooburCoordinator extends AbstractBLEDeviceCoordinator {
         Map<AbstractDao<?, ?>, Property> map = new HashMap<>(1);
         map.put(session.getID115ActivitySampleDao(), ID115ActivitySampleDao.Properties.DeviceId);
         return map;
+    }
+
+    @NonNull
+    @Override
+    public List<DeviceCardAction> getCustomActions() {
+        return TooburDeviceCardActions.create();
     }
 }

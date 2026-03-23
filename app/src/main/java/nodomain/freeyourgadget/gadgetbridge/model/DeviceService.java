@@ -151,6 +151,8 @@ public interface DeviceService extends EventHandler {
     String EXTRA_BOOLEAN_ENABLE = "enable_realtime_steps";
     String EXTRA_INTERVAL_SECONDS = "interval_seconds";
     String EXTRA_RECORDED_DATA_TYPES = "data_types";
+    /** When true, {@link #ACTION_FETCH_RECORDED_DATA} was triggered by auto-fetch (not manual). */
+    String EXTRA_RECORDED_DATA_AUTO_FETCH = "recorded_data_auto_fetch";
     String EXTRA_FM_FREQUENCY = "fm_frequency";
     String EXTRA_LED_COLOR = "led_color";
     String EXTRA_GPS_LOCATION = "gps_location";

@@ -35,6 +35,8 @@ final class TooburV3HealthSync {
 
     static final int V3_CMD_HEALTH_SYNC = 0x0004;
     static final int V3_CMD_HEALTH_SIZES = 0x0005;
+    private static final int V3_HEALTH_TYPE_SPO2 = 0x01;
+    private static final int V3_HEALTH_TYPE_PRESSURE = 0x02;
     private static final int V3_HEALTH_TYPE_HR = 0x03;
     private static final int V3_HEALTH_TYPE_SPORT_SUMMARY = 0x08;
     private static final int TX_PACKET_LEN = 19;
@@ -135,7 +137,7 @@ final class TooburV3HealthSync {
         return u32le(frame, 11);
     }
 
-    interface ReplyListener {
+    public interface ReplyListener {
         /**
          * Cmd {@code 0x0005} reply: aggregate size (delta from requested offsets), e.g. sync all size in logcat.
          */
@@ -145,6 +147,18 @@ final class TooburV3HealthSync {
          * Cmd {@code 0x0004} reply with {@code dataType == 3} (HR stream) — parsed like {@code toobur-hr-csv.html}.
          */
         default void onV3HrParsed(@NonNull TooburV3HrParser.ParsedHr parsed, int dataSizeBytes) {
+        }
+
+        /** Cmd {@code 0x0004} reply with {@code dataType == 1} (SpO₂ day stream). */
+        default void onV3Spo2Parsed(@NonNull TooburV3DayMetricParser.ParsedDayMetric parsed, int dataSizeBytes) {
+        }
+
+        /** Cmd {@code 0x0004} reply with {@code dataType == 2} (pressure / stress day stream). */
+        default void onV3PressureParsed(@NonNull TooburV3DayMetricParser.ParsedDayMetric parsed, int dataSizeBytes) {
+        }
+
+        /** Cmd {@code 0x0004} reply with {@code dataType == 8} (sport / daily summary) — steps, distance, etc. */
+        default void onV3SportSummary(@NonNull V3SportSummary summary) {
         }
     }
 
@@ -178,6 +192,20 @@ final class TooburV3HealthSync {
             dispatchV3Reply(complete, listener);
         }
         return true;
+    }
+
+    /**
+     * Feed 0x0AF2 notify into the reassembly buffer without dispatching; caller polls
+     * {@link V3ReassemblyBuffer#pollComplete()} then runs state machine and calls {@link #dispatchV3Reply}.
+     */
+    static boolean feedNotifyFragmentRx(@NonNull V3ReassemblyBuffer rx, @NonNull byte[] data) {
+        if (data.length == 0) {
+            return false;
+        }
+        if ((data[0] & 0xFF) != 0x33 && !rx.isReceiving()) {
+            return false;
+        }
+        return rx.feed(data);
     }
 
     static void dispatchV3Reply(@NonNull byte[] frame, @Nullable ReplyListener listener) {
@@ -219,6 +247,40 @@ final class TooburV3HealthSync {
             }
             return;
         }
+        if (common.dataType == V3_HEALTH_TYPE_SPO2) {
+            int headerStart = 14;
+            int headerEnd = Math.min(payload.length, headerStart + common.headSize);
+            int dataEnd = Math.min(payload.length, headerEnd + common.dataSize);
+            byte[] headerBytes = Arrays.copyOfRange(payload, headerStart, headerEnd);
+            byte[] dataBytes = headerEnd < dataEnd ? Arrays.copyOfRange(payload, headerEnd, dataEnd) : new byte[0];
+            TooburV3DayMetricParser.ParsedDayMetric parsed = TooburV3DayMetricParser.parse(
+                    common.itemCount, headerBytes, dataBytes, 50, 100);
+            if (parsed != null) {
+                LOG.info("[V3 SpO2] {} items={} head={} data={}",
+                        TooburV3DayMetricParser.formatLogSummary(parsed), common.itemCount, common.headSize, common.dataSize);
+                if (listener != null) {
+                    listener.onV3Spo2Parsed(parsed, common.dataSize);
+                }
+            }
+            return;
+        }
+        if (common.dataType == V3_HEALTH_TYPE_PRESSURE) {
+            int headerStart = 14;
+            int headerEnd = Math.min(payload.length, headerStart + common.headSize);
+            int dataEnd = Math.min(payload.length, headerEnd + common.dataSize);
+            byte[] headerBytes = Arrays.copyOfRange(payload, headerStart, headerEnd);
+            byte[] dataBytes = headerEnd < dataEnd ? Arrays.copyOfRange(payload, headerEnd, dataEnd) : new byte[0];
+            TooburV3DayMetricParser.ParsedDayMetric parsed = TooburV3DayMetricParser.parse(
+                    common.itemCount, headerBytes, dataBytes, 0, 100);
+            if (parsed != null) {
+                LOG.info("[V3 stress] {} items={} head={} data={}",
+                        TooburV3DayMetricParser.formatLogSummary(parsed), common.itemCount, common.headSize, common.dataSize);
+                if (listener != null) {
+                    listener.onV3PressureParsed(parsed, common.dataSize);
+                }
+            }
+            return;
+        }
         if (common.dataType != V3_HEALTH_TYPE_SPORT_SUMMARY) {
             LOG.debug("[V3 health] cmd 0x04 dataType=0x{} items={} (skip non-sport summary)", Integer.toHexString(common.dataType & 0xFF), common.itemCount);
             return;
@@ -238,6 +300,9 @@ final class TooburV3HealthSync {
             return;
         }
         LOG.info(formatSportLogLine(common, summary));
+        if (listener != null) {
+            listener.onV3SportSummary(summary);
+        }
     }
 
     private static int u16le(byte[] b, int off) {
@@ -284,20 +349,21 @@ final class TooburV3HealthSync {
         );
     }
 
-    private static final class V3SportSummary {
-        final int year;
-        final int month;
-        final int day;
-        final int minuteOffset;
-        final int intervalMinutes;
-        final int totalSteps;
-        final int totalCalories;
-        final int headerDisplayCalories;
-        final int itemDisplayCalories;
-        final int rawTotalCalories;
-        final int totalDistance;
-        final int coveredUntilMinutes;
-        final int totalActiveTime;
+    /** Parsed v3 sport / daily summary (data type {@code 0x08}) — see {@code packetdumps/logcat/sync_example.txt} / TOOBUR.md. */
+    public static final class V3SportSummary {
+        public final int year;
+        public final int month;
+        public final int day;
+        public final int minuteOffset;
+        public final int intervalMinutes;
+        public final int totalSteps;
+        public final int totalCalories;
+        public final int headerDisplayCalories;
+        public final int itemDisplayCalories;
+        public final int rawTotalCalories;
+        public final int totalDistance;
+        public final int coveredUntilMinutes;
+        public final int totalActiveTime;
 
         V3SportSummary(int year, int month, int day, int minuteOffset, int intervalMinutes,
                 int totalSteps, int totalCalories, int headerDisplayCalories, int itemDisplayCalories,

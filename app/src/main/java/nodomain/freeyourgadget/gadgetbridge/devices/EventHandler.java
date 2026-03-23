@@ -105,6 +105,13 @@ public interface EventHandler {
 
     void onFetchRecordedData(int dataTypes);
 
+    /**
+     * @param autoFetch {@code true} for background auto-sync (e.g. unlock); {@code false} for manual “fetch activity data”.
+     */
+    default void onFetchRecordedData(int dataTypes, boolean autoFetch) {
+        onFetchRecordedData(dataTypes);
+    }
+
     void onReset(int flags);
 
     void onHeartRateTest();

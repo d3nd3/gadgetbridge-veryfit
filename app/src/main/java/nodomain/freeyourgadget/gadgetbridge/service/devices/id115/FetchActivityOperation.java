@@ -34,6 +34,7 @@ import nodomain.freeyourgadget.gadgetbridge.devices.id115.ID115Constants;
 import nodomain.freeyourgadget.gadgetbridge.devices.id115.ID115SampleProvider;
 import nodomain.freeyourgadget.gadgetbridge.entities.ID115ActivitySample;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivityKind;
+import nodomain.freeyourgadget.gadgetbridge.model.ActivitySample;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.TransactionBuilder;
 import nodomain.freeyourgadget.gadgetbridge.util.GB;
 
@@ -48,7 +49,7 @@ public class FetchActivityOperation extends AbstractID115Operation {
     }
 
     @Override
-    boolean isHealthOperation() {
+    protected boolean isHealthOperation() {
         return true;
     }
 
@@ -72,7 +73,7 @@ public class FetchActivityOperation extends AbstractID115Operation {
     }
 
     @Override
-    void handleResponse(byte[] data) {
+    protected void handleResponse(byte[] data) {
         if (!isOperationRunning()) {
             LOG.error("ignoring notification because operation is not running. Data length: {}", data.length);
             getSupport().logMessageContent(data);
@@ -171,6 +172,7 @@ public class FetchActivityOperation extends AbstractID115Operation {
         sample.setActiveTimeMinutes(activeTime);
         sample.setCaloriesBurnt(calories);
         sample.setDistanceMeters(distance);
+        sample.setHeartRate(ActivitySample.NOT_MEASURED);
         return sample;
     }
 }

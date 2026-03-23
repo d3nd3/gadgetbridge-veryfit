@@ -22,13 +22,14 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Splits long VeryFit v3 frames for BLE characteristics when ATT MTU is still the default
- * (typically 23 → <strong>20 payload bytes</strong> per write). Otherwise writes are truncated
- * ({@code TransactionBuilder} warns: {@code payload … longer than current MTU: 26 > 20}) and the
- * watch never sees a valid CRC.
+ * Splits long VeryFit v3 frames when one ATT write cannot hold the full frame. Prefer
+ * {@link #splitForAttMtu(byte[], int)} with payload from
+ * {@code AbstractBTLEDeviceSupport.calcMaxWriteChunk(gattMtu)} so small frames (e.g. 26-byte HR
+ * 0x09) use a single write after MTU exchange; default MTU 23 yields 20 payload bytes per write.
  * <p>
- * Same layout as {@code htmlapp/toobur-hr-csv.html} {@code sendV3PacketChunked}: first segment is
- * the start of the frame; each continuation segment is {@code 0x33} + next bytes.
+ * First segment is the start of the frame (byte {@code 0x33} is the v3 magic only there).
+ * Continuation segments are the <em>next raw bytes</em> of the same frame — do not prefix
+ * {@code 0x33} again on follow-up ATT writes (per TOOBUR / VeryFit wire behaviour).
  * </p>
  */
 final class TooburV3BleChunkedWrite {
@@ -45,30 +46,23 @@ final class TooburV3BleChunkedWrite {
     }
 
     /**
-     * @param mtuPayload max bytes per <em>first</em> segment; continuation segments allow
-     *                   {@code mtuPayload - 1} data bytes (one byte for {@code 0x33} prefix).
+     * @param mtuPayload max bytes per ATT write payload for every segment (first and continuations).
      */
     static List<byte[]> splitForAttMtu(byte[] fullFrame, int mtuPayload) {
         if (fullFrame == null || fullFrame.length == 0) {
             return Collections.emptyList();
         }
-        if (mtuPayload < 2) {
+        if (mtuPayload < 1) {
             throw new IllegalArgumentException("mtuPayload");
         }
         if (fullFrame.length <= mtuPayload) {
             return Collections.singletonList(fullFrame);
         }
         List<byte[]> chunks = new ArrayList<>();
-        final int maxContData = mtuPayload - 1;
-        int firstLen = Math.min(fullFrame.length, mtuPayload);
-        chunks.add(Arrays.copyOfRange(fullFrame, 0, firstLen));
-        int offset = firstLen;
+        int offset = 0;
         while (offset < fullFrame.length) {
-            int n = Math.min(fullFrame.length - offset, maxContData);
-            byte[] c = new byte[1 + n];
-            c[0] = 0x33;
-            System.arraycopy(fullFrame, offset, c, 1, n);
-            chunks.add(c);
+            int n = Math.min(fullFrame.length - offset, mtuPayload);
+            chunks.add(Arrays.copyOfRange(fullFrame, offset, offset + n));
             offset += n;
         }
         return chunks;

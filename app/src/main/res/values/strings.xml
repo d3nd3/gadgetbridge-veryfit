@@ -79,6 +79,12 @@
     <string name="speed_first">Speed first</string>
     <string name="accuracy_first">Accuracy First</string>
 
+    <string name="pref_device_card_battery_category_title">Device card</string>
+    <string name="pref_device_card_battery_display_title">Battery display</string>
+    <string name="pref_device_card_battery_display_summary">Show percentage or voltage next to the battery icon on the device list</string>
+    <string name="pref_device_card_battery_percent">Percentage</string>
+    <string name="pref_device_card_battery_voltage">Voltage (V)</string>
+
     <string name="device_card_activity_card_title">Activity info on device card</string>
     <string name="device_card_activity_card_title_summary">Choose what activity details are displayed on device card</string>
     <string name="prefs_activity_in_device_card_title">Show Activity info on device card</string>
@@ -4675,8 +4681,10 @@
 
     <!-- TOOBUR device settings -->
     <string name="toobur_pref_category_device">Device features</string>
-    <string name="toobur_pref_bind_title">Send bind on connect</string>
-    <string name="toobur_pref_bind_summary">Send BIND 0x04 0x01 (VeryFit bind start) after each connection. Disable if you pair only with another app.</string>
+    <string name="toobur_pref_send_bind_title">Send bind</string>
+    <string name="toobur_pref_send_bind_summary">Send BIND 0x04 0x01 (VeryFit bind start) once — use when you want app pairing without auto-send on connect.</string>
+    <string name="toobur_pref_send_unbind_title">Send unbind</string>
+    <string name="toobur_pref_send_unbind_summary">Send unbind 0x04 0x02 (same tail as bind). Use before pairing with another app if needed.</string>
     <string name="toobur_pref_music_title">Music control on device</string>
     <string name="toobur_pref_music_summary">Enable or disable music control on the watch (SET 0x03 0x2A)</string>
     <string name="toobur_pref_call_alert_title">Call and notification alerts</string>
@@ -4685,15 +4693,65 @@
     <string name="toobur_pref_dnd_summary">Enable do not disturb mode (SET 0x03 0x29)</string>
     <string name="toobur_pref_raise_to_wake_title">Raise to wake</string>
     <string name="toobur_pref_raise_to_wake_summary">Turn on display when you raise your wrist (SET 0x03 0x28)</string>
-    <string name="toobur_pref_sos_title">One-key SOS</string>
-    <string name="toobur_pref_sos_summary">Enable one-key SOS emergency feature (SET 0x03 0x2C)</string>
 
-    <!-- TOOBUR heart rate (SET 0x03 0x25, 0x52) -->
+    <!-- TOOBUR heart rate (SET 0x03 0x24, 0x25; v3 cmd 0x09) -->
     <string name="toobur_pref_category_health">Heart rate</string>
-    <string name="toobur_pref_hr_mode_title">Heart rate monitoring</string>
-    <string name="toobur_pref_hr_mode_summary">Off: disabled. Auto: continuous (default). Manual: measure on demand only.</string>
-    <string name="toobur_pref_realtime_hr_title">Real-time heart rate stream</string>
-    <string name="toobur_pref_realtime_hr_summary">Enable real-time HR (and G-sensor) stream to the app (SET 0x03 0x52)</string>
+    <string name="toobur_pref_hr_continuous_title">Continuous heart rate</string>
+    <string name="toobur_pref_hr_continuous_summary">VeryFit v3 cmd 0x09 on 0x0AF6: on (CC) or off (AA). Schedule window is not configurable here (always = four zero bytes).</string>
+    <string name="toobur_pref_spo2_continuous_title">Continuous SpO₂</string>
+    <string name="toobur_pref_spo2_continuous_summary">SET 0x03 0x44: enable blood oxygen monitoring on the band (0xAA on / 0x55 off). Full schedule uses capture defaults.</string>
+    <string name="toobur_pref_pressure_continuous_title">Continuous stress (pressure)</string>
+    <string name="toobur_pref_pressure_continuous_summary">SET 0x03 0x45: enable stress monitoring on the band (0xAA on / 0x55 off). Uses capture defaults for schedule and thresholds.</string>
+    <string name="toobur_pref_auto_activity_title">Auto activity detection</string>
+    <string name="toobur_pref_auto_activity_summary">SET 0x03 0x49: which sports the band auto-identifies (nine bytes: walk, run, bike, auto pause, end remind, elliptical, rowing, swim, smart rope). Card tap toggles off ↔ walk+run.</string>
+    <string name="toobur_auto_activity_preset_off">Off</string>
+    <string name="toobur_auto_activity_preset_walk_run">Walk and run</string>
+    <string name="toobur_auto_activity_preset_walk_run_bike">Walk, run, bicycle</string>
+    <string name="toobur_auto_activity_preset_walk_run_bike_swim">Walk, run, bicycle, swim</string>
+    <string name="toobur_auto_activity_preset_all_sports">All sports (incl. end reminder)</string>
+    <string name="toobur_device_card_hr_desc">Toggle continuous heart rate on the band</string>
+    <string name="toobur_device_card_spo2_desc">Toggle continuous SpO₂ on the band</string>
+    <string name="toobur_device_card_stress_desc">Toggle continuous stress on the band</string>
+    <string name="toobur_device_card_auto_desc">Toggle auto activity detection (off ↔ walk+run); use device settings for more sports</string>
+    <string name="toobur_device_card_auto_label_wr">W+R</string>
+    <string name="toobur_device_card_auto_label_wrb">W+R+B</string>
+    <string name="toobur_device_card_auto_label_wrb_sw">W+R+B+Sw</string>
+    <string name="toobur_device_card_auto_label_all">All</string>
+    <string name="toobur_pref_hr_interval_title">Measurement interval</string>
+    <string name="toobur_pref_hr_interval_summary">Only these intervals are supported on the device. Value 255 selects smart / dynamic interval from HR intensity.</string>
+    <string name="toobur_pref_category_auto_fetch">Auto background sync</string>
+    <string name="toobur_pref_auto_fetch_enabled_title">Allow auto-fetch for this device</string>
+    <string name="toobur_pref_auto_fetch_enabled_summary">When Gadgetbridge auto-sync runs (e.g. on unlock), this band can be included. Turn off to only sync from the device card or other manual actions.</string>
+    <string name="toobur_pref_auto_fetch_interval_title">Auto-fetch interval (minutes)</string>
+    <string name="toobur_pref_auto_fetch_interval_summary">Minimum minutes between automatic syncs for this band. Enter 0 to use the app-wide “Auto fetch interval” in Gadgetbridge settings.</string>
+
+    <string name="toobur_pref_category_v3_sync">Activity &amp; health sync</string>
+    <string name="toobur_sync_scope_off">Never</string>
+    <string name="toobur_sync_scope_manual">Manual fetch only</string>
+    <string name="toobur_sync_scope_both">Auto and manual</string>
+    <string name="toobur_pref_live_data_mode_title">Live steps / HR (GET 0xA0)</string>
+    <string name="toobur_pref_live_data_mode_summary">Whether to request live data on manual fetch, auto background fetch, both, or never.</string>
+    <string name="toobur_pref_v3_sync_spo2_title">SpO2 (day)</string>
+    <string name="toobur_pref_v3_sync_spo2_summary">v3 type 0x01 — off, manual-only, or auto+manual</string>
+    <string name="toobur_pref_v3_sync_pressure_title">Pressure</string>
+    <string name="toobur_pref_v3_sync_pressure_summary">v3 type 0x02</string>
+    <string name="toobur_pref_v3_sync_hr_day_title">HR (day history)</string>
+    <string name="toobur_pref_v3_sync_hr_day_summary">v3 type 0x03</string>
+    <string name="toobur_pref_v3_sync_activity_title">Activity counts</string>
+    <string name="toobur_pref_v3_sync_activity_summary">v3 type 0x04</string>
+    <string name="toobur_pref_v3_sync_swim_title">Swim</string>
+    <string name="toobur_pref_v3_sync_swim_summary">v3 type 0x06</string>
+    <string name="toobur_pref_v3_sync_sleep_title">Sleep</string>
+    <string name="toobur_pref_v3_sync_sleep_summary">v3 type 0x07</string>
+    <string name="toobur_pref_v3_sync_sport_title">Sport summary</string>
+    <string name="toobur_pref_v3_sync_sport_summary">v3 type 0x08 (day)</string>
     <string name="toobur_pref_weather_title">Weather on watch</string>
     <string name="toobur_pref_weather_summary">Show weather on the watch (SET 0x03 0x2D). Only if device supports it.</string>
+    <string name="toobur_pref_v3_health_sport_probe_title">Sport-only v3 size probe</string>
+    <string name="toobur_pref_v3_health_sport_probe_summary">For v3 cmd 0x05 before sync, use a stored byte offset only for sport (0x08). Set pref toobur_v3_health_sport_offset if needed. Compares to a separate baseline.</string>
+    <string name="toobur_pref_v3_health_fetch_force_full_title">Always full v3 health sync</string>
+    <string name="toobur_pref_v3_health_fetch_force_full_summary">When fetching activity data, always run cmd 0x04 start/stop for all types after 0x05, even if the aggregate size did not increase.</string>
+    <string name="toobur_device_info_mtu_title">MTU (watch)</string>
+    <!-- GET 0x02 0xF0 (IDOGetMtuInfo): watch rx/tx, PHY label, DLE, status byte; phone ATT from Android after negotiation. -->
+    <string name="toobur_device_info_mtu_details">Watch rx %1$d · tx %2$d · PHY %3$s · DLE %4$d · status %5$d · phone ATT %6$d</string>
 </resources>

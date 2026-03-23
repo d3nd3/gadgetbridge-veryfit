@@ -332,10 +332,15 @@ public class ServiceDeviceSupport implements DeviceSupport {
 
     @Override
     public void onFetchRecordedData(int dataTypes) {
+        onFetchRecordedData(dataTypes, false);
+    }
+
+    @Override
+    public void onFetchRecordedData(int dataTypes, boolean autoFetch) {
         if (checkBusy("fetch activity data")) {
             return;
         }
-        delegate.onFetchRecordedData(dataTypes);
+        delegate.onFetchRecordedData(dataTypes, autoFetch);
     }
 
     @Override

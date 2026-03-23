@@ -375,6 +375,11 @@ public class GBDeviceAdapterv2 extends ListAdapter<GBDevice, GBDeviceAdapterv2.V
         TextView[] batteryStatusLabels = {holder.batteryStatusLabel0, holder.batteryStatusLabel1, holder.batteryStatusLabel2};
         ImageView[] batteryIcons = {holder.batteryIcon0, holder.batteryIcon1, holder.batteryIcon2};
 
+        final boolean batteryCardPreferVoltage = DeviceSettingsPreferenceConst.PREF_DEVICE_CARD_BATTERY_DISPLAY_VOLTAGE.equals(
+                GBApplication.getDeviceSpecificSharedPrefs(device.getAddress()).getString(
+                        DeviceSettingsPreferenceConst.PREF_DEVICE_CARD_BATTERY_DISPLAY,
+                        DeviceSettingsPreferenceConst.PREF_DEVICE_CARD_BATTERY_DISPLAY_PERCENT));
+
         for (int batteryIndex = 0; batteryIndex < coordinator.getBatteryCount(device); batteryIndex++) {
 
             int batteryLevel = device.getBatteryLevel(batteryIndex);
@@ -389,7 +394,12 @@ public class GBDeviceAdapterv2 extends ListAdapter<GBDevice, GBDeviceAdapterv2.V
                 batteryIcons[batteryIndex].setImageResource(batteryIcon);
             }
 
-            if (batteryLevel != GBDevice.BATTERY_UNKNOWN) {
+            final boolean hasVoltage = batteryVoltage >= 0;
+
+            if (batteryCardPreferVoltage && hasVoltage) {
+                batteryStatusLabels[batteryIndex].setText(String.format(Locale.getDefault(), "%.2f V", batteryVoltage));
+                batteryIcons[batteryIndex].setImageLevel(200);
+            } else if (batteryLevel != GBDevice.BATTERY_UNKNOWN) {
                 batteryStatusLabels[batteryIndex].setText(device.getBatteryLevel(batteryIndex) + "%");
                 if (BatteryState.BATTERY_CHARGING.equals(batteryState) ||
                         BatteryState.BATTERY_CHARGING_FULL.equals(batteryState)) {
@@ -406,8 +416,8 @@ public class GBDeviceAdapterv2 extends ListAdapter<GBDevice, GBDeviceAdapterv2.V
                         batteryIcons[batteryIndex].setImageLevel(device.getBatteryLevel(batteryIndex));
                     }
                 }
-            } else if (BatteryState.NO_BATTERY.equals(batteryState) && batteryVoltage != GBDevice.BATTERY_UNKNOWN) {
-                batteryStatusLabels[batteryIndex].setText(String.format(Locale.getDefault(), "%.2f", batteryVoltage));
+            } else if (BatteryState.NO_BATTERY.equals(batteryState) && hasVoltage) {
+                batteryStatusLabels[batteryIndex].setText(String.format(Locale.getDefault(), "%.2f V", batteryVoltage));
                 batteryIcons[batteryIndex].setImageLevel(200);
             } else {
                 //should be the "default" status, shown when the device is not connected
@@ -1361,6 +1371,11 @@ public class GBDeviceAdapterv2 extends ListAdapter<GBDevice, GBDeviceAdapterv2.V
                             view.findViewById(R.id.device_custom_action_2_box),
                             view.findViewById(R.id.device_custom_action_2_image),
                             view.findViewById(R.id.device_custom_action_2_label)
+                    ),
+                    new CustomActionHolder(
+                            view.findViewById(R.id.device_custom_action_3_box),
+                            view.findViewById(R.id.device_custom_action_3_image),
+                            view.findViewById(R.id.device_custom_action_3_label)
                     )
             };
 

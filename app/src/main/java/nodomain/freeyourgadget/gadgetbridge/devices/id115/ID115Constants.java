@@ -51,6 +51,8 @@ public class ID115Constants {
     public static final byte CMD_KEY_GET_SN_INFO = 0x06;
     public static final byte CMD_KEY_GET_NOTICE_STATUS = 0x10;
     public static final byte CMD_KEY_GET_LIVE_DATA = (byte) 0xA0;
+    /** GET 0x02 0xF0 — IDOGetMtuInfo: status, rx_mtu, tx_mtu (16-bit LE), phy_speed, dle_length (see VeryFit / confirmed-only.html). */
+    public static final byte CMD_KEY_GET_MTU_INFO = (byte) 0xF0;
     public static final byte CMD_KEY_GET_GSENSOR_PARAM = 0x21;      // GET 0x02 0x21 — rate, range, threshold (reply ≥7 bytes)
 
     // CMD_ID_SETTINGS
@@ -68,6 +70,8 @@ public class ID115Constants {
     public static final byte CMD_KEY_SET_DISPLAY_MODE = 0x2B;
     public static final byte CMD_KEY_SET_ONE_KEY_SOS = 0x2C;
     public static final byte CMD_KEY_SET_WEATHER_SWITCH = 0x2D;
+    /** SET 0x03 0x49 — auto activity / sport detection (11-byte frame; nine flags after key). */
+    public static final byte CMD_KEY_SET_ACTIVITY_SWITCH = 0x49;
     public static final byte CMD_KEY_SET_NOTICE = 0x30;
     public static final byte CMD_ARG_MUSIC_ON = (byte) 0xAA;
     public static final byte CMD_ARG_MUSIC_OFF = 0x55;

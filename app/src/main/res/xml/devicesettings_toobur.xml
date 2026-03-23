@@ -4,12 +4,17 @@
 
     <PreferenceCategory android:title="@string/toobur_pref_category_device" />
 
-    <SwitchPreferenceCompat
-        android:defaultValue="true"
-        android:key="toobur_bind_on_connect"
-        android:layout="@layout/preference_checkbox"
-        android:summary="@string/toobur_pref_bind_summary"
-        android:title="@string/toobur_pref_bind_title" />
+    <Preference
+        android:key="toobur_action_send_bind"
+        android:persistent="false"
+        android:summary="@string/toobur_pref_send_bind_summary"
+        android:title="@string/toobur_pref_send_bind_title" />
+
+    <Preference
+        android:key="toobur_action_send_unbind"
+        android:persistent="false"
+        android:summary="@string/toobur_pref_send_unbind_summary"
+        android:title="@string/toobur_pref_send_unbind_title" />
 
     <SwitchPreferenceCompat
         android:defaultValue="true"
@@ -39,30 +44,151 @@
         android:summary="@string/toobur_pref_raise_to_wake_summary"
         android:title="@string/toobur_pref_raise_to_wake_title" />
 
-    <SwitchPreferenceCompat
-        android:defaultValue="false"
-        android:key="toobur_sos_enabled"
-        android:layout="@layout/preference_checkbox"
-        android:summary="@string/toobur_pref_sos_summary"
-        android:title="@string/toobur_pref_sos_title" />
-
     <PreferenceCategory android:title="@string/toobur_pref_category_health" />
-
-    <ListPreference
-        android:defaultValue="auto"
-        android:entries="@array/toobur_hr_mode_entries"
-        android:entryValues="@array/toobur_hr_mode_values"
-        android:key="toobur_heart_rate_mode"
-        app:useSimpleSummaryProvider="true"
-        android:summary="@string/toobur_pref_hr_mode_summary"
-        android:title="@string/toobur_pref_hr_mode_title" />
 
     <SwitchPreferenceCompat
         android:defaultValue="true"
-        android:key="toobur_realtime_hr_enabled"
+        android:key="toobur_hr_continuous_enabled"
         android:layout="@layout/preference_checkbox"
-        android:summary="@string/toobur_pref_realtime_hr_summary"
-        android:title="@string/toobur_pref_realtime_hr_title" />
+        android:summary="@string/toobur_pref_hr_continuous_summary"
+        android:title="@string/toobur_pref_hr_continuous_title" />
+
+    <ListPreference
+        android:defaultValue="300"
+        android:entries="@array/toobur_hr_interval_entries"
+        android:entryValues="@array/toobur_hr_interval_values"
+        android:key="toobur_hr_interval_seconds"
+        app:useSimpleSummaryProvider="true"
+        android:summary="@string/toobur_pref_hr_interval_summary"
+        android:title="@string/toobur_pref_hr_interval_title" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="true"
+        android:key="toobur_spo2_continuous_enabled"
+        android:layout="@layout/preference_checkbox"
+        android:summary="@string/toobur_pref_spo2_continuous_summary"
+        android:title="@string/toobur_pref_spo2_continuous_title" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="true"
+        android:key="toobur_pressure_continuous_enabled"
+        android:layout="@layout/preference_checkbox"
+        android:summary="@string/toobur_pref_pressure_continuous_summary"
+        android:title="@string/toobur_pref_pressure_continuous_title" />
+
+    <ListPreference
+        android:defaultValue="off"
+        android:entries="@array/toobur_auto_activity_preset_entries"
+        android:entryValues="@array/toobur_auto_activity_preset_values"
+        android:key="toobur_auto_activity_preset"
+        app:useSimpleSummaryProvider="true"
+        android:summary="@string/toobur_pref_auto_activity_summary"
+        android:title="@string/toobur_pref_auto_activity_title" />
+
+    <PreferenceCategory android:title="@string/toobur_pref_category_auto_fetch" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="true"
+        android:key="toobur_auto_fetch_enabled"
+        android:layout="@layout/preference_checkbox"
+        android:summary="@string/toobur_pref_auto_fetch_enabled_summary"
+        android:title="@string/toobur_pref_auto_fetch_enabled_title" />
+
+    <androidx.preference.EditTextPreference
+        android:defaultValue="0"
+        android:key="toobur_auto_fetch_interval_minutes"
+        android:title="@string/toobur_pref_auto_fetch_interval_title"
+        app:useSimpleSummaryProvider="true"
+        android:summary="@string/toobur_pref_auto_fetch_interval_summary"
+        android:dialogTitle="@string/toobur_pref_auto_fetch_interval_title" />
+
+    <PreferenceCategory android:title="@string/toobur_pref_category_v3_sync" />
+
+    <ListPreference
+        android:defaultValue="both"
+        android:entries="@array/toobur_sync_scope_entries"
+        android:entryValues="@array/toobur_sync_scope_values"
+        android:key="toobur_live_data_fetch_mode"
+        app:useSimpleSummaryProvider="true"
+        android:summary="@string/toobur_pref_live_data_mode_summary"
+        android:title="@string/toobur_pref_live_data_mode_title" />
+
+    <ListPreference
+        android:defaultValue="both"
+        android:entries="@array/toobur_sync_scope_entries"
+        android:entryValues="@array/toobur_sync_scope_values"
+        android:key="toobur_v3_sync_spo2_mode"
+        app:useSimpleSummaryProvider="true"
+        android:summary="@string/toobur_pref_v3_sync_spo2_summary"
+        android:title="@string/toobur_pref_v3_sync_spo2_title" />
+
+    <ListPreference
+        android:defaultValue="both"
+        android:entries="@array/toobur_sync_scope_entries"
+        android:entryValues="@array/toobur_sync_scope_values"
+        android:key="toobur_v3_sync_pressure_mode"
+        app:useSimpleSummaryProvider="true"
+        android:summary="@string/toobur_pref_v3_sync_pressure_summary"
+        android:title="@string/toobur_pref_v3_sync_pressure_title" />
+
+    <ListPreference
+        android:defaultValue="both"
+        android:entries="@array/toobur_sync_scope_entries"
+        android:entryValues="@array/toobur_sync_scope_values"
+        android:key="toobur_v3_sync_hr_day_mode"
+        app:useSimpleSummaryProvider="true"
+        android:summary="@string/toobur_pref_v3_sync_hr_day_summary"
+        android:title="@string/toobur_pref_v3_sync_hr_day_title" />
+
+    <ListPreference
+        android:defaultValue="both"
+        android:entries="@array/toobur_sync_scope_entries"
+        android:entryValues="@array/toobur_sync_scope_values"
+        android:key="toobur_v3_sync_activity_mode"
+        app:useSimpleSummaryProvider="true"
+        android:summary="@string/toobur_pref_v3_sync_activity_summary"
+        android:title="@string/toobur_pref_v3_sync_activity_title" />
+
+    <ListPreference
+        android:defaultValue="both"
+        android:entries="@array/toobur_sync_scope_entries"
+        android:entryValues="@array/toobur_sync_scope_values"
+        android:key="toobur_v3_sync_swim_mode"
+        app:useSimpleSummaryProvider="true"
+        android:summary="@string/toobur_pref_v3_sync_swim_summary"
+        android:title="@string/toobur_pref_v3_sync_swim_title" />
+
+    <ListPreference
+        android:defaultValue="both"
+        android:entries="@array/toobur_sync_scope_entries"
+        android:entryValues="@array/toobur_sync_scope_values"
+        android:key="toobur_v3_sync_sleep_mode"
+        app:useSimpleSummaryProvider="true"
+        android:summary="@string/toobur_pref_v3_sync_sleep_summary"
+        android:title="@string/toobur_pref_v3_sync_sleep_title" />
+
+    <ListPreference
+        android:defaultValue="both"
+        android:entries="@array/toobur_sync_scope_entries"
+        android:entryValues="@array/toobur_sync_scope_values"
+        android:key="toobur_v3_sync_sport_mode"
+        app:useSimpleSummaryProvider="true"
+        android:summary="@string/toobur_pref_v3_sync_sport_summary"
+        android:title="@string/toobur_pref_v3_sync_sport_title" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="toobur_v3_health_sport_offset_probe"
+        android:layout="@layout/preference_checkbox"
+        android:summary="@string/toobur_pref_v3_health_sport_probe_summary"
+        android:title="@string/toobur_pref_v3_health_sport_probe_title" />
+
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:key="toobur_v3_health_fetch_force_full"
+        android:layout="@layout/preference_checkbox"
+        android:summary="@string/toobur_pref_v3_health_fetch_force_full_summary"
+        android:title="@string/toobur_pref_v3_health_fetch_force_full_title" />
 
     <SwitchPreferenceCompat
         android:defaultValue="false"

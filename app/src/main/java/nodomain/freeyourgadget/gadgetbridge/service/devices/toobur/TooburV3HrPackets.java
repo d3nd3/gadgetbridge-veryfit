@@ -16,16 +16,21 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 package nodomain.freeyourgadget.gadgetbridge.service.devices.toobur;
 
+import org.slf4j.Logger;
+
+import java.util.Locale;
+
+import nodomain.freeyourgadget.gadgetbridge.util.GB;
+
 /**
- * VeryFit / IDO v3 heart-rate mode on {@code 0x0AF6}: cmd {@code 0x0009} (evt 5010).
- * <p>
- * One 26-byte frame: {@code UPDATE_TIMESTAMP(4)} + {@code ON_OFF(2)} +
- * null {@code START-END(4)} + {@code INTERVAL(2 LE)} + CRC16 — same shape as
- * {@code htmlapp/toobur-hr-csv.html} {@code buildV3HrUnifiedPacket} / dual-step1-only captures
- * (e.g. OFF: {@code AA 00} + {@code 00 00 00 00} + interval; ON: {@code CC 00} + same).
- * </p>
+ * VeryFit / IDO v3 heart-rate mode: cmd {@code 0x0009} (evt 5010) is written on
+ * {@code 0x0AF6} (same as {@code htmlapp/toobur-hr-csv.html} TX); {@code 0x0AF1} is for v3 bulk sync.
+ * Use a single unified 26-byte frame via {@link #buildHrUnified}.
  */
 final class TooburV3HrPackets {
+    /** v3 cmd LE at bytes 8–9 (raw 0x0AF2) / 7–8 (reassembled without leading {@code 0x33}). */
+    static final int V3_CMD_HR_UNIFIED = 0x0009;
+
     static final int PACKET_LEN = 26;
     private static final byte[] MAGIC = {
             0x33, (byte) 0xDA, (byte) 0xAD, (byte) 0xDA, (byte) 0xAD,
@@ -66,9 +71,9 @@ final class TooburV3HrPackets {
      * Single v3 HR command: on/off and/or interval change (no legacy SET {@code 0x03 0x25}).
      *
      * @param continuousOn true = ON ({@code 0xCC}), false = OFF ({@code 0xAA})
-     * @param intervalSeconds measurement interval in seconds; {@code 255} = smart/dynamic HR
+     * @param intervalSeconds one of {@code 5, 60, 180, 300, 600, 900, 1800} or {@code 255} (smart / intensity-based)
      */
-    static byte[] buildHrUnified(boolean continuousOn, int intervalSeconds, int seq) {
+    public static byte[] buildHrUnified(boolean continuousOn, int intervalSeconds, int seq) {
         byte[] p = new byte[PACKET_LEN];
         System.arraycopy(MAGIC, 0, p, 0, MAGIC.length);
         p[10] = (byte) (seq & 0xFF);
@@ -92,19 +97,88 @@ final class TooburV3HrPackets {
         return p;
     }
 
+    /** Device-supported fixed intervals (seconds). {@code 255} is handled separately (smart HR). */
+    private static final int[] HR_INTERVAL_FIXED_SEC = {5, 60, 180, 300, 600, 900, 1800};
+
     /**
-     * Valid wire values: fixed seconds (5–3600) or 255 = smart / dynamic HR.
+     * Normalize to a supported wire value: {@code 5, 60, 180, 300, 600, 900, 1800} or {@code 255} (smart).
+     * Unknown values snap to the nearest fixed interval (legacy prefs).
      */
-    static int clampInterval(int seconds) {
+    public static int clampInterval(int seconds) {
         if (seconds == 255) {
             return 255;
         }
-        if (seconds < 5) {
-            return 5;
+        for (int v : HR_INTERVAL_FIXED_SEC) {
+            if (seconds == v) {
+                return v;
+            }
         }
-        if (seconds > 3600) {
-            return 3600;
+        int best = 300;
+        int bestDist = Integer.MAX_VALUE;
+        for (int v : HR_INTERVAL_FIXED_SEC) {
+            int d = Math.abs(seconds - v);
+            if (d < bestDist) {
+                bestDist = d;
+                best = v;
+            }
         }
-        return seconds;
+        return best;
+    }
+
+    private static int u16le(byte[] d, int off) {
+        if (d == null || d.length < off + 2) {
+            return 0;
+        }
+        return (d[off] & 0xFF) | ((d[off + 1] & 0xFF) << 8);
+    }
+
+    /**
+     * If {@code data} is a raw 0x0AF2 notify with v3 magic {@code 0x33} and cmd {@link #V3_CMD_HR_UNIFIED},
+     * logs INFO (matches VeryFit {@code protocol_receive_data} lines e.g. app_fresh_launch.txt:184).
+     *
+     * @return true if this was a 0x09 frame (caller may still forward to super)
+     */
+    public static boolean logV3Hr09RxIfPresent(byte[] data, Logger log) {
+        if (data == null || data.length < 12 || log == null || !log.isInfoEnabled()) {
+            return false;
+        }
+        if ((data[0] & 0xFF) != 0x33) {
+            return false;
+        }
+        if (u16le(data, 8) != V3_CMD_HR_UNIFIED) {
+            return false;
+        }
+        int innerLen = u16le(data, 6);
+        int nseq = u16le(data, 10);
+        int intervalEcho = data.length >= 24 ? u16le(data, 22) : -1;
+        boolean crcOk = data.length >= 4 && crc16CcittFalse(data, 1, data.length - 3)
+                == (u16le(data, data.length - 2));
+        log.info("TOOBUR HR: v3 0x09 RX (0x0AF2) nseq=0x{} innerLen={} intervalEcho={}s crcOk={} hex={}",
+                String.format(Locale.US, "%04X", nseq & 0xFFFF),
+                innerLen,
+                intervalEcho,
+                crcOk,
+                GB.hexdump(data));
+        return true;
+    }
+
+    /**
+     * Log reassembled v3 frame without leading {@code 0x33} (see {@link TooburV3HealthSync.V3ReassemblyBuffer}).
+     */
+    public static void logV3Hr09StrippedRx(byte[] frame, Logger log) {
+        if (frame == null || frame.length < 12 || log == null || !log.isInfoEnabled()) {
+            return;
+        }
+        if (u16le(frame, 7) != V3_CMD_HR_UNIFIED) {
+            return;
+        }
+        int innerLen = u16le(frame, 5);
+        int nseq = u16le(frame, 9);
+        int intervalEcho = frame.length >= 23 ? u16le(frame, 21) : -1;
+        log.info("TOOBUR HR: v3 0x09 RX (0x0AF2 reassembled) nseq=0x{} innerLen={} intervalEcho={}s hex={}",
+                String.format(Locale.US, "%04X", nseq & 0xFFFF),
+                innerLen,
+                intervalEcho,
+                GB.hexdump(frame));
     }
 }

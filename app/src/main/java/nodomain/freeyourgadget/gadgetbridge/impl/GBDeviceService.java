@@ -397,8 +397,14 @@ public class GBDeviceService implements DeviceService {
 
     @Override
     public void onFetchRecordedData(int dataTypes) {
+        onFetchRecordedData(dataTypes, false);
+    }
+
+    @Override
+    public void onFetchRecordedData(int dataTypes, boolean autoFetch) {
         Intent intent = createIntent().setAction(ACTION_FETCH_RECORDED_DATA)
-                .putExtra(EXTRA_RECORDED_DATA_TYPES, dataTypes);
+                .putExtra(EXTRA_RECORDED_DATA_TYPES, dataTypes)
+                .putExtra(EXTRA_RECORDED_DATA_AUTO_FETCH, autoFetch);
         invokeService(intent);
     }
 

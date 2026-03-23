@@ -92,7 +92,8 @@ public abstract class AbstractID115Operation extends AbstractBTLEOperation<ID115
         }
     }
 
-    abstract boolean isHealthOperation();
+    protected abstract boolean isHealthOperation();
 
-    abstract void handleResponse(byte[] data);
+    /** @noinspection JavaDoc */
+    protected abstract void handleResponse(byte[] data);
 }

@@ -346,6 +346,9 @@ public final class BtLEQueue implements Thread.UncaughtExceptionHandler {
 
         final long delayMs = mDeviceSupport.getGattConnectDelayMs();
         mDeviceSupport.onGattConnectDelayScheduled(delayMs > 0);
+        /* After a deferred connectGatt (OEM/TOOBUR scan-then-connect), some peripherals need longer than
+         * the default 5s to complete the connection — same watch often succeeds with a longer watchdog. */
+        final long gattConnectWatchdogMs = delayMs > 0 ? 12_000L : 5_000L;
 
         final Runnable performConnectGatt = () -> {
             synchronized (mGattMonitor) {
@@ -359,9 +362,10 @@ public final class BtLEQueue implements Thread.UncaughtExceptionHandler {
                 }
                 mGattConnectTimeoutHandler.removeCallbacksAndMessages(null);
                 mGattConnectTimeoutHandler.postDelayed(() -> {
-                    LOG.warn("Timed out connecting to GATT for {}", mGbDevice.getName());
+                    LOG.warn("Timed out connecting to GATT for {} (watchdog {} ms after connectGatt, deferBeforeConnect={} ms)",
+                            mGbDevice.getName(), gattConnectWatchdogMs, delayMs);
                     handleDisconnected(0x93 /* BluetoothGatt.GATT_CONNECTION_TIMEOUT */);
-                }, 5000L);
+                }, gattConnectWatchdogMs);
 
                 // connectGatt with true doesn't really work ;( too often connection problems
                 if (GBApplication.isRunningOreoOrLater() && !connectionForceLegacyGatt) {

@@ -23,9 +23,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,6 +41,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -68,6 +71,10 @@ public class DevicesFragment extends Fragment {
     private FloatingActionButton fab;
     List<GBDevice> deviceList;
     private  HashMap<String, DailyTotals> deviceActivityHashMap = new HashMap();
+
+    /** Per-device prefs listeners so device card UI (e.g. battery % vs V) updates without app restart. */
+    private final List<Pair<SharedPreferences, SharedPreferences.OnSharedPreferenceChangeListener>>
+            deviceCardPrefsRegistrations = new ArrayList<>();
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
@@ -193,6 +200,43 @@ public class DevicesFragment extends Fragment {
         return currentView;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        registerDeviceCardPreferenceListeners();
+    }
+
+    private void registerDeviceCardPreferenceListeners() {
+        unregisterDeviceCardPreferenceListeners();
+        if (deviceList == null || deviceManager == null) {
+            return;
+        }
+        for (GBDevice d : deviceList) {
+            SharedPreferences sp = GBApplication.getDeviceSpecificSharedPrefs(d.getAddress());
+            if (sp == null) {
+                continue;
+            }
+            final String address = d.getAddress();
+            SharedPreferences.OnSharedPreferenceChangeListener listener = (prefs, key) -> {
+                if (DeviceSettingsPreferenceConst.PREF_DEVICE_CARD_BATTERY_DISPLAY.equals(key)) {
+                    GBDevice dev = deviceManager.getDeviceByAddress(address);
+                    if (dev != null) {
+                        refreshSingleDevice(dev);
+                    }
+                }
+            };
+            sp.registerOnSharedPreferenceChangeListener(listener);
+            deviceCardPrefsRegistrations.add(new Pair<>(sp, listener));
+        }
+    }
+
+    private void unregisterDeviceCardPreferenceListeners() {
+        for (Pair<SharedPreferences, SharedPreferences.OnSharedPreferenceChangeListener> p : deviceCardPrefsRegistrations) {
+            p.first.unregisterOnSharedPreferenceChangeListener(p.second);
+        }
+        deviceCardPrefsRegistrations.clear();
+    }
+
     private void launchDiscoveryActivity() {
         startActivity(new Intent(getActivity(), DiscoveryActivityV2.class));
     }
@@ -211,6 +255,7 @@ public class DevicesFragment extends Fragment {
 
     @Override
     public void onDestroy() {
+        unregisterDeviceCardPreferenceListeners();
         if (deviceListView != null) unregisterForContextMenu(deviceListView);
         LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(mReceiver);
         super.onDestroy();
@@ -227,6 +272,7 @@ public class DevicesFragment extends Fragment {
             mGBDeviceAdapter.rebuildFolders();
             mGBDeviceAdapter.notifyDataSetChanged();
         }
+        registerDeviceCardPreferenceListeners();
     }
 
     public void refreshSingleDevice(final GBDevice device) {

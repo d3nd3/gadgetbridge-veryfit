@@ -597,6 +597,11 @@ public class DeviceSettingsPreferenceConst {
     public static final String PREFS_ACTIVITY_IN_DEVICE_CARD_STEPS = "prefs_activity_in_device_card_steps";
     public static final String PREFS_ACTIVITY_IN_DEVICE_CARD_SLEEP = "prefs_activity_in_device_card_sleep";
     public static final String PREFS_ACTIVITY_IN_DEVICE_CARD_DISTANCE = "prefs_activity_in_device_card_distance";
+
+    /** Per-device: main device list battery label — {@link #PREF_DEVICE_CARD_BATTERY_DISPLAY_PERCENT} or {@link #PREF_DEVICE_CARD_BATTERY_DISPLAY_VOLTAGE}. */
+    public static final String PREF_DEVICE_CARD_BATTERY_DISPLAY = "pref_device_card_battery_display";
+    public static final String PREF_DEVICE_CARD_BATTERY_DISPLAY_PERCENT = "percent";
+    public static final String PREF_DEVICE_CARD_BATTERY_DISPLAY_VOLTAGE = "voltage";
     public static final String PREFS_DEVICE_CHARTS_TABS = "charts_tabs";
     public static final String PREFS_PER_APP_NOTIFICATION_SETTINGS = "pref_per_app_notification_settings";
     public static final String PREF_MULTIPOINT = "pref_multipoint";

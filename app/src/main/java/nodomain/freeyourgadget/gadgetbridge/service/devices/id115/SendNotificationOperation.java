@@ -88,7 +88,7 @@ public class SendNotificationOperation extends AbstractID115Operation {
     }
 
     @Override
-    boolean isHealthOperation() {
+    protected boolean isHealthOperation() {
         return false;
     }
 
@@ -121,7 +121,7 @@ public class SendNotificationOperation extends AbstractID115Operation {
     }
 
     @Override
-    void handleResponse(byte[] data) {
+    protected void handleResponse(byte[] data) {
         if (!isOperationRunning()) {
             LOG.error("ignoring notification because operation is not running. Data length: " + data.length);
             getSupport().logMessageContent(data);

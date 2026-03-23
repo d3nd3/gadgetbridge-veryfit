@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory android:title="@string/pref_device_card_battery_category_title" />
+
+    <ListPreference
+        android:defaultValue="percent"
+        android:entries="@array/pref_device_card_battery_display_entries"
+        android:entryValues="@array/pref_device_card_battery_display_values"
+        android:key="pref_device_card_battery_display"
+        android:summary="@string/pref_device_card_battery_display_summary"
+        android:title="@string/pref_device_card_battery_display_title"
+        app:useSimpleSummaryProvider="true" />
+
+</androidx.preference.PreferenceScreen>
