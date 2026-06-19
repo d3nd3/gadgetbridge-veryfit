@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.text.format.DateUtils;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -71,6 +72,8 @@ import nodomain.freeyourgadget.gadgetbridge.activities.dashboard.DashboardCalori
 import nodomain.freeyourgadget.gadgetbridge.activities.dashboard.DashboardDistanceWidget;
 import nodomain.freeyourgadget.gadgetbridge.activities.dashboard.DashboardGoalsWidget;
 import nodomain.freeyourgadget.gadgetbridge.activities.dashboard.DashboardHrvWidget;
+import nodomain.freeyourgadget.gadgetbridge.activities.dashboard.DashboardBloodPressureWidget;
+import nodomain.freeyourgadget.gadgetbridge.activities.dashboard.DashboardPaiWidget;
 import nodomain.freeyourgadget.gadgetbridge.activities.dashboard.DashboardSleepScoreWidget;
 import nodomain.freeyourgadget.gadgetbridge.activities.dashboard.DashboardSleepWidget;
 import nodomain.freeyourgadget.gadgetbridge.activities.dashboard.DashboardStepsWidget;
@@ -259,7 +262,7 @@ public class DashboardFragment extends Fragment implements MenuProvider {
             textViewDate.setText(requireContext().getString(R.string.activity_summary_today));
             arrowRight.setAlpha(0.5f);
         } else {
-            textViewDate.setText(DateTimeUtils.formatDate(day.getTime()));
+            textViewDate.setText(DateTimeUtils.formatDate(day.getTime(), DateUtils.FORMAT_SHOW_WEEKDAY));
             arrowRight.setAlpha(1);
         }
 
@@ -302,8 +305,14 @@ public class DashboardFragment extends Fragment implements MenuProvider {
                     case "bodyenergy":
                         widget = DashboardBodyEnergyWidget.newInstance(dashboardData);
                         break;
+                    case "pai":
+                        widget = DashboardPaiWidget.newInstance(dashboardData);
+                        break;
                     case "hrv":
                         widget = DashboardHrvWidget.newInstance(dashboardData);
+                        break;
+                    case "bloodpressure":
+                        widget = DashboardBloodPressureWidget.newInstance(dashboardData);
                         break;
                     case "vo2max_running":
                         widget = DashboardVO2MaxRunningWidget.newInstance(dashboardData);

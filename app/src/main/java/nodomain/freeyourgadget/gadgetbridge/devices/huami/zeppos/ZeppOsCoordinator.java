@@ -19,8 +19,10 @@ package nodomain.freeyourgadget.gadgetbridge.devices.huami.zeppos;
 import android.app.Activity;
 import android.content.Context;
 import android.net.Uri;
+import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -58,9 +60,11 @@ import nodomain.freeyourgadget.gadgetbridge.entities.AbstractActivitySample;
 import nodomain.freeyourgadget.gadgetbridge.entities.DaoSession;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivitySummaryParser;
+import nodomain.freeyourgadget.gadgetbridge.model.ActivityTrackProvider;
 import nodomain.freeyourgadget.gadgetbridge.service.DeviceSupport;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.HuamiLanguageType;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.HuamiVibrationPatternNotificationType;
+import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.zeppos.ZeppOsActivityTrackProvider;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.zeppos.ZeppOsBtbrSupport;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.zeppos.ZeppOsBtleSupport;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.huami.zeppos.ZeppOsFwInstallHandler;
@@ -129,7 +133,7 @@ public abstract class ZeppOsCoordinator extends HuamiCoordinator {
     }
 
     @Override
-    public InstallHandler findInstallHandler(final Uri uri, final Context context) {
+    public InstallHandler findInstallHandler(final Uri uri, final Bundle options, final Context context) {
         if (supportsAgpsUpdates()) {
             final ZeppOsAgpsInstallHandler agpsInstallHandler = new ZeppOsAgpsInstallHandler(uri, context);
             if (agpsInstallHandler.isValid()) {
@@ -317,6 +321,12 @@ public abstract class ZeppOsCoordinator extends HuamiCoordinator {
     }
 
     @Override
+    @Nullable
+    public ActivityTrackProvider getActivityTrackProvider(@NonNull final GBDevice device, @NonNull final Context context) {
+        return new ZeppOsActivityTrackProvider();
+    }
+
+    @Override
     public boolean supportsAlarmSnoozing(@NonNull GBDevice device) {
         // All alarms snooze by default, there doesn't seem to be a flag that disables it
         return false;
@@ -498,6 +508,10 @@ public abstract class ZeppOsCoordinator extends HuamiCoordinator {
                     DeviceSpecificSettingsScreen.CALENDAR,
                     R.xml.devicesettings_sync_calendar
             );
+            deviceSpecificSettings.addRootScreen(
+                    DeviceSpecificSettingsScreen.CALENDAR,
+                    R.xml.devicesettings_sync_calendar_event_reminders
+            );
         }
 
         //
@@ -647,7 +661,7 @@ public abstract class ZeppOsCoordinator extends HuamiCoordinator {
     }
 
     public boolean supportsFtpServer(final GBDevice device) {
-        return false;
+        return supportsWifiHotspot(device);
     }
 
     public boolean hasGps(final GBDevice device) {

@@ -45,7 +45,7 @@ public class FitNap extends RecordData {
     }
 
     @Nullable
-    public Integer getUnknown1() {
+    public Integer getStartTzOffset() {
         return getFieldByNumber(1, Integer.class);
     }
 
@@ -55,28 +55,33 @@ public class FitNap extends RecordData {
     }
 
     @Nullable
-    public Integer getUnknown3() {
+    public Integer getEndTzOffset() {
         return getFieldByNumber(3, Integer.class);
     }
 
     @Nullable
-    public Integer getUnknown4() {
+    public Integer getFeedback() {
         return getFieldByNumber(4, Integer.class);
     }
 
     @Nullable
-    public Integer getUnknown6() {
-        return getFieldByNumber(6, Integer.class);
+    public Boolean getDeleted() {
+        return getFieldByNumber(6, Boolean.class);
     }
 
     @Nullable
-    public Long getTimestamp7() {
+    public Long getUpdatedTimestamp() {
         return getFieldByNumber(7, Long.class);
     }
 
     @Nullable
     public Long getTimestamp() {
         return getFieldByNumber(253, Long.class);
+    }
+
+    @Nullable
+    public Integer getMessageIndex() {
+        return getFieldByNumber(254, Integer.class);
     }
 
     /**
@@ -92,7 +97,7 @@ public class FitNap extends RecordData {
             return this;
         }
 
-        public Builder setUnknown1(final Integer value) {
+        public Builder setStartTzOffset(final Integer value) {
             setFieldByNumber(1, value);
             return this;
         }
@@ -102,28 +107,33 @@ public class FitNap extends RecordData {
             return this;
         }
 
-        public Builder setUnknown3(final Integer value) {
+        public Builder setEndTzOffset(final Integer value) {
             setFieldByNumber(3, value);
             return this;
         }
 
-        public Builder setUnknown4(final Integer value) {
+        public Builder setFeedback(final Integer value) {
             setFieldByNumber(4, value);
             return this;
         }
 
-        public Builder setUnknown6(final Integer value) {
+        public Builder setDeleted(final Boolean value) {
             setFieldByNumber(6, value);
             return this;
         }
 
-        public Builder setTimestamp7(final Long value) {
+        public Builder setUpdatedTimestamp(final Long value) {
             setFieldByNumber(7, value);
             return this;
         }
 
         public Builder setTimestamp(final Long value) {
             setFieldByNumber(253, value);
+            return this;
+        }
+
+        public Builder setMessageIndex(final Integer value) {
+            setFieldByNumber(254, value);
             return this;
         }
 

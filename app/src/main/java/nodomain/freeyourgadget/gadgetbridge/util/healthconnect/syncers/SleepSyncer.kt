@@ -28,9 +28,12 @@ import nodomain.freeyourgadget.gadgetbridge.model.ActivitySample
 import nodomain.freeyourgadget.gadgetbridge.util.healthconnect.HealthConnectUtils
 import org.slf4j.LoggerFactory
 import java.time.Instant
-import java.time.ZoneOffset
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 private val LOG = LoggerFactory.getLogger("SleepSyncer")
+
+private const val IN_PROGRESS_THRESHOLD_HOURS = 6L
 
 internal object SleepSyncer : ContextualActivitySampleSyncer {
 
@@ -38,7 +41,7 @@ internal object SleepSyncer : ContextualActivitySampleSyncer {
         healthConnectClient: HealthConnectClient,
         gbDevice: GBDevice,
         metadata: Metadata,
-        offset: ZoneOffset,
+        offset: ZoneId,
         sliceStartBoundary: Instant,
         sliceEndBoundary: Instant,
         grantedPermissions: Set<String>,
@@ -101,7 +104,22 @@ internal object SleepSyncer : ContextualActivitySampleSyncer {
         LOG.info("Attempting to insert ${sleepSessionRecordList.size} SleepSessionRecord(s) for device '$deviceName' for slice $sliceStartBoundary to $sliceEndBoundary.")
         HealthConnectUtils.insertRecords(sleepSessionRecordList, healthConnectClient)
         LOG.info("Successfully inserted SleepSessionRecord(s) for device '$deviceName' for slice $sliceStartBoundary to $sliceEndBoundary.")
-        val latestTs = sleepSessionRecordList.maxOfOrNull { it.endTime }
+
+        val now = Instant.now()
+        var latestTs: Instant? = null
+        for (record in sleepSessionRecordList) {
+            val sessionEnd = record.endTime
+            val sessionStart = record.startTime
+            val effectiveTs = if (sessionEnd.isAfter(now.minus(IN_PROGRESS_THRESHOLD_HOURS, ChronoUnit.HOURS))) {
+                LOG.info("Sleep session ending at $sessionEnd may still be in progress — holding cursor at $sessionStart for re-processing.")
+                sessionStart.minusSeconds(1)
+            } else {
+                sessionEnd
+            }
+            if (latestTs == null || effectiveTs.isAfter(latestTs)) {
+                latestTs = effectiveTs
+            }
+        }
         return SyncerStatistics(recordsSynced = sleepSessionRecordList.size, recordsSkipped = skippedCount, recordType = "Sleep", latestRecordTimestamp = latestTs)
     }
 
@@ -114,7 +132,7 @@ internal object SleepSyncer : ContextualActivitySampleSyncer {
         sortedDeviceSamples: List<ActivitySample>,
         sliceStartBoundary: Instant,
         sliceEndBoundary: Instant,
-        offset: ZoneOffset,
+        offset: ZoneId,
         metadata: Metadata,
         context: Context,
         deviceName: String
@@ -123,11 +141,14 @@ internal object SleepSyncer : ContextualActivitySampleSyncer {
         val sessionBoundaryStart = analysisSession.sleepStart.toInstant()
         val sessionBoundaryEndInclusive = analysisSession.sleepEnd.toInstant()
 
-        // Check if session overlaps with the current slice (inclusive boundaries [sliceStart, sliceEnd])
-        // Skip if: sessionStart > sliceEnd OR sessionEnd < sliceStart
-        if (sessionBoundaryStart.isAfter(sliceEndBoundary) || sessionBoundaryEndInclusive.isBefore(sliceStartBoundary)) {
+        // Only process this session if its START falls within the current slice [sliceStart, sliceEnd).
+        // The look-back query ensures full session data is available even for sessions starting near the
+        // previous slice boundary. The look-forward query ensures full session data for sessions starting
+        // near the current slice end. This ownership rule prevents duplicate records when the same session
+        // is discovered across multiple slices due to the look-back overlap.
+        if (sessionBoundaryStart.isBefore(sliceStartBoundary) || !sessionBoundaryStart.isBefore(sliceEndBoundary)) {
             LOG.debug(
-                "Skipping sleep session (identified by SleepAnalysis) for device '{}' (Timeframe: {} to {}) as it does not overlap with current slice ({} to {}).",
+                "Skipping sleep session (identified by SleepAnalysis) for device '{}' (Timeframe: {} to {}) as its start does not fall within current slice [{} to {}).",
                 deviceName,
                 sessionBoundaryStart,
                 sessionBoundaryEndInclusive,
@@ -177,15 +198,24 @@ internal object SleepSyncer : ContextualActivitySampleSyncer {
 
         LOG.info("Prepared SleepSessionRecord for device '$deviceName' (Session: $recordFinalStartTime to $recordFinalEndTime). Stages: ${stages.size}")
 
+        val startHourEpoch = recordFinalStartTime.epochSecond / 3600 * 3600
+        val clientRecordId = "gb-sleep-${metadata.device?.manufacturer ?: "unknown"}-${metadata.device?.model ?: "unknown"}-$startHourEpoch"
+        val sessionMetadata = Metadata.autoRecorded(
+            clientRecordId = clientRecordId,
+            clientRecordVersion = stages.size.toLong(),
+            device = metadata.device!!
+        )
+        LOG.info("Sleep session clientRecordId=$clientRecordId, clientRecordVersion=${stages.size}")
+
         return SleepSessionRecord(
             startTime = recordFinalStartTime,
-            startZoneOffset = offset,
+            startZoneOffset = offset.rules.getOffset(recordFinalStartTime),
             endTime = recordFinalEndTime,
-            endZoneOffset = offset,
+            endZoneOffset = offset.rules.getOffset(recordFinalEndTime),
             title = context.getString(nodomain.freeyourgadget.gadgetbridge.R.string.health_connect_sleep_session_title, deviceName),
             notes = context.getString(nodomain.freeyourgadget.gadgetbridge.R.string.health_connect_sleep_session_notes, deviceName),
             stages = stages,
-            metadata = metadata
+            metadata = sessionMetadata
         )
     }
 

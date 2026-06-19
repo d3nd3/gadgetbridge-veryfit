@@ -78,8 +78,8 @@
     <string name="watch9_time_minutes">Minutes :</string>
     <string name="activity_db_management_empty_db_warning">Attention! En cliquant sur ce bouton, vous supprimerez toutes vos données et recommencerez à zéro.</string>
     <string name="live_activity_max_heart_rate">Mesure cardiaque actuelle / maximum : %1$d / %2$d</string>
-    <string name="overstep">Trop d\'activité : %1$d</string>
-    <string name="lack_of_step">Manque d\'activité : %1$d</string>
+    <string name="overstep">Trop d\'activité : %1$s</string>
+    <string name="lack_of_step">Manque d\'activité : %1$s</string>
     <string name="overslept">Excès de sommeil : %1$s</string>
     <string name="lack_of_sleep">Manque de sommeil : %1$s</string>
     <string name="zetime_activity_tracking_summary">Activer le suivi des activités : comptera vos pas, etc.</string>
@@ -345,7 +345,7 @@
     <string name="mi2_dnd_automatic">Automatique (détection de sommeil)</string>
     <string name="mi2_dnd_off">Éteint</string>
     <string name="off">Éteint</string>
-    <string name="mi2_enable_text_notifications_summary">Requis : micrologiciel version 1.0.1.28 ou plus, fichier Mili_pro.ft* installé.</string>
+    <string name="mi2_enable_text_notifications_summary"><![CDATA[Requis : micrologiciel version 1.0.1.28 ou plus, fichier Mili_pro.ft* installé.]]></string>
     <string name="mi2_enable_text_notifications">Notifications textuelles</string>
     <string name="miband2_prefs_timeformat">Mi2 : format de l\'heure</string>
     <string name="StringUtils_sender">(%1$s)</string>
@@ -358,8 +358,8 @@
     <string name="pref_title_setup_bt_pairing">Activer le jumelage Bluetooth</string>
     <string name="pebble_pairing_hint">Une fenêtre de jumelage va s’afficher sur votre téléphone. Si cela ne se produit pas, regardez dans vos notifications et acceptez-la. Acceptez ensuite la demande de jumelage sur votre Pebble.</string>
     <string name="title_activity_pebble_pairing">Jumelage avec une Pebble</string>
-    <string name="Delete">Supprimer</string>
-    <string name="Cancel">Annuler</string>
+    <string name="delete">Supprimer</string>
+    <string name="cancel">Annuler</string>
     <string name="dbmanagementactivity_overwrite">Écraser</string>
     <string name="dbmanagementactivity_old_activity_db_deletion_failed">Échec de la destruction de l\'ancienne base de données.</string>
     <string name="dbmanagementactivity_old_activity_db_successfully_deleted">Les anciennes données d\'activité ont été effacées.</string>
@@ -404,7 +404,7 @@
     <string name="mi2_prefs_display_items">Éléments à afficher</string>
     <string name="mi2_prefs_goal_notification_summary">Le bracelet vibrera lorsque l\'objectif de pas quotidien sera atteint</string>
     <string name="mi2_prefs_goal_notification">Notification d\'objectif</string>
-    <string name="dateformat_date_time">Date et heure</string>
+    <string name="dateformat_date_time"><![CDATA[Date et heure]]></string>
     <string name="dateformat_time">Heure</string>
     <string name="miband2_prefs_dateformat">Format de la date</string>
     <string name="miband_prefs_device_time_offset_hours">La compensation de temps en heure (pour travailleurs en rotation, par exemple)</string>

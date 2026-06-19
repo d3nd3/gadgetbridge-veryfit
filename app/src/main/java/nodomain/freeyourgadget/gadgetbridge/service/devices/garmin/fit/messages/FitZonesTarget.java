@@ -64,6 +64,16 @@ public class FitZonesTarget extends RecordData {
         return getFieldByNumber(7, Integer.class);
     }
 
+    @Nullable
+    public Long getTimestamp() {
+        return getFieldByNumber(253, Long.class);
+    }
+
+    @Nullable
+    public Integer getMessageIndex() {
+        return getFieldByNumber(254, Integer.class);
+    }
+
     /**
      * @noinspection unused
      */
@@ -94,6 +104,16 @@ public class FitZonesTarget extends RecordData {
 
         public Builder setPwrCalcType(final Integer value) {
             setFieldByNumber(7, value);
+            return this;
+        }
+
+        public Builder setTimestamp(final Long value) {
+            setFieldByNumber(253, value);
+            return this;
+        }
+
+        public Builder setMessageIndex(final Integer value) {
+            setFieldByNumber(254, value);
             return this;
         }
 

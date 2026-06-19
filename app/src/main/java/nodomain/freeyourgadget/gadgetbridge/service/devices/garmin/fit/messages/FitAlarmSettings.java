@@ -68,7 +68,7 @@ public class FitAlarmSettings extends RecordData {
     }
 
     @Nullable
-    public Long getSomeTimestamp() {
+    public Long getTimeCreated() {
         return getFieldByNumber(5, Long.class);
     }
 
@@ -80,6 +80,11 @@ public class FitAlarmSettings extends RecordData {
     @Nullable
     public Label getLabel() {
         return getFieldByNumber(8, Label.class);
+    }
+
+    @Nullable
+    public Long getTimeUpdated() {
+        return getFieldByNumber(11, Long.class);
     }
 
     @Nullable
@@ -120,7 +125,7 @@ public class FitAlarmSettings extends RecordData {
             return this;
         }
 
-        public Builder setSomeTimestamp(final Long value) {
+        public Builder setTimeCreated(final Long value) {
             setFieldByNumber(5, value);
             return this;
         }
@@ -132,6 +137,11 @@ public class FitAlarmSettings extends RecordData {
 
         public Builder setLabel(final Label value) {
             setFieldByNumber(8, value);
+            return this;
+        }
+
+        public Builder setTimeUpdated(final Long value) {
+            setFieldByNumber(11, value);
             return this;
         }
 

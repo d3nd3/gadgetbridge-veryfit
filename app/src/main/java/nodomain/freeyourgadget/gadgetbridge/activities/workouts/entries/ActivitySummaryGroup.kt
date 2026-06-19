@@ -1,3 +1,19 @@
+/*  Copyright (C) 2025-2026 José Rebelo, a0z, Me7c7, Martin Piatka, Thomas Kuehne
+
+    This file is part of Gadgetbridge.
+
+    Gadgetbridge is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as published
+    by the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Gadgetbridge is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 package nodomain.freeyourgadget.gadgetbridge.activities.workouts.entries
 
 import nodomain.freeyourgadget.gadgetbridge.model.ActivitySummaryData
@@ -84,6 +100,9 @@ object ActivitySummaryGroup {
                     ActivitySummaryEntries.HR_AVG,
                     ActivitySummaryEntries.HR_MAX,
                     ActivitySummaryEntries.HR_MIN,
+                    ActivitySummaryEntries.RECOVERY_HR,
+                    ActivitySummaryEntries.HR_USER_RESTING,
+                    ActivitySummaryEntries.HR_USER_MAX,
                 )
             )
 
@@ -164,6 +183,7 @@ object ActivitySummaryGroup {
                     ActivitySummaryEntries.AVG_RIGHT_POWER_PHASE_PEAK,
                     ActivitySummaryEntries.AVG_POWER_SEATING,
                     ActivitySummaryEntries.AVG_POWER_STANDING,
+                    ActivitySummaryEntries.TOTAL_WORK,
                 )
             )
 
@@ -224,6 +244,10 @@ object ActivitySummaryGroup {
                     ActivitySummaryEntries.MAX_CADENCE_SEATING,
                     ActivitySummaryEntries.FRONT_GEAR_SHIFTS,
                     ActivitySummaryEntries.REAR_GEAR_SHIFTS,
+                    ActivitySummaryEntries.BATTERY_LEVEL_EBIKE_START,
+                    ActivitySummaryEntries.BATTERY_LEVEL_EBIKE_END,
+                    ActivitySummaryEntries.MOUNTAIN_BIKE_GRIT_SCORE,
+                    ActivitySummaryEntries.MOUNTAIN_BIKE_FLOW_SCORE,
                 )
             )
 
@@ -232,13 +256,22 @@ object ActivitySummaryGroup {
                 ActivitySummaryEntries.GROUP_TRAINING_EFFECT, listOf<String>(
                     ActivitySummaryEntries.TRAINING_EFFECT_AEROBIC,
                     ActivitySummaryEntries.TRAINING_EFFECT_ANAEROBIC,
+                    ActivitySummaryEntries.TRAINING_EFFECT_TOTAL,
                     ActivitySummaryEntries.WORKOUT_LOAD,
                     ActivitySummaryEntries.TRAINING_LOAD,
                     ActivitySummaryEntries.INTENSITY_FACTOR,
                     ActivitySummaryEntries.TRAINING_STRESS_SCORE,
                     ActivitySummaryEntries.MAXIMUM_OXYGEN_UPTAKE,
+                    ActivitySummaryEntries.RECOVERY_TIME_REMAINING_AT_START,
                     ActivitySummaryEntries.RECOVERY_TIME,
+                    ActivitySummaryEntries.BODY_ENERGY_AT_START,
+                    ActivitySummaryEntries.BODY_ENERGY_AT_END,
+                    ActivitySummaryEntries.STAMINA_AT_START,
+                    ActivitySummaryEntries.STAMINA_AT_END,
+                    ActivitySummaryEntries.STAMINA_MIN,
                     ActivitySummaryEntries.LACTATE_THRESHOLD_HR,
+                    ActivitySummaryEntries.RATING_OF_PERCEIVED_EXERTION,
+                    ActivitySummaryEntries.WORKOUT_FEEL,
                 )
             )
 
@@ -280,8 +313,15 @@ object ActivitySummaryGroup {
                     ActivitySummaryEntries.END_N2,
                     ActivitySummaryEntries.DIVE_NUMBER,
                     ActivitySummaryEntries.BOTTOM_TIME,
+                    ActivitySummaryEntries.OXYGEN_TOXICITY,
+                    ActivitySummaryEntries.SURFACE_INTERVAL,
+                    ActivitySummaryEntries.PRESSURE_SAC_AVG,
+                    ActivitySummaryEntries.WATER_TYPE
                 )
             )
+
+            // Diving Gas
+            put(ActivitySummaryEntries.GROUP_GAS, listOf())
 
             // Recovery Heart Rate
             put(ActivitySummaryEntries.GROUP_RECOVERY_HEART_RATE, listOf<String>())
@@ -315,6 +355,42 @@ object ActivitySummaryGroup {
                 )
             )
 
+            // Distance
+            put(ActivitySummaryEntries.GROUP_DISTANCE, listOf(
+                ActivitySummaryEntries.DISTANCE_METERS
+            ))
+
+            // Steps
+            put(ActivitySummaryEntries.GROUP_STEPS, listOf(
+                ActivitySummaryEntries.AVG_GROUND_CONTACT_TIME,
+                ActivitySummaryEntries.AVG_GROUND_CONTACT_TIME_BALANCE,
+                ActivitySummaryEntries.AVG_VERTICAL_OSCILLATION,
+                ActivitySummaryEntries.AVG_VERTICAL_RATIO,
+                ActivitySummaryEntries.STANDING_COUNT,
+                ActivitySummaryEntries.STANDING_TIME,
+                ActivitySummaryEntries.STEPS,
+                ActivitySummaryEntries.STEP_LENGTH_AVG,
+                ActivitySummaryEntries.STEP_RATE_AVG,
+                ActivitySummaryEntries.STEP_RATE_MAX,
+                ActivitySummaryEntries.STEP_RATE_SUM,
+                ActivitySummaryEntries.STEP_SPEED_LOSS,
+                ActivitySummaryEntries.STEP_SPEED_LOSS_PERCENTAGE,
+                ActivitySummaryEntries.STRIDE_AVG,
+                ActivitySummaryEntries.STRIDE_MAX,
+                ActivitySummaryEntries.STRIDE_MIN,
+                ActivitySummaryEntries.STRIDE_TOTAL,
+            ))
+
+
+            // Gear Info - e.g. last battery level
+            put(
+                ActivitySummaryEntries.GROUP_GEAR_INFO, listOf(
+                    ActivitySummaryEntries.BATTERY_LEVEL_START,
+                    ActivitySummaryEntries.BATTERY_LEVEL_END,
+                    ActivitySummaryEntries.BATTERY_GAIN
+                )
+            )
+
             // Other
             put(
                 ActivitySummaryEntries.GROUP_OTHER, listOf<String>(
@@ -323,15 +399,10 @@ object ActivitySummaryGroup {
                     ActivitySummaryEntries.CALORIES_BURNT,
                     ActivitySummaryEntries.CALORIES_TOTAL,
                     ActivitySummaryEntries.CALORIES_RESTING,
-                    ActivitySummaryEntries.STRIDE_AVG,
-                    ActivitySummaryEntries.STRIDE_MAX,
-                    ActivitySummaryEntries.STRIDE_MIN,
-                    ActivitySummaryEntries.STEP_LENGTH_AVG,
-                    ActivitySummaryEntries.CADENCE_AVG,
-                    ActivitySummaryEntries.CADENCE_MAX,
-                    ActivitySummaryEntries.CADENCE_MIN,
-                    ActivitySummaryEntries.STEP_RATE_AVG,
-                    ActivitySummaryEntries.STEP_RATE_MAX,
+                    ActivitySummaryEntries.CALORIES_CONSUMED,
+                    ActivitySummaryEntries.SPO2_AVG,
+                    ActivitySummaryEntries.STRESS_AVG,
+                    ActivitySummaryEntries.SOLAR_INTENSITY,
                 )
             )
         }

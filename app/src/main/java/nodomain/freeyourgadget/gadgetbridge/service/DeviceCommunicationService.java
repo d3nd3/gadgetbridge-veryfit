@@ -1,11 +1,11 @@
-/*  Copyright (C) 2015-2025 Andreas Böhler, Andreas Shimokawa, Arjan
+/*  Copyright (C) 2015-2026 Andreas Böhler, Andreas Shimokawa, Arjan
     Schrijver, Avamander, Carsten Pfeiffer, Daniel Dakhno, Daniele Gobbetti,
     Daniel Hauck, Davis Mosenkovs, Dikay900, Dmitriy Bogdanov, Frank Slezak,
     Gabriele Monaco, Gordon Williams, ivanovlev, João Paulo Barraca, José
-    Rebelo, Julien Pivotto, Kasha, keeshii, Martin, Matthieu Baerts, mvn23,
-    NekoBox, Nephiel, Petr Vaněk, Sebastian Kranz, Sergey Trofimov, Steffen
-    Liebergeld, Taavi Eomäe, TylerWilliamson, Uwe Hermann, Yoran Vulker,
-    Thomas Kuehne
+    Rebelo, Julien Pivotto, Kasha, keeshii, Martin, Martin Braun, Matthieu
+    Baerts, mvn23, NekoBox, Nephiel, Petr Vaněk, Sebastian Kranz, Sergey
+    Trofimov, Steffen Liebergeld, Taavi Eomäe, TylerWilliamson, Uwe Hermann,
+    Yoran Vulker, Thomas Kuehne
 
     This file is part of Gadgetbridge.
 
@@ -66,6 +66,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.Stack;
 import java.util.UUID;
 
 import nodomain.freeyourgadget.gadgetbridge.BuildConfig;
@@ -78,11 +79,13 @@ import nodomain.freeyourgadget.gadgetbridge.capabilities.loyaltycards.LoyaltyCar
 import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventCameraRemote;
 import nodomain.freeyourgadget.gadgetbridge.devices.DeviceCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.externalevents.AlarmClockReceiver;
+import nodomain.freeyourgadget.gadgetbridge.externalevents.DeviceAlarmReceiver;
 import nodomain.freeyourgadget.gadgetbridge.externalevents.BluetoothConnectReceiver;
 import nodomain.freeyourgadget.gadgetbridge.externalevents.BluetoothPairingRequestReceiver;
 import nodomain.freeyourgadget.gadgetbridge.externalevents.CMWeatherReceiver;
 import nodomain.freeyourgadget.gadgetbridge.externalevents.CalendarReceiver;
 import nodomain.freeyourgadget.gadgetbridge.externalevents.DeviceSettingsReceiver;
+import nodomain.freeyourgadget.gadgetbridge.externalevents.GlobalSettingsReceiver;
 import nodomain.freeyourgadget.gadgetbridge.externalevents.HrvCacheInvalidationReceiver;
 import nodomain.freeyourgadget.gadgetbridge.externalevents.IntentApiReceiver;
 import nodomain.freeyourgadget.gadgetbridge.externalevents.KeyMissingReceiver;
@@ -270,7 +273,7 @@ public class DeviceCommunicationService extends Service implements SharedPrefere
     private AlarmClockReceiver mAlarmClockReceiver = null;
     private SilentModeReceiver mSilentModeReceiver = null;
     private GBAutoFetchReceiver mGBAutoFetchReceiver = null;
-    private AutoConnectIntervalReceiver mAutoConnectInvervalReceiver = null;
+    private AutoConnectIntervalReceiver mAutoConnectIntervalReceiver = null;
 
     private VolumeChangeReceiver mVolumeChangeReceiver = null;
     private HrvCacheInvalidationReceiver mHrvCacheInvalidationReceiver = null;
@@ -281,8 +284,8 @@ public class DeviceCommunicationService extends Service implements SharedPrefere
     private LineageOsWeatherReceiver mLineageOsWeatherReceiver = null;
     private TinyWeatherForecastGermanyReceiver mTinyWeatherForecastGermanyReceiver = null;
     private OmniJawsObserver mOmniJawsObserver = null;
-    private final DeviceSettingsReceiver deviceSettingsReceiver = new DeviceSettingsReceiver();
-    private final IntentApiReceiver intentApiReceiver = new IntentApiReceiver();
+
+    private final Stack<BroadcastReceiver> globalReceivers = new Stack<>();
     private GBLocationService locationService = null;
 
     private OsmandEventReceiver mOsmandAidlHelper = null;
@@ -546,19 +549,35 @@ public class DeviceCommunicationService extends Service implements SharedPrefere
         mBlueToothConnectReceiver = new BluetoothConnectReceiver(this);
         ContextCompat.registerReceiver(this, mBlueToothConnectReceiver, new IntentFilter(BluetoothDevice.ACTION_ACL_CONNECTED), ContextCompat.RECEIVER_EXPORTED);
 
-        mAutoConnectInvervalReceiver= new AutoConnectIntervalReceiver(this);
-        ContextCompat.registerReceiver(this, mAutoConnectInvervalReceiver, new IntentFilter("GB_RECONNECT"), ContextCompat.RECEIVER_EXPORTED);
+        mAutoConnectIntervalReceiver = new AutoConnectIntervalReceiver(this);
+        ContextCompat.registerReceiver(this, mAutoConnectIntervalReceiver, new IntentFilter("GB_RECONNECT"), ContextCompat.RECEIVER_EXPORTED);
 
         IntentFilter bluetoothCommandFilter = new IntentFilter();
         bluetoothCommandFilter.addAction(API_LEGACY_COMMAND_BLUETOOTH_CONNECT);
         bluetoothCommandFilter.addAction(API_LEGACY_COMMAND_BLUETOOTH_DISCONNECT);
         ContextCompat.registerReceiver(this, bluetoothCommandReceiver, bluetoothCommandFilter, ContextCompat.RECEIVER_EXPORTED);
 
+        if (getPrefs().getBoolean("intent_api_allow_global_settings", false)) {
+            final GlobalSettingsReceiver globalSettingsReceiver = new GlobalSettingsReceiver();
+            final IntentFilter globalSettingsIntentFilter = new IntentFilter();
+            globalSettingsIntentFilter.addAction(GlobalSettingsReceiver.COMMAND);
+            ContextCompat.registerReceiver(this, globalSettingsReceiver, globalSettingsIntentFilter, ContextCompat.RECEIVER_EXPORTED);
+            globalReceivers.add(globalSettingsReceiver);
+        }
+
+        final DeviceSettingsReceiver deviceSettingsReceiver = new DeviceSettingsReceiver();
         final IntentFilter deviceSettingsIntentFilter = new IntentFilter();
         deviceSettingsIntentFilter.addAction(DeviceSettingsReceiver.COMMAND);
         ContextCompat.registerReceiver(this, deviceSettingsReceiver, deviceSettingsIntentFilter, ContextCompat.RECEIVER_EXPORTED);
+        globalReceivers.add(deviceSettingsReceiver);
 
+        final DeviceAlarmReceiver deviceAlarmReceiver = new DeviceAlarmReceiver();
+        ContextCompat.registerReceiver(this, deviceAlarmReceiver, deviceAlarmReceiver.buildFilter(), ContextCompat.RECEIVER_EXPORTED);
+        globalReceivers.add(deviceAlarmReceiver);
+
+        final IntentApiReceiver intentApiReceiver = new IntentApiReceiver();
         ContextCompat.registerReceiver(this, intentApiReceiver, intentApiReceiver.buildFilter(), ContextCompat.RECEIVER_EXPORTED);
+        globalReceivers.add(intentApiReceiver);
 
         mKeyMissingReceiver = new KeyMissingReceiver();
         ContextCompat.registerReceiver(this, mKeyMissingReceiver, new IntentFilter(KeyMissingReceiver.ACTION_KEY_MISSING), ContextCompat.RECEIVER_EXPORTED);
@@ -868,7 +887,7 @@ public class DeviceCommunicationService extends Service implements SharedPrefere
 
     /**
      * @param text original text
-     * @return 'text' or a new String without non supported chars like emoticons, etc.
+     * @return 'text' or a new String without non-supported chars like emoticons, etc.
      */
     private String sanitizeNotifText(String text, GBDevice device) throws DeviceNotFoundException {
         if (text == null || text.length() == 0)
@@ -968,7 +987,7 @@ public class DeviceCommunicationService extends Service implements SharedPrefere
                         || (notificationSpec.type == NotificationType.GENERIC_SMS && notificationSpec.phoneNumber != null)) {
                     // NOTE: maybe not where it belongs
                     // I would rather like to save that as an array in SharedPreferences
-                    // this would work but I dont know how to do the same in the Settings Activity's xml
+                    // this would work but I don't know how to do the same in the Settings Activity's xXML
                     ArrayList<String> replies = new ArrayList<>();
                     for (int i = 1; i <= 16; i++) {
                         String reply = devicePrefs.getString("canned_reply_" + i, null);
@@ -1151,7 +1170,7 @@ public class DeviceCommunicationService extends Service implements SharedPrefere
                 deviceSupport.onAppReorder(uuids);
                 break;
             }
-            case ACTION_INSTALL:
+            case ACTION_INSTALL: {
                 Uri uri = intentCopy.getParcelableExtra(EXTRA_URI);
                 Bundle options = Objects.requireNonNullElse(intentCopy.getBundleExtra(EXTRA_OPTIONS), Bundle.EMPTY);
                 if (uri != null) {
@@ -1161,6 +1180,7 @@ public class DeviceCommunicationService extends Service implements SharedPrefere
                     LOG.error("Got null uri for app to install");
                 }
                 break;
+            }
             case ACTION_SET_ALARMS:
                 ArrayList<? extends Alarm> alarms = (ArrayList<? extends Alarm>) intentCopy.getSerializableExtra(EXTRA_ALARMS);
                 deviceSupport.onSetAlarms(alarms);
@@ -1212,7 +1232,8 @@ public class DeviceCommunicationService extends Service implements SharedPrefere
                 break;
             }
             case ACTION_TEST_NEW_FUNCTION: {
-                deviceSupport.onTestNewFunction();
+                Bundle options = intentCopy.getBundleExtra(EXTRA_OPTIONS);
+                deviceSupport.onTestNewFunction(options);
                 break;
             }
             case ACTION_SEND_WEATHER: {
@@ -1257,10 +1278,10 @@ public class DeviceCommunicationService extends Service implements SharedPrefere
                 deviceSupport.onMusicListReq();
                 break;
             case ACTION_REQUEST_MUSIC_OPERATION:
-                int operation = intentCopy.getIntExtra("operation", -1);
-                int playlistIndex = intentCopy.getIntExtra("playlistIndex", -1);
-                String playlistName = intentCopy.getStringExtra("playlistName");
-                ArrayList<Integer> musics = (ArrayList<Integer>) intentCopy.getSerializableExtra("musicIds");
+                int operation = intentCopy.getIntExtra(EXTRA_REQUEST_MUSIC_OPERATION, -1);
+                int playlistIndex = intentCopy.getIntExtra(EXTRA_REQUEST_MUSIC_PLAY_LIST_INDEX, -1);
+                String playlistName = intentCopy.getStringExtra(EXTRA_REQUEST_MUSIC_PLAY_LIST_NAME);
+                ArrayList<Integer> musics = (ArrayList<Integer>) intentCopy.getSerializableExtra(EXTRA_REQUEST_MUSIC_MUSIC_IDS);
                 deviceSupport.onMusicOperation(operation, playlistIndex, playlistName, musics);
                 break;
         }
@@ -1641,9 +1662,9 @@ public class DeviceCommunicationService extends Service implements SharedPrefere
         unregisterReceiver(mBlueToothConnectReceiver);
         mBlueToothConnectReceiver = null;
 
-        unregisterReceiver(mAutoConnectInvervalReceiver);
-        mAutoConnectInvervalReceiver.destroy();
-        mAutoConnectInvervalReceiver = null;
+        unregisterReceiver(mAutoConnectIntervalReceiver);
+        mAutoConnectIntervalReceiver.destroy();
+        mAutoConnectIntervalReceiver = null;
 
         for(GBDevice device : getGBDevices()){
             try {
@@ -1655,8 +1676,16 @@ public class DeviceCommunicationService extends Service implements SharedPrefere
         GB.removeNotification(GB.NOTIFICATION_ID, this); // need to do this because the updated notification won't be cancelled when service stops
 
         unregisterReceiver(bluetoothCommandReceiver);
-        unregisterReceiver(deviceSettingsReceiver);
-        unregisterReceiver(intentApiReceiver);
+
+        while (!globalReceivers.isEmpty()) {
+            final BroadcastReceiver receiver = globalReceivers.pop();
+            try {
+                LOG.debug("Unregistering global receiver {}", receiver.getClass().getSimpleName());
+                unregisterReceiver(receiver);
+            } catch (final Exception e) {
+                LOG.error("Failed to unregister broadcast receiver", e);
+            }
+        }
 
         if (mHrvCacheInvalidationReceiver != null) {
             mHrvCacheInvalidationReceiver.unregisterReceiver();

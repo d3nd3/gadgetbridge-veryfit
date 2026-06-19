@@ -392,7 +392,7 @@
     <string name="mi2_dnd_automatic">Automatic (sleep detection)</string>
     <string name="mi2_dnd_off">Off</string>
     <string name="off">Off</string>
-    <string name="mi2_enable_text_notifications_summary">Needs firmware &gt;= 1.0.1.28 and Mili_pro.ft* installed.</string>
+    <string name="mi2_enable_text_notifications_summary"><![CDATA[Needs firmware &gt;= 1.0.1.28 and Mili_pro.ft* installed.]]></string>
     <string name="mi2_enable_text_notifications">Text notifications</string>
     <string name="mi2_fw_installhandler_fw53_hint">You need to install version %1$s before installing this firmware!</string>
     <string name="miband2_prefs_timeformat">Mi2: Time format</string>
@@ -408,8 +408,8 @@
     <string name="pebble_pairing_hint">A pairing dialog will pop up on your Android device. If not, look in the notification drawer and accept the pairing request. Also accept it on your Pebble afterwards.</string>
     <string name="title_activity_pebble_pairing">Pebble pairing</string>
     <string name="title_activity_vibration">Vibration</string>
-    <string name="Delete">Delete</string>
-    <string name="Cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
     <string name="dbmanagementactivity_overwrite">Overwrite</string>
     <string name="dbmanagementactivity_old_activity_db_deletion_failed">Old Activity database deletion failed.</string>
     <string name="dbmanagementactivity_old_activity_db_successfully_deleted">Old activity data deleted.</string>
@@ -458,7 +458,7 @@
     <string name="mi2_prefs_display_items">Display items</string>
     <string name="mi2_prefs_goal_notification_summary">The band will vibrate when the daily steps goal is reached</string>
     <string name="mi2_prefs_goal_notification">Goal notification</string>
-    <string name="dateformat_date_time">Time &amp; date</string>
+    <string name="dateformat_date_time"><![CDATA[Time & date]]></string>
     <string name="dateformat_time">Time</string>
     <string name="miband2_prefs_dateformat">Date format</string>
     <string name="miband_prefs_device_time_offset_hours">Device time offset in hours (for detecting sleep of shift workers)</string>
@@ -500,8 +500,8 @@
     <string name="debugactivity_really_factoryreset_title">Really factory reset\?</string>
     <string name="live_activity_max_heart_rate">Current / Max heart rate: %1$d / %2$d</string>
     <string name="no_data">No data</string>
-    <string name="overstep">Overstep: %1$d</string>
-    <string name="lack_of_step">Lack of steps: %1$d</string>
+    <string name="overstep">Overstep: %1$s</string>
+    <string name="lack_of_step">Lack of steps: %1$s</string>
     <string name="overslept">Overslept: %1$s</string>
     <string name="lack_of_sleep">Lack of sleep: %1$s</string>
     <string name="language_and_region_prefs">Language and region settings</string>

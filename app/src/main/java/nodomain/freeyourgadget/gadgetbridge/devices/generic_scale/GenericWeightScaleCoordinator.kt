@@ -49,10 +49,6 @@ class GenericWeightScaleCoordinator : AbstractBLEDeviceCoordinator() {
         return Int.MAX_VALUE
     }
 
-    override fun getSupportedDeviceSpecificSettings(device: GBDevice?): IntArray? {
-        return intArrayOf(R.xml.devicesettings_weight_scale_unit)
-    }
-
     override fun getWeightSampleProvider(
         device: GBDevice, session: DaoSession
     ): TimeSampleProvider<out WeightSample?> {
@@ -68,7 +64,7 @@ class GenericWeightScaleCoordinator : AbstractBLEDeviceCoordinator() {
         return "Generic"
     }
 
-    override fun getDeviceSupportClass(device: GBDevice?): Class<out DeviceSupport?> {
+    override fun getDeviceSupportClass(device: GBDevice): Class<out DeviceSupport?> {
         return GenericWeightScaleSupport::class.java
     }
 

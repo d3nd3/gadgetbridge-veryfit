@@ -29,6 +29,7 @@ import nodomain.freeyourgadget.gadgetbridge.util.healthconnect.HealthConnectUtil
 import nodomain.freeyourgadget.gadgetbridge.util.healthconnect.SyncException
 import org.slf4j.Logger
 import java.time.Instant
+import java.time.ZoneId
 import java.time.ZoneOffset
 import kotlin.reflect.KClass
 
@@ -48,7 +49,7 @@ internal abstract class AbstractTimeSampleSyncer<TSample : TimeSample, TRecord :
         daoSession: DaoSession
     ): TimeSampleProvider<out TSample>?
 
-    protected abstract fun convertSample(
+    internal abstract fun convertSample(
         sample: TSample,
         offset: ZoneOffset,
         metadata: Metadata,
@@ -59,7 +60,7 @@ internal abstract class AbstractTimeSampleSyncer<TSample : TimeSample, TRecord :
         healthConnectClient: HealthConnectClient,
         gbDevice: GBDevice,
         metadata: Metadata,
-        offset: ZoneOffset,
+        offset: ZoneId,
         sliceStartBoundary: Instant,
         sliceEndBoundary: Instant,
         grantedPermissions: Set<String>
@@ -104,7 +105,7 @@ internal abstract class AbstractTimeSampleSyncer<TSample : TimeSample, TRecord :
         val recordsToInsert = samples.filter {
             val timestamp = Instant.ofEpochMilli(it.timestamp)
             if (timestamp.isBefore(sliceStartBoundary) || timestamp.isAfter(sliceEndBoundary)) {
-                logger.debug(
+                logger.trace(
                     "Skipping sample for at {} as it's outside the slice {} - {}.",
                     timestamp,
                     sliceStartBoundary,
@@ -114,9 +115,10 @@ internal abstract class AbstractTimeSampleSyncer<TSample : TimeSample, TRecord :
             }
             return@filter true
         }.mapNotNull { sample ->
+            val sampleOffset = offset.rules.getOffset(Instant.ofEpochMilli(sample.timestamp))
             convertSample(
                 sample,
-                offset,
+                sampleOffset,
                 metadata,
                 deviceName
             )?.also {

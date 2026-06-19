@@ -50,7 +50,7 @@ public class FitSleepRestlessMoments extends RecordData {
     }
 
     @Nullable
-    public Number[] getUnknown2() {
+    public Number[] getDurations() {
         return getArrayFieldByNumber(2, Number.class);
     }
 
@@ -72,7 +72,7 @@ public class FitSleepRestlessMoments extends RecordData {
             return this;
         }
 
-        public Builder setUnknown2(final Number[] value) {
+        public Builder setDurations(final Number[] value) {
             setFieldByNumber(2, (Object[]) value);
             return this;
         }

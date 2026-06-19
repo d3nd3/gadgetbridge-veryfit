@@ -27,7 +27,6 @@ import static nodomain.freeyourgadget.gadgetbridge.service.devices.qhybrid.reque
 import static nodomain.freeyourgadget.gadgetbridge.service.devices.qhybrid.requests.fossil.configuration.ConfigurationPutRequest.UnitsConfigItem;
 import static nodomain.freeyourgadget.gadgetbridge.service.devices.qhybrid.requests.fossil.configuration.ConfigurationPutRequest.VibrationStrengthConfigItem;
 import static nodomain.freeyourgadget.gadgetbridge.service.devices.qhybrid.requests.fossil_hr.music.MusicControlRequest.MUSIC_PHONE_REQUEST;
-import static nodomain.freeyourgadget.gadgetbridge.service.devices.qhybrid.requests.fossil_hr.music.MusicControlRequest.MUSIC_WATCH_REQUEST;
 import static nodomain.freeyourgadget.gadgetbridge.util.BitmapUtil.convertDrawableToBitmap;
 import static nodomain.freeyourgadget.gadgetbridge.util.GB.NOTIFICATION_CHANNEL_ID;
 import static nodomain.freeyourgadget.gadgetbridge.util.StringUtils.shortenPackageName;
@@ -56,6 +55,7 @@ import android.os.Messenger;
 import android.os.RemoteException;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -81,6 +81,7 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
@@ -103,13 +104,12 @@ import nodomain.freeyourgadget.gadgetbridge.database.DBHelper;
 import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventAppInfo;
 import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventCallControl;
 import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventFindPhone;
-import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventMusicControl;
 import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventNotificationControl;
+import nodomain.freeyourgadget.gadgetbridge.devices.HybridHRSpo2SampleProvider;
 import nodomain.freeyourgadget.gadgetbridge.devices.qhybrid.CommuteActionsActivity;
 import nodomain.freeyourgadget.gadgetbridge.devices.qhybrid.FossilFileReader;
 import nodomain.freeyourgadget.gadgetbridge.devices.qhybrid.FossilHRInstallHandler;
 import nodomain.freeyourgadget.gadgetbridge.devices.qhybrid.HybridHRActivitySampleProvider;
-import nodomain.freeyourgadget.gadgetbridge.devices.qhybrid.HybridHRSpo2SampleProvider;
 import nodomain.freeyourgadget.gadgetbridge.devices.qhybrid.NotificationHRConfiguration;
 import nodomain.freeyourgadget.gadgetbridge.devices.qhybrid.QHybridConstants;
 import nodomain.freeyourgadget.gadgetbridge.entities.BaseActivitySummary;
@@ -123,15 +123,15 @@ import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDeviceApp;
 import nodomain.freeyourgadget.gadgetbridge.model.CallSpec;
 import nodomain.freeyourgadget.gadgetbridge.model.DeviceType;
+import nodomain.freeyourgadget.gadgetbridge.model.DistanceUnit;
 import nodomain.freeyourgadget.gadgetbridge.model.GenericItem;
 import nodomain.freeyourgadget.gadgetbridge.model.ItemWithDetails;
 import nodomain.freeyourgadget.gadgetbridge.model.MusicSpec;
 import nodomain.freeyourgadget.gadgetbridge.model.MusicStateSpec;
 import nodomain.freeyourgadget.gadgetbridge.model.NavigationInfoSpec;
 import nodomain.freeyourgadget.gadgetbridge.model.NotificationSpec;
-import nodomain.freeyourgadget.gadgetbridge.model.weather.Weather;
 import nodomain.freeyourgadget.gadgetbridge.model.WeatherSpec;
-import nodomain.freeyourgadget.gadgetbridge.webview.CurrentPosition;
+import nodomain.freeyourgadget.gadgetbridge.model.weather.Weather;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.qhybrid.QHybridSupport;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.qhybrid.adapter.fossil.FossilWatchAdapter;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.qhybrid.file.FileHandle;
@@ -195,6 +195,7 @@ import nodomain.freeyourgadget.gadgetbridge.util.UriHelper;
 import nodomain.freeyourgadget.gadgetbridge.util.Version;
 import nodomain.freeyourgadget.gadgetbridge.util.calendar.CalendarEvent;
 import nodomain.freeyourgadget.gadgetbridge.util.calendar.CalendarManager;
+import nodomain.freeyourgadget.gadgetbridge.webview.CurrentPosition;
 
 public class FossilHRWatchAdapter extends FossilWatchAdapter {
     public static final int MESSAGE_WHAT_VOICE_DATA_RECEIVED = 0;
@@ -217,7 +218,6 @@ public class FossilHRWatchAdapter extends FossilWatchAdapter {
         super(deviceSupport);
     }
 
-    private boolean saveRawActivityFiles = false;
     private boolean notifiedAboutMissingNavigationApp = false;
 
     HashMap<String, Bitmap> appIconCache = new HashMap<>();
@@ -561,20 +561,10 @@ public class FossilHRWatchAdapter extends FossilWatchAdapter {
         }
     }
 
-    private void setVibrationStrengthFromConfig() {
-        Prefs prefs = new Prefs(getDeviceSpecificPreferences());
-        int vibrationStrengh = prefs.getInt(DeviceSettingsPreferenceConst.PREF_VIBRATION_STRENGH_PERCENTAGE, 2);
-        if (vibrationStrengh > 0) {
-            vibrationStrengh = (vibrationStrengh + 1) * 25; // Seems 0,50,75,100 are working...
-        }
-        setVibrationStrength((short) (vibrationStrengh));
-    }
-
     private void setUnitsConfig() {
-        Prefs prefs = GBApplication.getPrefs();
-        String unit = prefs.getString(SettingsActivity.PREF_MEASUREMENT_SYSTEM, GBApplication.getContext().getString(R.string.p_unit_metric));
+        final DistanceUnit distanceUnit = GBApplication.getPrefs().getDistanceUnit();
         int value = 8; // dont know what this bit means but it was set for me before tampering
-        if (!unit.equals("metric")) {
+        if (distanceUnit != DistanceUnit.METRIC) {
             value |= (4 | 1); // temperature and distance
         }
         queueWrite(
@@ -1296,7 +1286,7 @@ public class FossilHRWatchAdapter extends FossilWatchAdapter {
                             for (int i = 0; i < entries.size(); i++) {
                                 samples[i] = entries.get(i).toDAOActivitySample(userId, deviceId);
                             }
-                            provider.addGBActivitySamples(samples);
+                            provider.addGBActivitySamples(Arrays.asList(samples));
                             // SpO2, should be empty for an unsupported device
                             ArrayList<HybridHRSpo2Sample> spo2Samples = parser.getSpo2Samples();
                             HybridHRSpo2SampleProvider spo2Provider = new HybridHRSpo2SampleProvider(getDeviceSupport().getDevice(), dbHandler.getDaoSession());
@@ -1316,8 +1306,9 @@ public class FossilHRWatchAdapter extends FossilWatchAdapter {
                             }
 
                             if (saveRawActivityFiles) {
-                                writeFile(String.valueOf(System.currentTimeMillis()), fileData);
+                                writeFile("activity_hr", String.valueOf(System.currentTimeMillis()), fileData);
                             }
+
                             queueWrite(new FileDeleteRequest(fileHandle));
                             GB.updateTransferNotification(null, "", false, 100, getContext());
                             GB.signalActivityDataFinish(getDeviceSupport().getDevice());
@@ -1345,21 +1336,6 @@ public class FossilHRWatchAdapter extends FossilWatchAdapter {
                 getDeviceSupport().getDevice().sendDeviceUpdateIntent(getContext());
             }
         });
-    }
-
-    private void writeFile(String fileName, byte[] value) {
-        File activityDir = new File(getContext().getExternalFilesDir(null), "activity_hr");
-        activityDir.mkdir();
-        File f = new File(activityDir, fileName);
-        try {
-            f.createNewFile();
-            FileOutputStream fos = new FileOutputStream(f);
-            fos.write(value);
-            fos.close();
-            GB.toast("saved file data", Toast.LENGTH_SHORT, GB.INFO);
-        } catch (IOException e) {
-            LOG.error("file error", e);
-        }
     }
 
     private void syncSettings() {
@@ -1744,7 +1720,7 @@ public class FossilHRWatchAdapter extends FossilWatchAdapter {
     }
 
     @Override
-    public void onTestNewFunction() {
+    public void onTestNewFunction(@Nullable Bundle options) {
         onSendCalendar();
     }
 
@@ -1939,7 +1915,7 @@ public class FossilHRWatchAdapter extends FossilWatchAdapter {
                 saveRawActivityFiles = getDeviceSpecificPreferences().getBoolean("save_raw_activity_files", false);
                 break;
             }
-            case SettingsActivity.PREF_MEASUREMENT_SYSTEM:
+            case SettingsActivity.PREF_UNIT_DISTANCE:
                 setUnitsConfig();
                 break;
             case DeviceSettingsPreferenceConst.PREF_HYBRID_HR_ACTIVITY_RECOGNITION_RUNNING_ENABLED:
@@ -1988,8 +1964,6 @@ public class FossilHRWatchAdapter extends FossilWatchAdapter {
             } else if (value[7] == 0x03) {
                 handleQuickReplyRequest(value);
             }
-        } else if (requestType == (byte) 0x05) {
-            handleMusicRequest(value);
         } else if (requestType == (byte) 0x01) {
             int eventId = value[2];
             LOG.info("got event id " + eventId);
@@ -2165,47 +2139,6 @@ public class FossilHRWatchAdapter extends FossilWatchAdapter {
         devEvtNotificationControl.event = GBDeviceEventNotificationControl.Event.REPLY;
         getDeviceSupport().evaluateGBDeviceEvent(devEvtNotificationControl);
         queueWrite(new QuickReplyConfirmationPutRequest(callId));
-    }
-
-    private void handleMusicRequest(byte[] value) {
-        byte command = value[3];
-        LOG.info("got music command: " + command);
-        MUSIC_WATCH_REQUEST request = MUSIC_WATCH_REQUEST.fromCommandByte(command);
-
-        GBDeviceEventMusicControl deviceEventMusicControl = new GBDeviceEventMusicControl();
-        deviceEventMusicControl.event = GBDeviceEventMusicControl.Event.PLAY;
-
-        // TODO add skipping/seeking
-
-        switch (request) {
-            case MUSIC_REQUEST_PLAY_PAUSE: {
-                queueWrite(new MusicControlRequest(MUSIC_PHONE_REQUEST.MUSIC_REQUEST_PLAY_PAUSE));
-                deviceEventMusicControl.event = GBDeviceEventMusicControl.Event.PLAYPAUSE;
-                break;
-            }
-            case MUSIC_REQUEST_NEXT: {
-                queueWrite(new MusicControlRequest(MUSIC_PHONE_REQUEST.MUSIC_REQUEST_NEXT));
-                deviceEventMusicControl.event = GBDeviceEventMusicControl.Event.NEXT;
-                break;
-            }
-            case MUSIC_REQUEST_PREVIOUS: {
-                queueWrite(new MusicControlRequest(MUSIC_PHONE_REQUEST.MUSIC_REQUEST_PREVIOUS));
-                deviceEventMusicControl.event = GBDeviceEventMusicControl.Event.PREVIOUS;
-                break;
-            }
-            case MUSIC_REQUEST_LOUDER: {
-                queueWrite(new MusicControlRequest(MUSIC_PHONE_REQUEST.MUSIC_REQUEST_LOUDER));
-                deviceEventMusicControl.event = GBDeviceEventMusicControl.Event.VOLUMEUP;
-                break;
-            }
-            case MUSIC_REQUEST_QUITER: {
-                queueWrite(new MusicControlRequest(MUSIC_PHONE_REQUEST.MUSIC_REQUEST_QUITER));
-                deviceEventMusicControl.event = GBDeviceEventMusicControl.Event.VOLUMEDOWN;
-                break;
-            }
-        }
-
-        getDeviceSupport().evaluateGBDeviceEvent(deviceEventMusicControl);
     }
 
     @Override

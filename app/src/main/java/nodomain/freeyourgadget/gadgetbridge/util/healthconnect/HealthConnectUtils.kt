@@ -50,6 +50,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.*
 import java.util.function.BiConsumer
 import kotlin.math.pow
@@ -238,10 +239,11 @@ class HealthConnectUtils {
         val recordsSyncedByType = mutableMapOf<String, Int>() // Track records per data type
         val dataTypesWithErrors = mutableSetOf<String>() // Track which data types had errors
 
-        val offset = ZonedDateTime.now(TimeZone.getDefault().toZoneId()).offset
+        val zoneId = TimeZone.getDefault().toZoneId()
         val manager = GBApplication.app().deviceManager
         val syncIntervalInSeconds: Long = 24 * 60 * 60 // 1 day slices
         val lookBackInSeconds: Long = 24 * 60 * 60
+        val sleepLookForwardSeconds: Long = 12 * 60 * 60
 
         for (targetAddress in selectedDevices) {
             // Check if worker has been cancelled
@@ -259,6 +261,11 @@ class HealthConnectUtils {
             LOG.info("$HC_SYNC_TAG Starting sync for device: {}", gbDevice.aliasOrName)
 
             val deviceCoordinator = gbDevice.deviceCoordinator
+            val manufacturer = deviceCoordinator.manufacturer
+            var deviceName = context.getString(deviceCoordinator.deviceNameResource)
+            if (deviceName.startsWith(manufacturer) && deviceName != manufacturer) {
+                deviceName = deviceName.replace(manufacturer, "").trim();
+            }
             val device = Device(
                 type = when (deviceCoordinator.getDeviceKind(gbDevice)) {
                     DeviceCoordinator.DeviceKind.WATCH -> Device.TYPE_WATCH
@@ -271,12 +278,12 @@ class HealthConnectUtils {
                     DeviceCoordinator.DeviceKind.SMART_DISPLAY -> Device.TYPE_SMART_DISPLAY
                     else -> Device.TYPE_UNKNOWN
                 },
-                manufacturer = deviceCoordinator.manufacturer,
-                model = gbDevice.model
+                manufacturer = manufacturer,
+                model = deviceName
             )
 
             dataTypeLoop@ for (dataType in HealthConnectPermissionManager.HealthConnectDataType.entries) {
-                // Check if worker has been cancelled
+                // Check if worker has been canceled
                 if (worker?.isStopped == true) {
                     LOG.info("$HC_SYNC_TAG Worker has been cancelled, aborting sync")
                     break@dataTypeLoop
@@ -363,14 +370,19 @@ class HealthConnectUtils {
                     updateSyncStatus(summary, true, summaryCallback, mainHandler)
 
                     val queryStartTs = currentSliceStartTs.minusSeconds(lookBackInSeconds)
-                    LOG.info("$HC_SYNC_TAG Querying Gadgetbridge DB for {}({}) from {} to {}", gbDevice.aliasOrName, dataType.name, queryStartTs, currentSliceEndTs)
+                    val queryEndTs = if (dataType == HealthConnectPermissionManager.HealthConnectDataType.SLEEP) {
+                        currentSliceEndTs.plusSeconds(sleepLookForwardSeconds)
+                    } else {
+                        currentSliceEndTs
+                    }
+                    LOG.info("$HC_SYNC_TAG Querying Gadgetbridge DB for {}({}) from {} to {}", gbDevice.aliasOrName, dataType.name, queryStartTs, queryEndTs)
 
                     // Fetch activityBasedSamples under their own lock if needed for the current dataType
                     val activityBasedSamples: List<ActivitySample>? = 
                         if (dataType == HealthConnectPermissionManager.HealthConnectDataType.ACTIVITY || 
                             dataType == HealthConnectPermissionManager.HealthConnectDataType.SLEEP) {
                             GBApplication.acquireDbReadOnly().use { db ->
-                                getActivitySamples(db, gbDevice, queryStartTs.epochSecond.toInt(), currentSliceEndTs.epochSecond.toInt())
+                                getActivitySamples(db, gbDevice, queryStartTs.epochSecond.toInt(), queryEndTs.epochSecond.toInt())
                             }
                         } else {
                             null
@@ -382,7 +394,7 @@ class HealthConnectUtils {
                             healthConnectClient = healthConnectClient,
                             gbDevice = gbDevice,
                             metadata = metadata,
-                            offset = offset,
+                            offset = zoneId,
                             currentSliceStartTs = currentSliceStartTs,
                             currentSliceEndTs = currentSliceEndTs,
                             grantedPermissions = grantedPermissions,
@@ -399,6 +411,7 @@ class HealthConnectUtils {
                         val sliceTotalSynced = sliceStats.sumOf { it.recordsSynced }
 
                         val latestRecordTs = sliceStats.mapNotNull { it.latestRecordTimestamp }.maxOrNull()
+
                         if (latestRecordTs != null && latestRecordTs.isAfter(timestampToPersistForThisDataType)) {
                             timestampToPersistForThisDataType = latestRecordTs
                         } else if (sliceTotalSynced == 0) {
@@ -484,7 +497,12 @@ class HealthConnectUtils {
         internal const val MAX_SAMPLES_PER_HEART_RATE_RECORD = 1000
         private const val MAX_RETRIES = 5
         private const val INITIAL_DELAY_MS = 1000L
-        private const val HC_SYNC_TAG = "[HC_SYNC]"
+        internal const val HC_SYNC_TAG = "[HC_SYNC]"
+
+        // Floor the sync-start at 2015 (Gadgetbridge predates it). A bogus near-epoch sample
+        // timestamp otherwise resolves the start to ~1970 and triggers a full historical resync.
+        private const val MIN_VALID_SAMPLE_SECONDS = 1420070400L // 2015-01-01T00:00:00Z
+        private const val MIN_VALID_SAMPLE_MILLIS = MIN_VALID_SAMPLE_SECONDS * 1000
 
         private fun getSyncTimestampRange(
             context: Context,
@@ -564,7 +582,7 @@ class HealthConnectUtils {
             healthConnectClient: HealthConnectClient,
             gbDevice: GBDevice,
             metadata: Metadata,
-            offset: java.time.ZoneOffset,
+            offset: java.time.ZoneId,
             currentSliceStartTs: Instant,
             currentSliceEndTs: Instant,
             grantedPermissions: Set<String>,
@@ -587,6 +605,12 @@ class HealthConnectUtils {
                         ))
                         if (gbDevice.deviceCoordinator.supportsActiveCalories(gbDevice)) {
                             sliceStats.add(ActiveCaloriesSyncer.sync(
+                                healthConnectClient, gbDevice, metadata, offset,
+                                currentSliceStartTs, currentSliceEndTs, grantedPermissions, activityBasedSamples
+                            ))
+                        }
+                        if (gbDevice.deviceCoordinator.supportsActivityDistance(gbDevice)) {
+                            sliceStats.add(DistanceSyncer.sync(
                                 healthConnectClient, gbDevice, metadata, offset,
                                 currentSliceStartTs, currentSliceEndTs, grantedPermissions, activityBasedSamples
                             ))
@@ -666,14 +690,14 @@ class HealthConnectUtils {
         ): Instant? {
             return when (val provider = getProviderForDataType(deviceCoordinator, device, db, dataType)) {
                 is TimeSampleProvider<*> -> {
-                    provider.firstSample?.timestamp?.takeIf { it > 0 }?.let { Instant.ofEpochMilli(it) }
+                    provider.firstSample?.timestamp?.takeIf { it > MIN_VALID_SAMPLE_MILLIS }?.let { Instant.ofEpochMilli(it) }
                 }
                 is SampleProvider<*> -> { // For ActivitySample based providers
-                    provider.firstActivitySample?.timestamp?.takeIf { it > 0 }?.let { Instant.ofEpochSecond(it.toLong()) }
+                    provider.getFirstActivitySample(MIN_VALID_SAMPLE_SECONDS.toInt())?.timestamp?.takeIf { it > MIN_VALID_SAMPLE_SECONDS }?.let { Instant.ofEpochSecond(it.toLong()) }
                 }
                 is BaseActivitySummaryDao -> {
                     val deviceEntity = DBHelper.getDevice(device, db.daoSession) ?: return null
-                    return db.daoSession.baseActivitySummaryDao?.queryBuilder()
+                    db.daoSession.baseActivitySummaryDao?.queryBuilder()
                         ?.where(BaseActivitySummaryDao.Properties.DeviceId.eq(deviceEntity.id))
                         ?.orderAsc(BaseActivitySummaryDao.Properties.StartTime)
                         ?.limit(1)

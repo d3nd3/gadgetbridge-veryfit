@@ -66,7 +66,7 @@ public class FileUtils {
     );
 
     /**
-     * Copies the the given sourceFile to destFile, overwriting it, in case it exists.
+     * Copies the given sourceFile to destFile, overwriting it, in case it exists.
      */
     public static void copyFile(File sourceFile, File destFile) throws IOException {
         if (!sourceFile.exists()) {
@@ -143,7 +143,7 @@ public class FileUtils {
     }
 
     /**
-     * Copies the content of a file to an uri,
+     * Copies the content of a file to a uri,
      * which for example was retrieved using the storage access framework.
      * @param context the application context.
      * @param src the file from which the content should be copied.
@@ -160,7 +160,7 @@ public class FileUtils {
     }
 
     /**
-     * Returns the textual contents of the given file. The contents is expected to be
+     * Returns the textual contents of the given file. The content is expected to be
      * in UTF-8 encoding.
      * @param file the file to read
      * @return the file contents as a newline-delimited string
@@ -320,6 +320,12 @@ public class FileUtils {
         return out.toByteArray();
     }
 
+    public static byte[] readAll(final File inputFile) throws IOException {
+        try (InputStream inputStream = new FileInputStream(inputFile)) {
+            return FileUtils.readAll(inputStream, inputFile.length());
+        }
+    }
+
     public static List<File> listRecursive(final File dir, final FilenameFilter filter) {
         final List<File> ret = new ArrayList<>();
         listRecursive(ret, dir, filter);
@@ -409,6 +415,16 @@ public class FileUtils {
         }
         fos.close();
         return Uri.fromFile(tempFile);
+    }
+
+    /**
+     * See {@link FileUtils#tryFixPath(File)}
+     */
+    public static File tryFixPath(final String path) {
+        if (path == null) {
+            return null;
+        }
+        return tryFixPath(new File(path));
     }
 
     /**

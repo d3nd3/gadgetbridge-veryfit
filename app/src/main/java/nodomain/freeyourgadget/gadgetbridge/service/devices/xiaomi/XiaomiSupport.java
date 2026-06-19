@@ -1,4 +1,4 @@
-/*  Copyright (C) 2023-2024 Andreas Shimokawa, José Rebelo, Yoran Vulker
+/*  Copyright (C) 2023-2026 Andreas Shimokawa, José Rebelo, Yoran Vulker
 
     This file is part of Gadgetbridge.
 
@@ -24,6 +24,7 @@ import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -60,6 +61,7 @@ import nodomain.freeyourgadget.gadgetbridge.service.devices.xiaomi.services.Xiao
 import nodomain.freeyourgadget.gadgetbridge.service.devices.xiaomi.services.XiaomiMusicService;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.xiaomi.services.XiaomiNotificationService;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.xiaomi.services.XiaomiPhonebookService;
+import nodomain.freeyourgadget.gadgetbridge.service.devices.xiaomi.services.XiaomiRpkService;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.xiaomi.services.XiaomiScheduleService;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.xiaomi.services.XiaomiSystemService;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.xiaomi.services.XiaomiWatchfaceService;
@@ -81,6 +83,8 @@ public class XiaomiSupport extends AbstractDeviceSupport {
     private final XiaomiWatchfaceService watchfaceService = new XiaomiWatchfaceService(this);
     private final XiaomiDataUploadService dataUploadService = new XiaomiDataUploadService(this);
     private final XiaomiPhonebookService phonebookService = new XiaomiPhonebookService(this);
+    private final XiaomiRpkService rpkService = new XiaomiRpkService(this);
+
 
     private String cachedFirmwareVersion = null;
     private XiaomiConnectionSupport connectionSupport = null;
@@ -97,6 +101,7 @@ public class XiaomiSupport extends AbstractDeviceSupport {
         put(XiaomiWatchfaceService.COMMAND_TYPE, watchfaceService);
         put(XiaomiDataUploadService.COMMAND_TYPE, dataUploadService);
         put(XiaomiPhonebookService.COMMAND_TYPE, phonebookService);
+        put(XiaomiRpkService.COMMAND_TYPE, rpkService);
     }};
 
     @Override
@@ -234,7 +239,7 @@ public class XiaomiSupport extends AbstractDeviceSupport {
     }
 
     @Override
-    public void onTestNewFunction() {
+    public void onTestNewFunction(@Nullable Bundle options) {
         //sendCommand("test new function", 2, 29);
     }
 
@@ -316,6 +321,8 @@ public class XiaomiSupport extends AbstractDeviceSupport {
             systemService.installFirmware(fwHelper);
         } else if (fwHelper.isWatchface()) {
             watchfaceService.installWatchface(fwHelper);
+        }else if (fwHelper.isRpk()) {
+            rpkService.installRpk(fwHelper);
         } else {
             LOG.warn("Unknown fwhelper for {}", uri);
         }
@@ -324,6 +331,7 @@ public class XiaomiSupport extends AbstractDeviceSupport {
     @Override
     public void onAppInfoReq() {
         watchfaceService.requestWatchfaceList();
+        rpkService.requestRpkList();
     }
 
     @Override
@@ -336,6 +344,7 @@ public class XiaomiSupport extends AbstractDeviceSupport {
     @Override
     public void onAppDelete(final UUID uuid) {
         watchfaceService.deleteWatchface(uuid);
+        rpkService.deleteRpk(uuid);
     }
 
     @Override
@@ -431,6 +440,14 @@ public class XiaomiSupport extends AbstractDeviceSupport {
 
     public XiaomiHealthService getHealthService() {
         return this.healthService;
+    }
+
+    public XiaomiRpkService getRpkService() {
+        return this.rpkService;
+    }
+
+    public XiaomiWatchfaceService getWatchfaceService() {
+        return this.watchfaceService;
     }
 
     @Override

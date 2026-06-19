@@ -31,7 +31,7 @@ import nodomain.freeyourgadget.gadgetbridge.util.healthconnect.HealthConnectUtil
 import nodomain.freeyourgadget.gadgetbridge.util.healthconnect.SyncException
 import org.slf4j.LoggerFactory
 import java.time.Instant
-import java.time.ZoneOffset
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
 private val LOG = LoggerFactory.getLogger("TemperatureSyncer")
@@ -47,7 +47,7 @@ internal object TemperatureSyncer : HealthConnectSyncer {
         healthConnectClient: HealthConnectClient,
         gbDevice: GBDevice,
         metadata: Metadata,
-        offset: ZoneOffset,
+        offset: ZoneId,
         sliceStartBoundary: Instant,
         sliceEndBoundary: Instant,
         grantedPermissions: Set<String>
@@ -94,13 +94,8 @@ internal object TemperatureSyncer : HealthConnectSyncer {
             LOG.info("Processing ${bodySamples.size} body temperature samples for '$deviceName'.")
             for (sample in bodySamples) {
                 val sampleTemp = sample.temperature.toDouble()
-                if (sampleTemp !in MIN_PLAUSIBLE_BODY_TEMP_C..MAX_PLAUSIBLE_BODY_TEMP_C) {
-                    LOG.debug(
-                        "Skipping Body Temperature sample for device '{}' at {} due to implausible value: {}°C.",
-                        deviceName,
-                        Instant.ofEpochMilli(sample.timestamp),
-                        sample.temperature
-                    )
+                if (sampleTemp !in MIN_PLAUSIBLE_BODY_TEMP_C..MAX_PLAUSIBLE_BODY_TEMP_C || !sampleTemp.isFinite()) {
+                    LOG.skipOutOfRange(deviceName, "BodyTemperature", "${sample.temperature}°C", "$MIN_PLAUSIBLE_BODY_TEMP_C..$MAX_PLAUSIBLE_BODY_TEMP_C °C")
                     continue
                 }
                 val timestamp = Instant.ofEpochMilli(sample.timestamp)
@@ -108,14 +103,14 @@ internal object TemperatureSyncer : HealthConnectSyncer {
                     recordsToInsert.add(
                         BodyTemperatureRecord(
                             time = timestamp,
-                            zoneOffset = offset,
+                            zoneOffset = offset.rules.getOffset(timestamp),
                             temperature = Temperature.celsius(sampleTemp),
                             measurementLocation = sample.temperatureLocation,
                             metadata = metadata
                         )
                     )
                 } else {
-                    LOG.debug(
+                    LOG.trace(
                         "Skipping Body Temperature sample for device '{}' at {} (value: {}°C) as it's outside slice {} - {}.",
                         deviceName,
                         timestamp,
@@ -165,6 +160,12 @@ internal object TemperatureSyncer : HealthConnectSyncer {
                         currentTempC - baselineForCurrentRecord
                     }
 
+                    if (deltaValue !in -30.0..30.0 || !deltaValue.isFinite()) {
+                        LOG.skipOutOfRange(deviceName, "SkinTemperatureDelta", deltaValue, "-30..30 °C")
+                        previousTempC = currentTempC
+                        continue
+                    }
+
                     deltas.add(
                         SkinTemperatureRecord.Delta(
                             time = Instant.ofEpochMilli(sample.timestamp),
@@ -178,9 +179,9 @@ internal object TemperatureSyncer : HealthConnectSyncer {
                     recordsToInsert.add(
                         SkinTemperatureRecord(
                             startTime = recordStartTime,
-                            startZoneOffset = offset,
+                            startZoneOffset = offset.rules.getOffset(recordStartTime),
                             endTime = recordEndTime,
-                            endZoneOffset = offset,
+                            endZoneOffset = offset.rules.getOffset(recordEndTime),
                             deltas = deltas,
                             baseline = Temperature.celsius(baselineForCurrentRecord),
                             metadata = metadata
@@ -206,7 +207,27 @@ internal object TemperatureSyncer : HealthConnectSyncer {
 
         LOG.info("Successfully inserted TemperatureRecord(s) (Body/Skin) for '$deviceName' for slice $sliceStartBoundary to $sliceEndBoundary.")
         LOG.info("Temperature sync completed for device '$deviceName' for slice $sliceStartBoundary to $sliceEndBoundary. Total synced: $totalRecordsSynced")
-        return SyncerStatistics(recordsSynced = totalRecordsSynced, recordsSkipped = totalRecordsSkipped, recordType = "Temperature")
+        return buildStatistics(recordsToInsert, totalRecordsSkipped)
+    }
+
+    // Builds the slice result, including latestRecordTimestamp. The orchestrator only advances the
+    // persisted sync cursor from that field; omitting it freezes the cursor and re-inserts the whole
+    // span every run. Body records are point-in-time, skin records are intervals, so the cursor takes
+    // the furthest forward edge of either kind.
+    internal fun buildStatistics(insertedRecords: List<Record>, recordsSkipped: Int): SyncerStatistics {
+        val latest = insertedRecords.mapNotNull {
+            when (it) {
+                is BodyTemperatureRecord -> it.time
+                is SkinTemperatureRecord -> it.endTime
+                else -> null
+            }
+        }.maxOrNull()
+        return SyncerStatistics(
+            recordsSynced = insertedRecords.size,
+            recordsSkipped = recordsSkipped,
+            recordType = "Temperature",
+            latestRecordTimestamp = latest
+        )
     }
 
     // Helper class to manage dynamic baseline calculation per device

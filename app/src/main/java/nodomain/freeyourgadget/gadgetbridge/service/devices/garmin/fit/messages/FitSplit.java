@@ -125,8 +125,18 @@ public class FitSplit extends RecordData {
     }
 
     @Nullable
+    public Double getActiveTime() {
+        return getFieldByNumber(78, Double.class);
+    }
+
+    @Nullable
     public Double getTotalMovingTime() {
         return getFieldByNumber(110, Double.class);
+    }
+
+    @Nullable
+    public Long getTimestamp() {
+        return getFieldByNumber(253, Long.class);
     }
 
     @Nullable
@@ -227,8 +237,18 @@ public class FitSplit extends RecordData {
             return this;
         }
 
+        public Builder setActiveTime(final Double value) {
+            setFieldByNumber(78, value);
+            return this;
+        }
+
         public Builder setTotalMovingTime(final Double value) {
             setFieldByNumber(110, value);
+            return this;
+        }
+
+        public Builder setTimestamp(final Long value) {
+            setFieldByNumber(253, value);
             return this;
         }
 

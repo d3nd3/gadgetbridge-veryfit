@@ -35,10 +35,14 @@ import org.slf4j.LoggerFactory;
 import java.text.ParseException;
 import java.time.LocalTime;
 import java.util.Date;
+import java.util.Locale;
 
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.activities.SettingsActivity;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
+import nodomain.freeyourgadget.gadgetbridge.model.DistanceUnit;
+import nodomain.freeyourgadget.gadgetbridge.model.TemperatureUnit;
+import nodomain.freeyourgadget.gadgetbridge.model.WeightUnit;
 
 public class GBPrefs extends Prefs {
     private static final Logger LOG = LoggerFactory.getLogger(GBPrefs.class);
@@ -80,6 +84,12 @@ public class GBPrefs extends Prefs {
     public static final String AUTO_EXPORT_ZIP_INTERVAL = "zip_auto_export_interval";
     public static final String AUTO_EXPORT_ZIP_LAST_EXECUTION = "zip_auto_export_last_execution";
     public static final String AUTO_EXPORT_ZIP_NEXT_EXECUTION = "zip_auto_export_next_execution";
+
+    // GPX export
+    public static final String AUTO_EXPORT_GPX_ENABLED = "gpx_auto_export_enabled";
+    public static final String AUTO_EXPORT_GPX_DIRECTORY = "gpx_auto_export_directory";
+    public static final String AUTO_EXPORT_GPX_ALL_DEVICES = "gpx_auto_export_all_devices";
+    public static final String AUTO_EXPORT_GPX_SELECTED_DEVICES = "gpx_auto_export_selected_devices";
 
     // Intent API
     public static final String INTENT_API_BROADCAST_EXPORT_DB = "intent_api_broadcast_export";
@@ -203,8 +213,31 @@ public class GBPrefs extends Prefs {
         return getLocalTime("notification_times_end", "22:00");
     }
 
-    public boolean isMetricUnits() {
-        return getString(SettingsActivity.PREF_MEASUREMENT_SYSTEM, "metric").equals("metric");
+    public TemperatureUnit getTemperatureUnit() {
+        try {
+            return TemperatureUnit.valueOf(getString(SettingsActivity.PREF_UNIT_TEMPERATURE, "celsius").toUpperCase(Locale.ROOT));
+        } catch (final Exception e) {
+            LOG.error("Error reading temperature unit preference", e);
+        }
+        return TemperatureUnit.CELSIUS;
+    }
+
+    public WeightUnit getWeightUnit() {
+        try {
+            return WeightUnit.valueOf(getString(SettingsActivity.PREF_UNIT_WEIGHT, "kilogram").toUpperCase(Locale.ROOT));
+        } catch (final Exception e) {
+            LOG.error("Error reading weight unit preference", e);
+        }
+        return WeightUnit.KILOGRAM;
+    }
+
+    public DistanceUnit getDistanceUnit() {
+        try {
+            return DistanceUnit.valueOf(getString(SettingsActivity.PREF_UNIT_DISTANCE, "metric").toUpperCase(Locale.ROOT));
+        } catch (final Exception e) {
+            LOG.error("Error reading distance unit preference", e);
+        }
+        return DistanceUnit.METRIC;
     }
 
     public boolean syncTime() {
@@ -217,5 +250,9 @@ public class GBPrefs extends Prefs {
 
     public boolean experimentalSettings() {
         return getBoolean("experimental_settings", false);
+    }
+
+    public boolean experimentalMetrics() {
+        return getBoolean("experimental_metrics", false);
     }
 }

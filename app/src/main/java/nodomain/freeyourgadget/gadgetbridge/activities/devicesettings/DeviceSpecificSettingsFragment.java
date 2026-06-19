@@ -93,6 +93,7 @@ import nodomain.freeyourgadget.gadgetbridge.devices.DeviceCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.DeviceManager;
 import nodomain.freeyourgadget.gadgetbridge.devices.huami.HuamiConst;
 import nodomain.freeyourgadget.gadgetbridge.devices.miband.MiBandConst;
+import nodomain.freeyourgadget.gadgetbridge.externalevents.gps.GBLocationService;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
 import nodomain.freeyourgadget.gadgetbridge.model.BatteryConfig;
 import nodomain.freeyourgadget.gadgetbridge.model.CannedMessagesSpec;
@@ -431,11 +432,6 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
             DeviceSettingsUtils.sortListPreference(transliterationPreference, false);
         }
 
-        final ListPreference weightScaleUnitPreference = findPreference(PREF_WEIGHT_SCALE_UNIT);
-        if (weightScaleUnitPreference != null) {
-            DeviceSettingsUtils.sortListPreference(weightScaleUnitPreference, false);
-        }
-
         String disconnectNotificationState = prefs.getString(PREF_DISCONNECT_NOTIFICATION, PREF_DO_NOT_DISTURB_OFF);
         boolean disconnectNotificationScheduled = disconnectNotificationState.equals(PREF_DO_NOT_DISTURB_SCHEDULED);
 
@@ -683,10 +679,18 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
         addPreferenceHandlerFor(PREF_HYDRATION_DND);
         addPreferenceHandlerFor(PREF_HYDRATION_DND_START);
         addPreferenceHandlerFor(PREF_HYDRATION_DND_END);
+        addPreferenceHandlerFor(PREF_HYDRATION_REMINDER_START);
+        addPreferenceHandlerFor(PREF_HYDRATION_REMINDER_END);
         addPreferenceHandlerFor(PREF_AMPM_ENABLED);
         addPreferenceHandlerFor(PREF_SOUNDS);
         addPreferenceHandlerFor(PREF_CAMERA_REMOTE);
         addPreferenceHandlerFor(PREF_SCREEN_LIFT_WRIST);
+
+        final Preference sendGpsToBandPref = findPreference(PREF_WORKOUT_SEND_GPS_TO_BAND);
+        if (sendGpsToBandPref != null && !GBLocationService.isGpsSupportedAndEnabled()) {
+            sendGpsToBandPref.setEnabled(false);
+            sendGpsToBandPref.setSummary(R.string.phone_gps_not_available);
+        }
 
         addPreferenceHandlerFor(PREF_BATTERY_POLLING_ENABLE);
         addPreferenceHandlerFor(PREF_BATTERY_POLLING_INTERVAL);
@@ -735,6 +739,11 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
 
         addPreferenceHandlerFor(PREF_NOTHING_EAR1_INEAR);
         addPreferenceHandlerFor(PREF_NOTHING_EAR1_AUDIOMODE);
+        addPreferenceHandlerFor(PREF_HEADPHONES_LOW_LATENCY);
+        addPreferenceHandlerFor(PREF_HEADPHONES_EQUALIZER);
+        addPreferenceHandlerFor(PREF_NOTHING_EAR1_ULTRA_BASS_ENABLED);
+        addPreferenceHandlerFor(PREF_NOTHING_EAR1_ULTRA_BASS_LEVEL);
+        addPreferenceHandlerFor(PREF_NOTHING_EAR1_SPATIAL_AUDIO);
 
         addPreferenceHandlerFor(PREF_HUAWEI_FREEBUDS_INEAR);
         addPreferenceHandlerFor(PREF_HUAWEI_FREEBUDS_AUDIOMODE);
@@ -812,6 +821,26 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
         addPreferenceHandlerFor(PREF_REDMI_BUDS_5_PRO_EQUALIZER_BAND_12k);
         addPreferenceHandlerFor(PREF_REDMI_BUDS_5_PRO_EQUALIZER_BAND_16k);
 
+        addPreferenceHandlerFor(PREF_REDMI_BUDS_6_ACTIVE_CONTROL_SINGLE_TAP_LEFT);
+        addPreferenceHandlerFor(PREF_REDMI_BUDS_6_ACTIVE_CONTROL_SINGLE_TAP_RIGHT);
+        addPreferenceHandlerFor(PREF_REDMI_BUDS_6_ACTIVE_CONTROL_DOUBLE_TAP_LEFT);
+        addPreferenceHandlerFor(PREF_REDMI_BUDS_6_ACTIVE_CONTROL_DOUBLE_TAP_RIGHT);
+        addPreferenceHandlerFor(PREF_REDMI_BUDS_6_ACTIVE_CONTROL_TRIPLE_TAP_LEFT);
+        addPreferenceHandlerFor(PREF_REDMI_BUDS_6_ACTIVE_CONTROL_TRIPLE_TAP_RIGHT);
+        addPreferenceHandlerFor(PREF_REDMI_BUDS_6_ACTIVE_CONTROL_LONG_TAP_MODE_LEFT);
+        addPreferenceHandlerFor(PREF_REDMI_BUDS_6_ACTIVE_CONTROL_LONG_TAP_MODE_RIGHT);
+        addPreferenceHandlerFor(PREF_REDMI_BUDS_6_ACTIVE_EQUALIZER_PRESET);
+
+        addPreferenceHandlerFor(PREF_REDMI_BUDS_8_ACTIVE_CONTROL_SINGLE_TAP_LEFT);
+        addPreferenceHandlerFor(PREF_REDMI_BUDS_8_ACTIVE_CONTROL_SINGLE_TAP_RIGHT);
+        addPreferenceHandlerFor(PREF_REDMI_BUDS_8_ACTIVE_CONTROL_DOUBLE_TAP_LEFT);
+        addPreferenceHandlerFor(PREF_REDMI_BUDS_8_ACTIVE_CONTROL_DOUBLE_TAP_RIGHT);
+        addPreferenceHandlerFor(PREF_REDMI_BUDS_8_ACTIVE_CONTROL_TRIPLE_TAP_LEFT);
+        addPreferenceHandlerFor(PREF_REDMI_BUDS_8_ACTIVE_CONTROL_TRIPLE_TAP_RIGHT);
+        addPreferenceHandlerFor(PREF_REDMI_BUDS_8_ACTIVE_CONTROL_LONG_TAP_MODE_LEFT);
+        addPreferenceHandlerFor(PREF_REDMI_BUDS_8_ACTIVE_CONTROL_LONG_TAP_MODE_RIGHT);
+        addPreferenceHandlerFor(PREF_REDMI_BUDS_8_ACTIVE_EQUALIZER_PRESET);
+
         addPreferenceHandlerFor(PREF_SONY_AMBIENT_SOUND_CONTROL);
         addPreferenceHandlerFor(PREF_SONY_AMBIENT_SOUND_CONTROL_BUTTON_MODE);
         addPreferenceHandlerFor(PREF_SONY_FOCUS_VOICE);
@@ -825,6 +854,8 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
         addPreferenceHandlerFor(PREF_SONY_EQUALIZER_BAND_6300);
         addPreferenceHandlerFor(PREF_SONY_EQUALIZER_BAND_16000);
         addPreferenceHandlerFor(PREF_SONY_EQUALIZER_BASS);
+        addPreferenceHandlerFor(PREF_SONY_AUDIO_HD);
+        addPreferenceHandlerFor(PREF_SONY_BUTTON_FUNCTION_NC_AMBIENT);
         addPreferenceHandlerFor(PREF_SONY_AUDIO_UPSAMPLING);
         addPreferenceHandlerFor(PREF_SONY_TOUCH_SENSOR);
         addPreferenceHandlerFor(PREF_SONY_PAUSE_WHEN_TAKEN_OFF);
@@ -841,6 +872,11 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
         addPreferenceHandlerFor(PREF_SONY_CONNECT_TWO_DEVICES);
         addPreferenceHandlerFor(PREF_SONY_ADAPTIVE_VOLUME_CONTROL);
         addPreferenceHandlerFor(PREF_SONY_WIDE_AREA_TAP);
+
+        addPreferenceHandlerFor(PREF_GYMLINK_ENABLED);
+        addPreferenceHandlerFor(PREF_ANTPLUS_ENABLED);
+        addPreferenceHandlerFor(PREF_HR_BROADCAST);
+        addPreferenceHandlerFor(PREF_DUAL_CONNECTION);
 
         addPreferenceHandlerFor(PREF_MEDIA_SOURCE);
         addPreferenceHandlerFor(PREF_MEDIA_PLAYBACK_MODE);
@@ -877,6 +913,7 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
         addPreferenceHandlerFor(PREF_SOUNDCORE_VOICE_PROMPTS);
         addPreferenceHandlerFor(PREF_SOUNDCORE_BUTTON_BRIGHTNESS);
         addPreferenceHandlerFor(PREF_SOUNDCORE_AUTO_POWER_OFF);
+        addPreferenceHandlerFor(PREF_SOUNDCORE_3D_SURROUND);
         addPreferenceHandlerFor(PREF_SOUNDCORE_LDAC_MODE);
         addPreferenceHandlerFor(PREF_SOUNDCORE_GAMING_MODE);
         addPreferenceHandlerFor(PREF_SOUNDCORE_ADAPTIVE_DIRECTION);
@@ -902,6 +939,7 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
         addPreferenceHandlerFor(PREF_SOUNDCORE_EQUALIZER_BAND9_VALUE);
 
         addPreferenceHandlerFor(PREF_MOONDROP_EQUALIZER_PRESET);
+        addPreferenceHandlerFor(PREF_MOONDROP_ANC_MODE);
         addPreferenceHandlerFor(PREF_MOONDROP_TOUCH_PLAY_PAUSE_EARBUD);
         addPreferenceHandlerFor(PREF_MOONDROP_TOUCH_PLAY_PAUSE_TRIGGER);
         addPreferenceHandlerFor(PREF_MOONDROP_TOUCH_MEDIA_PREV_EARBUD);
@@ -917,7 +955,6 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
         addPreferenceHandlerFor(PREF_MOONDROP_TOUCH_ANC_MODE_EARBUD);
         addPreferenceHandlerFor(PREF_MOONDROP_TOUCH_ANC_MODE_TRIGGER);
 
-        addPreferenceHandlerFor(PREF_MISCALE_WEIGHT_UNIT);
         addPreferenceHandlerFor(PREF_MISCALE_SMALL_OBJECTS);
 
         addPreferenceHandlerFor(PREF_MIJIA_LYWSD_COMFORT_TEMPERATURE_LOWER);
@@ -967,6 +1004,7 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
 
         addPreferenceHandlerFor(PREF_VOLUME);
         addPreferenceHandlerFor(PREF_CROWN_VIBRATION);
+        addPreferenceHandlerFor(PREF_PROMPT_TONE);
         addPreferenceHandlerFor(PREF_ALERT_TONE);
         addPreferenceHandlerFor(PREF_COVER_TO_MUTE);
         addPreferenceHandlerFor(PREF_VIBRATE_FOR_ALERT);
@@ -979,8 +1017,6 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
         addPreferenceHandlerFor(PREF_OFFLINE_VOICE_LANGUAGE);
 
         addPreferenceHandlerFor(PREF_VOICE_SERVICE_LANGUAGE);
-
-        addPreferenceHandlerFor(PREF_TEMPERATURE_SCALE_CF);
 
         addPreferenceHandlerFor(PREF_PREFIX_NOTIFICATION_WITH_APP);
 
@@ -1045,6 +1081,7 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
             addPreferenceHandlerFor(PREF_CALENDAR_SYNC_FOCUS_TIME);
             addPreferenceHandlerFor(PREF_CALENDAR_SYNC_ALL_DAY);
             addPreferenceHandlerFor(PREF_CALENDAR_SYNC_WORKING_LOCATION);
+            addPreferenceHandlerFor(PREF_CALENDAR_SYNC_EVENT_REMINDERS);
         }
 
         addPreferenceHandlerFor(PREF_ATC_BLE_OEPL_MODEL);
@@ -1316,6 +1353,7 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
         final Preference cannedMessagesDismissCall = findPreference("canned_messages_dismisscall_send");
         if (cannedMessagesDismissCall != null) {
             cannedMessagesDismissCall.setOnPreferenceClickListener(new androidx.preference.Preference.OnPreferenceClickListener() {
+                @Override
                 public boolean onPreferenceClick(androidx.preference.Preference preference) {
                     ArrayList<String> messages = new ArrayList<>();
                     for (int i = 1; i <= cannedRepliesSlotCount; i++) {
@@ -1345,6 +1383,7 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
         if (cannedMessagesGeneric != null) {
 
             cannedMessagesGeneric.setOnPreferenceClickListener(new androidx.preference.Preference.OnPreferenceClickListener() {
+                @Override
                 public boolean onPreferenceClick(androidx.preference.Preference preference) {
                     final ArrayList<String> messages = new ArrayList<>();
                     for (int i = 1; i <= cannedRepliesSlotCount; i++) {
@@ -1628,11 +1667,20 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
                     R.xml.devicesettings_device_support_can_reconnect
             );
 
-            deviceSpecificSettings.addRootScreen(
-                    DeviceSpecificSettingsScreen.DEVELOPER,
+            final List<Integer> intentApiSubScreens = new ArrayList<>();
+            Collections.addAll(
+                    intentApiSubScreens,
                     R.xml.devicesettings_header_intent_api,
                     R.xml.devicesettings_settings_third_party_apps
             );
+            if (coordinator.getAlarmSlotCount(device) > 0) {
+                intentApiSubScreens.add(R.xml.devicesettings_alarms_third_party_apps);
+            }
+            deviceSpecificSettings.addRootScreen(
+                    DeviceSpecificSettingsScreen.DEVELOPER,
+                    intentApiSubScreens
+            );
+
             if (coordinator.getConnectionType().usesBluetoothLE()) {
                 deviceSpecificSettings.addRootScreen(
                         DeviceSpecificSettingsScreen.DEVELOPER,
@@ -1696,6 +1744,7 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
         Preference pref = findPreference(preferenceKey);
         if (pref != null) {
             pref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
                 public boolean onPreferenceChange(Preference preference, Object newVal) {
                     notifyPreferenceChanged(preferenceKey);
 

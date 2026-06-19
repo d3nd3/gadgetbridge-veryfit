@@ -52,7 +52,11 @@
     <uses-permission android:name="me.hackerchick.catima.READ_CARDS"/>
     <uses-permission android:name="me.hackerchick.catima.debug.READ_CARDS"/>
 
-    <!-- Make sure we don't get the INTERNET permission even when a depencency requires it -->
+    <!-- Read passes from FossWallet -->
+    <uses-permission android:name="nz.eloque.foss_wallet.READ_CARDS"/>
+    <uses-permission android:name="nz.eloque.foss_wallet.dev.READ_CARDS"/>
+
+    <!-- Make sure we don't get the INTERNET permission even when a dependency requires it -->
     <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
 
     <!-- Internet Helper -->
@@ -225,6 +229,10 @@
         <activity
             android:name=".activities.automations.AutoExportZipSettingsActivity"
             android:label="@string/pref_header_auto_export_zip"
+            android:parentActivityName=".activities.SettingsActivity" />
+        <activity
+            android:name=".activities.automations.AutoExportGpxSettingsActivity"
+            android:label="@string/pref_header_auto_export_gpx"
             android:parentActivityName=".activities.SettingsActivity" />
         <activity
             android:name=".activities.maps.MapsTrackActivity"
@@ -964,15 +972,15 @@
         </activity>
 
         <activity
-            android:name=".devices.qhybrid.QHybridConfigActivity"
+            android:name=".devices.qhybrid.QHybridNotificationsConfigActivity"
             android:label="@string/qhybrid_title_watchface"
             android:exported="true"
             android:parentActivityName=".activities.devicesettings.DeviceSettingsActivity" />
         <activity
-            android:name=".devices.qhybrid.QHybridAppChoserActivity"
+            android:name=".devices.qhybrid.QHybridAppChooserActivity"
             android:label="@string/qhybrid_title_apps"
             android:exported="true"
-            android:parentActivityName=".devices.qhybrid.QHybridConfigActivity" />
+            android:parentActivityName=".devices.qhybrid.QHybridNotificationsConfigActivity" />
         <activity
             android:name=".devices.qhybrid.HRConfigActivity"
             android:label="@string/qhybrid_title_watchface"
@@ -1050,7 +1058,7 @@
                 <action android:name="android.intent.action.SEND" />
                 <action android:name="android.intent.action.SEND_MULTIPLE" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="*/*" />
+                <data android:mimeType="application/gpx+xml" />
             </intent-filter>
         </activity>
 
@@ -1090,6 +1098,27 @@
             android:name=".devices.cycling_sensor.activity.CyclingLiveDataActivity"
             android:launchMode="singleInstance"
             android:exported="true" />
+
+        <activity
+            android:name=".devices.garmin.actions.GarminSendWaypointActivity"
+            android:exported="true"
+            android:label="@string/activity_send_waypoint_titel">
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="geo" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
 
         <!-- For supported versions through Android 13, create an activity to show the rationale
        of Health Connect permissions once users click the privacy policy link. -->

@@ -22,7 +22,26 @@ import androidx.health.connect.client.records.metadata.Metadata
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice
 import nodomain.freeyourgadget.gadgetbridge.model.ActivitySample
 import java.time.Instant
-import java.time.ZoneOffset
+import java.time.ZoneId
+
+// Deterministic clientRecordId so re-emitting an overlapping window upserts instead of duplicating.
+// version is the clientRecordVersion; HC keeps the highest on conflict (newVersion >= existing
+// overwrites). Callers pass the sync run's wall-clock so a later run always outranks the value it
+// previously wrote for a minute. It must never be the metric value: a downward correction would
+// then carry a lower version and be silently ignored, freezing the minute at its stale maximum.
+internal fun clientRecordMetadata(
+    base: Metadata,
+    type: String,
+    idKey: Long,
+    version: Long
+): Metadata {
+    val device = base.device ?: return base
+    val id = "gb-$type-${device.manufacturer ?: "unknown"}-${device.model ?: "unknown"}-$idKey"
+    return when (base.recordingMethod) {
+        Metadata.RECORDING_METHOD_ACTIVELY_RECORDED -> Metadata.activelyRecorded(device, id, version)
+        else -> Metadata.autoRecorded(device, id, version)
+    }
+}
 
 /**
  * Statistics returned by a syncer after processing a slice.
@@ -46,7 +65,7 @@ internal sealed interface HealthConnectSyncer {
         healthConnectClient: HealthConnectClient,
         gbDevice: GBDevice,
         metadata: Metadata,
-        offset: ZoneOffset,
+        offset: ZoneId,
         sliceStartBoundary: Instant,
         sliceEndBoundary: Instant,
         grantedPermissions: Set<String>
@@ -62,7 +81,7 @@ internal interface ActivitySampleSyncer {
         healthConnectClient: HealthConnectClient,
         gbDevice: GBDevice,
         metadata: Metadata,
-        offset: ZoneOffset,
+        offset: ZoneId,
         sliceStartBoundary: Instant,
         sliceEndBoundary: Instant,
         grantedPermissions: Set<String>,
@@ -79,7 +98,7 @@ internal interface ContextualActivitySampleSyncer {
         healthConnectClient: HealthConnectClient,
         gbDevice: GBDevice,
         metadata: Metadata,
-        offset: ZoneOffset,
+        offset: ZoneId,
         sliceStartBoundary: Instant,
         sliceEndBoundary: Instant,
         grantedPermissions: Set<String>,

@@ -3,6 +3,7 @@ package nodomain.freeyourgadget.gadgetbridge.devices.thermalprinter;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -65,7 +66,7 @@ public class ThermalPrinterCoordinator extends AbstractBLEDeviceCoordinator {
 
     @Nullable
     @Override
-    public InstallHandler findInstallHandler(Uri uri, Context context) {
+    public InstallHandler findInstallHandler(Uri uri, Bundle options, Context context) {
         final ImageFilePrinterHandler imageFilePrinterHandler = new ImageFilePrinterHandler(uri, context);
         if (imageFilePrinterHandler.isValid()) {
             return imageFilePrinterHandler;
@@ -94,17 +95,18 @@ public class ThermalPrinterCoordinator extends AbstractBLEDeviceCoordinator {
     private static final class ControlDeviceCardAction implements DeviceCardAction {
 
         @Override
-        public int getIcon(GBDevice device) {
+        public int getIcon(@NonNull GBDevice device) {
             return R.drawable.ic_file_upload;
         }
 
+        @NonNull
         @Override
-        public String getDescription(final GBDevice device, final Context context) {
+        public String getDescription(@NonNull final GBDevice device, @NonNull final Context context) {
             return context.getString(R.string.activity_print_image_print_button);
         }
 
         @Override
-        public void onClick(final GBDevice device, final Context context) {
+        public void onClick(@NonNull final GBDevice device, @NonNull final Context context) {
 
             final Intent startIntent = new Intent(context, SendToPrinterActivity.class);
             startIntent.putExtra(GBDevice.EXTRA_DEVICE, device);

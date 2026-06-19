@@ -18,10 +18,7 @@ package nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.messages
 
 import androidx.annotation.Nullable;
 
-import java.util.Date;
-
 import nodomain.freeyourgadget.gadgetbridge.model.ActivityPoint;
-import nodomain.freeyourgadget.gadgetbridge.model.GPSCoordinate;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.FitRecordDataBuilder;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.RecordData;
 import nodomain.freeyourgadget.gadgetbridge.service.devices.garmin.fit.RecordDefinition;
@@ -339,6 +336,11 @@ public class FitRecord extends RecordData {
     }
 
     @Nullable
+    public Integer getPerformanceCondition() {
+        return getFieldByNumber(90, Integer.class);
+    }
+
+    @Nullable
     public Long getAbsolutePressure() {
         return getFieldByNumber(91, Long.class);
     }
@@ -424,6 +426,11 @@ public class FitRecord extends RecordData {
     }
 
     @Nullable
+    public Integer getTotalAscent() {
+        return getFieldByNumber(121, Integer.class);
+    }
+
+    @Nullable
     public Long getAirTimeRemaining() {
         return getFieldByNumber(123, Long.class);
     }
@@ -459,13 +466,48 @@ public class FitRecord extends RecordData {
     }
 
     @Nullable
+    public Integer getStaminaPotential() {
+        return getFieldByNumber(137, Integer.class);
+    }
+
+    @Nullable
+    public Integer getStamina() {
+        return getFieldByNumber(138, Integer.class);
+    }
+
+    @Nullable
     public Float getCoreTemperature() {
         return getFieldByNumber(139, Float.class);
     }
 
     @Nullable
+    public Double getGradeAdjustedSpeed() {
+        return getFieldByNumber(140, Double.class);
+    }
+
+    @Nullable
     public Integer getBodyBattery() {
         return getFieldByNumber(143, Integer.class);
+    }
+
+    @Nullable
+    public Integer getExternalHeartRate() {
+        return getFieldByNumber(144, Integer.class);
+    }
+
+    @Nullable
+    public Float getStepSpeedLossDistance() {
+        return getFieldByNumber(146, Float.class);
+    }
+
+    @Nullable
+    public Float getStepSpeedLossPercentage() {
+        return getFieldByNumber(147, Float.class);
+    }
+
+    @Nullable
+    public Double getForce() {
+        return getFieldByNumber(148, Double.class);
     }
 
     @Nullable
@@ -776,6 +818,11 @@ public class FitRecord extends RecordData {
             return this;
         }
 
+        public Builder setPerformanceCondition(final Integer value) {
+            setFieldByNumber(90, value);
+            return this;
+        }
+
         public Builder setAbsolutePressure(final Long value) {
             setFieldByNumber(91, value);
             return this;
@@ -861,6 +908,11 @@ public class FitRecord extends RecordData {
             return this;
         }
 
+        public Builder setTotalAscent(final Integer value) {
+            setFieldByNumber(121, value);
+            return this;
+        }
+
         public Builder setAirTimeRemaining(final Long value) {
             setFieldByNumber(123, value);
             return this;
@@ -896,13 +948,48 @@ public class FitRecord extends RecordData {
             return this;
         }
 
+        public Builder setStaminaPotential(final Integer value) {
+            setFieldByNumber(137, value);
+            return this;
+        }
+
+        public Builder setStamina(final Integer value) {
+            setFieldByNumber(138, value);
+            return this;
+        }
+
         public Builder setCoreTemperature(final Float value) {
             setFieldByNumber(139, value);
             return this;
         }
 
+        public Builder setGradeAdjustedSpeed(final Double value) {
+            setFieldByNumber(140, value);
+            return this;
+        }
+
         public Builder setBodyBattery(final Integer value) {
             setFieldByNumber(143, value);
+            return this;
+        }
+
+        public Builder setExternalHeartRate(final Integer value) {
+            setFieldByNumber(144, value);
+            return this;
+        }
+
+        public Builder setStepSpeedLossDistance(final Float value) {
+            setFieldByNumber(146, value);
+            return this;
+        }
+
+        public Builder setStepSpeedLossPercentage(final Float value) {
+            setFieldByNumber(147, value);
+            return this;
+        }
+
+        public Builder setForce(final Double value) {
+            setFieldByNumber(148, value);
             return this;
         }
 
@@ -925,37 +1012,43 @@ public class FitRecord extends RecordData {
     // manual changes below
 
     public ActivityPoint toActivityPoint() {
-        final ActivityPoint activityPoint = new ActivityPoint();
-        activityPoint.setTime(new Date(getComputedTimestamp() * 1000L));
-        if (getLatitude() != null && getLongitude() != null) {
-            activityPoint.setLocation(new GPSCoordinate(
-                    getLongitude(),
-                    getLatitude(),
-                    getEnhancedAltitude() != null ? getEnhancedAltitude() : GPSCoordinate.UNKNOWN_ALTITUDE
-            ));
-        }
-        if (getHeartRate() != null) {
-            activityPoint.setHeartRate(getHeartRate());
-        }
-        if (getEnhancedSpeed() != null) {
-            activityPoint.setSpeed(getEnhancedSpeed().floatValue());
-        }
-        if (getCadence() != null) {
-            activityPoint.setCadence(getCadence());
-        }
-        if (getPower() != null) {
-            activityPoint.setPower(getPower());
-        }
-        if (getEnhancedRespirationRate() != null) {
-            activityPoint.setRespiratoryRate(getEnhancedRespirationRate());
-        }
-        if (getTemperature() != null) {
-            activityPoint.setTemperature(getTemperature());
-        }
-        if (getDepth() != null) {
-            activityPoint.setDepth(getDepth());
+        final ActivityPoint.Builder builder = new ActivityPoint.Builder(getComputedTimestamp() * 1000L);
+        builder.setBodyEnergy(getBodyBattery());
+        builder.setCadence(getCadence());
+        builder.setCnsToxicity(getCnsLoad());
+        builder.setDepth(getDepth());
+        builder.setDistance(getDistance());
+        builder.setHdop(getGpsAccuracy());
+        builder.setHeartRate(getHeartRate());
+        builder.setLatitude(getLatitude());
+        builder.setLongitude(getLongitude());
+        builder.setN2Load(getN2Load());
+        builder.setPower(getPower());
+        builder.setStamina(getStamina());
+        builder.setStepLength(getStepLength());
+        builder.setTemperature(getTemperature());
+
+        final Double enhancedAltitude = getEnhancedAltitude();
+        if (enhancedAltitude == null) {
+            builder.setAltitude(getAltitude());
+        } else {
+            builder.setAltitude(enhancedAltitude);
         }
 
-        return activityPoint;
+        final Float enhancedRespirationRate = getEnhancedRespirationRate();
+        if (enhancedRespirationRate == null) {
+            builder.setRespiratoryRate(getRespirationRate());
+        } else {
+            builder.setRespiratoryRate(enhancedRespirationRate);
+        }
+
+        final Double enhancedSpeed = getEnhancedSpeed();
+        if (enhancedSpeed == null) {
+            builder.setSpeed(getSpeed());
+        } else {
+            builder.setSpeed(enhancedSpeed.floatValue());
+        }
+
+        return builder.build();
     }
 }

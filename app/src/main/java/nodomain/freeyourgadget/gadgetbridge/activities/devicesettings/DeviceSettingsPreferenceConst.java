@@ -95,8 +95,8 @@ public class DeviceSettingsPreferenceConst {
     public static final String PREF_CALENDAR_SYNC_ALL_DAY = "calendar_sync_all_day";
     public static final String PREF_CALENDAR_SYNC_WORKING_LOCATION = "calendar_sync_working_location";
     public static final String PREF_CALENDAR_SYNC_COLOR_BLACKLIST = "calendar_sync_color_blacklist";
+    public static final String PREF_CALENDAR_SYNC_EVENT_REMINDERS = "calendar_sync_event_reminders";
     public static final String PREF_TIME_SYNC = "time_sync";
-    public static final String PREF_WEIGHT_SCALE_UNIT = "pref_weight_scale_unit";
     public static final String PREF_USE_CUSTOM_DEVICEICON = "use_custom_deviceicon";
     public static final String PREF_BUTTON_1_FUNCTION_SHORT = "button_1_function_short";
     public static final String PREF_BUTTON_2_FUNCTION_SHORT = "button_2_function_short";
@@ -170,6 +170,7 @@ public class DeviceSettingsPreferenceConst {
     public static final String PREF_ALWAYS_ON_DISPLAY_STYLE = "always_on_display_style";
 
     public static final String PREF_VOLUME = "volume";
+    public static final String PREF_PROMPT_TONE = "prompt_tone";
     public static final String PREF_CROWN_VIBRATION = "crown_vibration";
     public static final String PREF_ALERT_TONE = "alert_tone";
     public static final String PREF_COVER_TO_MUTE = "cover_to_mute";
@@ -327,6 +328,8 @@ public class DeviceSettingsPreferenceConst {
     public static final String PREF_HYDRATION_DND = "pref_hydration_dnd";
     public static final String PREF_HYDRATION_DND_START = "pref_hydration_dnd_start";
     public static final String PREF_HYDRATION_DND_END = "pref_hydration_dnd_end";
+    public static final String PREF_HYDRATION_REMINDER_START = "pref_hydration_reminder_start";
+    public static final String PREF_HYDRATION_REMINDER_END = "pref_hydration_reminder_end";
     public static final String PREF_AMPM_ENABLED = "pref_ampm_enabled";
 
     public static final String PREF_SONYSWR12_LOW_VIBRATION = "vibration_preference";
@@ -374,7 +377,11 @@ public class DeviceSettingsPreferenceConst {
 
     public static final String PREF_NOTHING_EAR1_INEAR = "pref_nothing_inear_detection";
     public static final String PREF_NOTHING_EAR1_AUDIOMODE = "pref_nothing_audiomode";
-
+    public static final String PREF_NOTHING_EAR1_ULTRA_BASS_ENABLED = "pref_nothing_ultra_bass_enabled";
+    public static final String PREF_NOTHING_EAR1_ULTRA_BASS_LEVEL = "pref_nothing_ultra_bass_level";
+    public static final String PREF_HEADPHONES_EQUALIZER = "pref_headphones_equalizer";
+    public static final String PREF_HEADPHONES_LOW_LATENCY = "pref_headphones_low_latency";
+    public static final String PREF_NOTHING_EAR1_SPATIAL_AUDIO = "pref_nothing_spatial_audio";
 
     public static final String PREF_HUAWEI_FREEBUDS_INEAR = "pref_freebuds_inear_detection";
     public static final String PREF_HUAWEI_FREEBUDS_AUDIOMODE = "pref_freebuds_audiomode";
@@ -465,6 +472,28 @@ public class DeviceSettingsPreferenceConst {
     public static final String PREF_REDMI_BUDS_5_PRO_EQUALIZER_BAND_16k="pref_redmi_buds_5_pro_equalizer_band_16k";
     public static final String PREF_REDMI_BUDS_5_PRO_ADAPTIVE_SOUND="pref_redmi_buds_5_pro_adaptive_sound";
 
+    public static final String PREF_REDMI_BUDS_6_ACTIVE_CONTROL_SINGLE_TAP_LEFT="pref_redmi_buds_6_active_control_single_tap_left";
+    public static final String PREF_REDMI_BUDS_6_ACTIVE_CONTROL_SINGLE_TAP_RIGHT="pref_redmi_buds_6_active_control_single_tap_right";
+    public static final String PREF_REDMI_BUDS_6_ACTIVE_CONTROL_DOUBLE_TAP_LEFT="pref_redmi_buds_6_active_control_double_tap_left";
+    public static final String PREF_REDMI_BUDS_6_ACTIVE_CONTROL_DOUBLE_TAP_RIGHT="pref_redmi_buds_6_active_control_double_tap_right";
+    public static final String PREF_REDMI_BUDS_6_ACTIVE_CONTROL_TRIPLE_TAP_LEFT="pref_redmi_buds_6_active_control_triple_tap_left";
+    public static final String PREF_REDMI_BUDS_6_ACTIVE_CONTROL_TRIPLE_TAP_RIGHT="pref_redmi_buds_6_active_control_triple_tap_right";
+    public static final String PREF_REDMI_BUDS_6_ACTIVE_CONTROL_LONG_TAP_MODE_LEFT="pref_redmi_buds_6_active_control_long_tap_mode_left";
+    public static final String PREF_REDMI_BUDS_6_ACTIVE_CONTROL_LONG_TAP_MODE_RIGHT="pref_redmi_buds_6_active_control_long_tap_mode_right";
+    public static final String PREF_REDMI_BUDS_6_ACTIVE_EQUALIZER_PRESET="pref_redmi_buds_6_active_equalizer_preset";
+
+    public static final String PREF_REDMI_BUDS_8_ACTIVE_CONTROL_SINGLE_TAP_LEFT="pref_redmi_buds_8_active_control_single_tap_left";
+    public static final String PREF_REDMI_BUDS_8_ACTIVE_CONTROL_SINGLE_TAP_RIGHT="pref_redmi_buds_8_active_control_single_tap_right";
+    public static final String PREF_REDMI_BUDS_8_ACTIVE_CONTROL_DOUBLE_TAP_LEFT="pref_redmi_buds_8_active_control_double_tap_left";
+    public static final String PREF_REDMI_BUDS_8_ACTIVE_CONTROL_DOUBLE_TAP_RIGHT="pref_redmi_buds_8_active_control_double_tap_right";
+    public static final String PREF_REDMI_BUDS_8_ACTIVE_CONTROL_TRIPLE_TAP_LEFT="pref_redmi_buds_8_active_control_triple_tap_left";
+    public static final String PREF_REDMI_BUDS_8_ACTIVE_CONTROL_TRIPLE_TAP_RIGHT="pref_redmi_buds_8_active_control_triple_tap_right";
+    public static final String PREF_REDMI_BUDS_8_ACTIVE_CONTROL_LONG_TAP_MODE_LEFT="pref_redmi_buds_8_active_control_long_tap_mode_left";
+    public static final String PREF_REDMI_BUDS_8_ACTIVE_CONTROL_LONG_TAP_MODE_RIGHT="pref_redmi_buds_8_active_control_long_tap_mode_right";
+    public static final String PREF_REDMI_BUDS_8_ACTIVE_CONTROL_LONG_TAP_SETTINGS_LEFT ="pref_redmi_buds_8_active_control_long_tap_settings_left";
+    public static final String PREF_REDMI_BUDS_8_ACTIVE_CONTROL_LONG_TAP_SETTINGS_RIGHT ="pref_redmi_buds_8_active_control_long_tap_settings_right";
+    public static final String PREF_REDMI_BUDS_8_ACTIVE_EQUALIZER_PRESET="pref_redmi_buds_8_active_equalizer_preset";
+
     public static final String PREF_SONY_AUDIO_CODEC = "pref_sony_audio_codec";
     public static final String PREF_SONY_PROTOCOL_VERSION = "pref_protocol_version";
     public static final String PREF_SONY_ACTUAL_PROTOCOL_VERSION = "pref_actual_protocol_version";
@@ -494,6 +523,8 @@ public class DeviceSettingsPreferenceConst {
     public static final String PREF_SOUNDCORE_VOICE_PROMPTS = "pref_soundcore_voice_prompts";
     public static final String PREF_SOUNDCORE_BUTTON_BRIGHTNESS = "pref_soundcore_button_brightness";
     public static final String PREF_SOUNDCORE_AUTO_POWER_OFF = "pref_soundcore_auto_power_off";
+    public static final String PREF_SOUNDCORE_3D_SURROUND = "pref_soundcore_3d_surround";
+    public static final String PREF_SOUNDCORE_ENABLE_PAIRING_MODE = "pref_soundcore_enable_pairing_mode";
     public static final String PREF_SOUNDCORE_LDAC_MODE = "pref_soundcore_ldac_mode";
     public static final String PREF_SOUNDCORE_GAMING_MODE = "pref_soundcore_gaming_mode";
     public static final String PREF_SOUNDCORE_ADAPTIVE_DIRECTION = "pref_soundcore_adaptive_direction";
@@ -530,6 +561,8 @@ public class DeviceSettingsPreferenceConst {
     public static final String PREF_SONY_SURROUND_MODE = "pref_sony_surround_mode";
     public static final String PREF_SONY_EQUALIZER = "pref_sony_equalizer";
     public static final String PREF_SONY_EQUALIZER_MODE = "pref_sony_equalizer_mode";
+    public static final String PREF_SONY_AUDIO_HD = "pref_sony_audio_hd";
+    public static final String PREF_SONY_BUTTON_FUNCTION_NC_AMBIENT = "pref_sony_button_function_nc_ambient";
     public static final String PREF_SONY_AUDIO_UPSAMPLING = "pref_sony_audio_upsampling";
     public static final String PREF_SONY_EQUALIZER_BAND_400 = "pref_sony_equalizer_band_400";
     public static final String PREF_SONY_EQUALIZER_BAND_1000 = "pref_sony_equalizer_band_1000";
@@ -552,6 +585,11 @@ public class DeviceSettingsPreferenceConst {
     public static final String PREF_SONY_CONNECT_TWO_DEVICES = "pref_sony_connect_two_devices";
     public static final String PREF_SONY_ADAPTIVE_VOLUME_CONTROL = "pref_adaptive_volume_control";
     public static final String PREF_SONY_WIDE_AREA_TAP = "pref_wide_area_tap";
+
+    public static final String PREF_GYMLINK_ENABLED = "gymlink_enabled";
+    public static final String PREF_ANTPLUS_ENABLED = "antplus_enabled";
+    public static final String PREF_HR_BROADCAST = "hr_broadcast";
+    public static final String PREF_DUAL_CONNECTION = "dual_connection";
 
     public static final String PREF_MEDIA_SOURCE = "pref_media_source";
     public static final String PREF_MEDIA_PLAYBACK_MODE = "pref_media_playback_mode";
@@ -578,8 +616,8 @@ public class DeviceSettingsPreferenceConst {
     public static final String PREF_MOONDROP_TOUCH_ASSISTANT_TRIGGER = "pref_moondrop_touch_assistant_trigger";
     public static final String PREF_MOONDROP_TOUCH_ANC_MODE_EARBUD = "pref_moondrop_touch_anc_mode_earbud";
     public static final String PREF_MOONDROP_TOUCH_ANC_MODE_TRIGGER = "pref_moondrop_touch_anc_mode_trigger";
+    public static final String PREF_MOONDROP_ANC_MODE = "pref_moondrop_anc_mode";
 
-    public static final String PREF_MISCALE_WEIGHT_UNIT = "pref_miscale_weight_unit";
     public static final String PREF_MISCALE_SMALL_OBJECTS = "pref_miscale_small_objects";
 
     public static final String PREF_MIJIA_LYWSD_COMFORT_CHARACTERISTIC_LENGTH = "pref_mijia_lywsd_comfort_characteristic_length";
@@ -631,8 +669,6 @@ public class DeviceSettingsPreferenceConst {
     public static final String PREF_HOURLY_CHIME_END = "hourly_chime_end";
 
     public static final String PREF_VOICE_SERVICE_LANGUAGE = "voice_service_language";
-
-    public static final String PREF_TEMPERATURE_SCALE_CF = "temperature_scale_cf";
 
     public static final String PREF_FAKE_ANDROID_ID = "fake_android_id";
 

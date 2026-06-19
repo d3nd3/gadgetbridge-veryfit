@@ -39,13 +39,11 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
-import androidx.preference.SwitchPreference;
 import androidx.preference.SwitchPreferenceCompat;
 
 import com.bytehamster.lib.preferencesearch.SearchPreferenceResult;
@@ -76,8 +74,10 @@ import nodomain.freeyourgadget.gadgetbridge.util.GB;
 import nodomain.freeyourgadget.gadgetbridge.util.Prefs;
 
 public class SettingsActivity extends AbstractSettingsActivityV2 {
-    public static final String PREF_MEASUREMENT_SYSTEM = "measurement_system";
     public static final String PREF_LANGUAGE = "language";
+    public static final String PREF_UNIT_WEIGHT = "unit_weight";
+    public static final String PREF_UNIT_TEMPERATURE = "unit_temperature";
+    public static final String PREF_UNIT_DISTANCE = "unit_distance";
 
     @Override
     protected PreferenceFragmentCompat newFragment() {
@@ -202,6 +202,13 @@ public class SettingsActivity extends AbstractSettingsActivityV2 {
                         });
                     }
                 }
+
+                final SwitchPreferenceCompat logLevelTrace = findPreference("log_level_trace");
+                logLevelTrace.setOnPreferenceChangeListener((preference, newVal) -> {
+                    final boolean traceEnabled = Boolean.TRUE.equals(newVal);
+                    Logging.getInstance().setTraceLogging(traceEnabled);
+                    return true;
+                });
             }
 
             pref = findPreference(PREF_LANGUAGE);
@@ -238,10 +245,24 @@ public class SettingsActivity extends AbstractSettingsActivityV2 {
                 });
             }
 
-            final Preference unit = findPreference(PREF_MEASUREMENT_SYSTEM);
-            if (unit != null) {
-                unit.setOnPreferenceChangeListener((preference, newVal) -> {
-                    invokeLater(() -> GBApplication.deviceService().onSendConfiguration(PREF_MEASUREMENT_SYSTEM));
+            final Preference unitDistance = findPreference(PREF_UNIT_DISTANCE);
+            if (unitDistance != null) {
+                unitDistance.setOnPreferenceChangeListener((preference, newVal) -> {
+                    invokeLater(() -> GBApplication.deviceService().onSendConfiguration(PREF_UNIT_DISTANCE));
+                    return true;
+                });
+            }
+            final Preference unitTemperature = findPreference(PREF_UNIT_TEMPERATURE);
+            if (unitTemperature != null) {
+                unitTemperature.setOnPreferenceChangeListener((preference, newVal) -> {
+                    invokeLater(() -> GBApplication.deviceService().onSendConfiguration(PREF_UNIT_TEMPERATURE));
+                    return true;
+                });
+            }
+            final Preference unitWeight = findPreference(PREF_UNIT_WEIGHT);
+            if (unitWeight != null) {
+                unitWeight.setOnPreferenceChangeListener((preference, newVal) -> {
+                    invokeLater(() -> GBApplication.deviceService().onSendConfiguration(PREF_UNIT_WEIGHT));
                     return true;
                 });
             }
@@ -498,7 +519,7 @@ public class SettingsActivity extends AbstractSettingsActivityV2 {
                                 editor.putString("opentracks_packagename", fitnessAppEditText.getText().toString());
                                 editor.apply();
                             })
-                            .setNegativeButton(R.string.Cancel, (dialog, which) -> {})
+                            .setNegativeButton(R.string.cancel, (dialog, which) -> {})
                             .show();
                     return false;
                 });
@@ -510,6 +531,7 @@ public class SettingsActivity extends AbstractSettingsActivityV2 {
         }
 
         public class CustomOnDeviceSelectedListener implements AdapterView.OnItemSelectedListener {
+            @Override
             public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
                 if (++fitnessAppSelectionListSpinnerFirstRun > 1) { //this prevents the setText to be set when spinner just is being initialized
                     fitnessAppEditText.setText(parent.getItemAtPosition(pos).toString());

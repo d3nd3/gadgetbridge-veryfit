@@ -26,6 +26,7 @@ import nodomain.freeyourgadget.gadgetbridge.model.ActivitySample
 import nodomain.freeyourgadget.gadgetbridge.util.healthconnect.HealthConnectUtils
 import org.slf4j.LoggerFactory
 import java.time.Instant
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
@@ -36,7 +37,7 @@ internal object HeartRateSyncer : ActivitySampleSyncer {
         healthConnectClient: HealthConnectClient,
         gbDevice: GBDevice,
         metadata: Metadata,
-        offset: ZoneOffset,
+        offset: ZoneId,
         sliceStartBoundary: Instant,
         sliceEndBoundary: Instant,
         grantedPermissions: Set<String>,
@@ -51,10 +52,25 @@ internal object HeartRateSyncer : ActivitySampleSyncer {
             return SyncerStatistics(recordType = "HeartRate")
         }
 
-        // 2. Relevant Input Data Check
+        // 2. Relevant Input Data Check. HC enforces 1..300 bpm; 255 is GB's documented
+        // "illegal value" sentinel (ActivitySample.getHeartRate) and lands inside that range.
+        var droppedOutOfRange = 0
         val validHRSamples = deviceSamples
-            .filter { it.heartRate in 20..250 }
+            .filter {
+                val inRange = it.heartRate in 1..300 && it.heartRate != 255
+                // 0 means "not measured" - common, don't count as out-of-range
+                if (!inRange && it.heartRate != 0) {
+                    droppedOutOfRange++
+                }
+                inRange
+            }
             .sortedBy { it.timestamp }
+        if (droppedOutOfRange > 0) {
+            LOG.info(
+                "${HealthConnectUtils.HC_SYNC_TAG} Dropped {} out-of-range HeartRate sample(s) for device '{}' in slice {} to {} (HC requires 1..300 bpm, 255 excluded as bad-measurement sentinel).",
+                droppedOutOfRange, deviceName, sliceStartBoundary, sliceEndBoundary
+            )
+        }
 
         if (validHRSamples.isEmpty()) {
             LOG.info("No valid heart rate samples found for device '$deviceName' for slice $sliceStartBoundary to $sliceEndBoundary.")
@@ -99,7 +115,7 @@ internal object HeartRateSyncer : ActivitySampleSyncer {
                                 recordEndTime,
                                 currentHcSamples.size
                             )
-                            heartRateRecordList.add(HeartRateRecord(recordStartTime, offset, recordEndTime, offset, ArrayList(currentHcSamples), metadata))
+                            heartRateRecordList.add(HeartRateRecord(recordStartTime, offset.rules.getOffset(recordStartTime), recordEndTime, offset.rules.getOffset(recordEndTime), ArrayList(currentHcSamples), metadata))
                         } else {
                              LOG.warn("Skipping HeartRateRecord for device '$deviceName' from $recordStartTime to $recordEndTime due to invalid duration even after adjustment.")
                         }
@@ -126,7 +142,7 @@ internal object HeartRateSyncer : ActivitySampleSyncer {
                     recordEndTime,
                     currentHcSamples.size
                 )
-                heartRateRecordList.add(HeartRateRecord(recordStartTime, offset, recordEndTime, offset, ArrayList(currentHcSamples), metadata))
+                heartRateRecordList.add(HeartRateRecord(recordStartTime, offset.rules.getOffset(recordStartTime), recordEndTime, offset.rules.getOffset(recordEndTime), ArrayList(currentHcSamples), metadata))
             } else {
                 LOG.warn("Skipping final HeartRateRecord for device '$deviceName' from $recordStartTime to $recordEndTime due to invalid duration even after adjustment.")
             }

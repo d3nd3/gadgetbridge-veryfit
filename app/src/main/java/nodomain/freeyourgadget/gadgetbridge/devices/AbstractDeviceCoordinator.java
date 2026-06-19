@@ -29,6 +29,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.widget.Toast;
 
 import androidx.annotation.DrawableRes;
@@ -83,14 +84,17 @@ import nodomain.freeyourgadget.gadgetbridge.impl.GBDeviceCandidate;
 import nodomain.freeyourgadget.gadgetbridge.model.AbstractNotificationPattern;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivitySample;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivitySummaryParser;
+import nodomain.freeyourgadget.gadgetbridge.model.ActivityTrackProvider;
 import nodomain.freeyourgadget.gadgetbridge.model.Alarm;
 import nodomain.freeyourgadget.gadgetbridge.model.BatteryConfig;
 import nodomain.freeyourgadget.gadgetbridge.model.BloodPressureSample;
 import nodomain.freeyourgadget.gadgetbridge.model.BodyEnergySample;
 import nodomain.freeyourgadget.gadgetbridge.model.DeviceType;
+import nodomain.freeyourgadget.gadgetbridge.model.GpxActivityTrackProvider;
 import nodomain.freeyourgadget.gadgetbridge.model.HeartRateSample;
 import nodomain.freeyourgadget.gadgetbridge.model.HrvSummarySample;
 import nodomain.freeyourgadget.gadgetbridge.model.HrvValueSample;
+import nodomain.freeyourgadget.gadgetbridge.model.MetricSample;
 import nodomain.freeyourgadget.gadgetbridge.model.PaiSample;
 import nodomain.freeyourgadget.gadgetbridge.model.RespiratoryRateSample;
 import nodomain.freeyourgadget.gadgetbridge.model.RestingMetabolicRateSample;
@@ -115,7 +119,7 @@ public abstract class AbstractDeviceCoordinator implements DeviceCoordinator {
     protected Pattern supportedDeviceName = null;
 
     /**
-     * This method should return a Regexp pattern that will matched against a found device
+     * This method should return a Regexp pattern that will be matched against a found device
      * to check whether this coordinator supports that device.
      * If more sophisticated logic is needed to determine device support, the supports(GBDeviceCandidate)
      * should be overridden.
@@ -444,6 +448,13 @@ public abstract class AbstractDeviceCoordinator implements DeviceCoordinator {
         return null;
     }
 
+    @Override
+    @Nullable
+    public ActivityTrackProvider getActivityTrackProvider(@NonNull final GBDevice device, @NonNull final Context context) {
+        // By default, most devices write a gpx file when there's an activity track
+        return new GpxActivityTrackProvider();
+    }
+
     public boolean isHealthWearable(BluetoothDevice device) {
         BluetoothClass bluetoothClass;
         try {
@@ -513,7 +524,7 @@ public abstract class AbstractDeviceCoordinator implements DeviceCoordinator {
 
     @Nullable
     @Override
-    public InstallHandler findInstallHandler(final Uri uri, final Context context) {
+    public InstallHandler findInstallHandler(final Uri uri, final Bundle options, final Context context) {
         return null;
     }
 
@@ -603,6 +614,15 @@ public abstract class AbstractDeviceCoordinator implements DeviceCoordinator {
     }
 
     @Override
+    public int getBlePhyMask() {
+        // this is specified as a recommendation ("prefer to use ...") by Google
+        // however some roms - e.g. MIUI - treat it as law ("must only use ...") (#6230)
+        // -> by default prefer more reliable physical layers (PHYs) over high throughput 2M
+
+        return BluetoothDevice.PHY_LE_1M_MASK | BluetoothDevice.PHY_LE_CODED_MASK;
+    }
+
+    @Override
     public boolean suggestUnbindBeforePair() {
         return true;
     }
@@ -673,6 +693,11 @@ public abstract class AbstractDeviceCoordinator implements DeviceCoordinator {
     }
 
     @Override
+    public boolean supportsActivityDistance(@NonNull GBDevice device) {
+        return false;
+    }
+
+    @Override
     public boolean supportsTrainingLoad(@NonNull GBDevice device) {
         return false;
     }
@@ -697,7 +722,8 @@ public abstract class AbstractDeviceCoordinator implements DeviceCoordinator {
                 supportsWeightMeasurement(device) ||
                 supportsActiveCalories(device) ||
                 supportsCyclingData(device) ||
-                supportsRespiratoryRate(device);
+                supportsRespiratoryRate(device) ||
+                supportsBloodPressureMeasurement(device);
     }
 
     @Override
@@ -974,7 +1000,9 @@ public abstract class AbstractDeviceCoordinator implements DeviceCoordinator {
         if (connectionType.usesBluetoothClassic() || connectionType.usesBluetoothLE()) {
             settings = ArrayUtils.insert(0, settings, R.xml.devicesettings_reconnect_periodic);
             settings = ArrayUtils.insert(0, settings, R.xml.devicesettings_device_connect_back);
-            settings = ArrayUtils.add(settings, R.xml.devicesettings_connection_priority_low_power);
+            if (supportsConnectionPriority()) {
+                settings = ArrayUtils.add(settings, R.xml.devicesettings_connection_priority_low_power);
+            }
         }
 
         return settings;
@@ -1190,5 +1218,21 @@ public abstract class AbstractDeviceCoordinator implements DeviceCoordinator {
     public int getReconnectionDelay() {
         // 2 seconds.
         return 2000;
+    }
+
+    @Override
+    public boolean supportsConnectionPriority() {
+        return true;
+    }
+
+    @Override
+    public GenericMetricSampleProvider getMetricsSampleProvider(@NonNull final GBDevice device, @NonNull final DaoSession session) {
+        return new GenericMetricSampleProvider(device, session);
+    }
+
+    @Override
+    @NonNull
+    public Set<MetricSample.Metric> supportsMetrics(@NonNull GBDevice device) {
+        return GenericMetricSampleProvider.getSupportedMetrics(device);
     }
 }

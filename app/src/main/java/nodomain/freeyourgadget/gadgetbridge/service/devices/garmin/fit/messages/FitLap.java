@@ -176,6 +176,26 @@ public class FitLap extends RecordData {
     }
 
     @Nullable
+    public Double getNecLat() {
+        return getFieldByNumber(25, Double.class);
+    }
+
+    @Nullable
+    public Double getNecLong() {
+        return getFieldByNumber(26, Double.class);
+    }
+
+    @Nullable
+    public Double getSwcLat() {
+        return getFieldByNumber(27, Double.class);
+    }
+
+    @Nullable
+    public Double getSwcLong() {
+        return getFieldByNumber(28, Double.class);
+    }
+
+    @Nullable
     public Integer getNumLengths() {
         return getFieldByNumber(32, Integer.class);
     }
@@ -328,6 +348,11 @@ public class FitLap extends RecordData {
     @Nullable
     public Integer getMinHeartRate() {
         return getFieldByNumber(63, Integer.class);
+    }
+
+    @Nullable
+    public Double getActiveTime() {
+        return getFieldByNumber(70, Double.class);
     }
 
     @Nullable
@@ -591,6 +616,11 @@ public class FitLap extends RecordData {
     }
 
     @Nullable
+    public Integer getEstSweatLoss() {
+        return getFieldByNumber(145, Integer.class);
+    }
+
+    @Nullable
     public Integer getAvgRespirationRate() {
         return getFieldByNumber(147, Integer.class);
     }
@@ -613,6 +643,11 @@ public class FitLap extends RecordData {
     @Nullable
     public Integer getJumpCount() {
         return getFieldByNumber(151, Integer.class);
+    }
+
+    @Nullable
+    public Integer getExecutionScore() {
+        return getFieldByNumber(152, Integer.class);
     }
 
     @Nullable
@@ -648,6 +683,41 @@ public class FitLap extends RecordData {
     @Nullable
     public Float getMaxCoreTemperature() {
         return getFieldByNumber(160, Float.class);
+    }
+
+    @Nullable
+    public Double getGradeAdjustedSpeed() {
+        return getFieldByNumber(161, Double.class);
+    }
+
+    @Nullable
+    public Integer getUnpaved() {
+        return getFieldByNumber(163, Integer.class);
+    }
+
+    @Nullable
+    public Float getStepSpeedLossDistance() {
+        return getFieldByNumber(164, Float.class);
+    }
+
+    @Nullable
+    public Float getStepSpeedLossPercentage() {
+        return getFieldByNumber(165, Float.class);
+    }
+
+    @Nullable
+    public Double getAvgForce() {
+        return getFieldByNumber(166, Double.class);
+    }
+
+    @Nullable
+    public Double getMaxForce() {
+        return getFieldByNumber(167, Double.class);
+    }
+
+    @Nullable
+    public Double getNormalizedForce() {
+        return getFieldByNumber(168, Double.class);
     }
 
     @Nullable
@@ -803,6 +873,26 @@ public class FitLap extends RecordData {
             return this;
         }
 
+        public Builder setNecLat(final Double value) {
+            setFieldByNumber(25, value);
+            return this;
+        }
+
+        public Builder setNecLong(final Double value) {
+            setFieldByNumber(26, value);
+            return this;
+        }
+
+        public Builder setSwcLat(final Double value) {
+            setFieldByNumber(27, value);
+            return this;
+        }
+
+        public Builder setSwcLong(final Double value) {
+            setFieldByNumber(28, value);
+            return this;
+        }
+
         public Builder setNumLengths(final Integer value) {
             setFieldByNumber(32, value);
             return this;
@@ -955,6 +1045,11 @@ public class FitLap extends RecordData {
 
         public Builder setMinHeartRate(final Integer value) {
             setFieldByNumber(63, value);
+            return this;
+        }
+
+        public Builder setActiveTime(final Double value) {
+            setFieldByNumber(70, value);
             return this;
         }
 
@@ -1218,6 +1313,11 @@ public class FitLap extends RecordData {
             return this;
         }
 
+        public Builder setEstSweatLoss(final Integer value) {
+            setFieldByNumber(145, value);
+            return this;
+        }
+
         public Builder setAvgRespirationRate(final Integer value) {
             setFieldByNumber(147, value);
             return this;
@@ -1240,6 +1340,11 @@ public class FitLap extends RecordData {
 
         public Builder setJumpCount(final Integer value) {
             setFieldByNumber(151, value);
+            return this;
+        }
+
+        public Builder setExecutionScore(final Integer value) {
+            setFieldByNumber(152, value);
             return this;
         }
 
@@ -1275,6 +1380,41 @@ public class FitLap extends RecordData {
 
         public Builder setMaxCoreTemperature(final Float value) {
             setFieldByNumber(160, value);
+            return this;
+        }
+
+        public Builder setGradeAdjustedSpeed(final Double value) {
+            setFieldByNumber(161, value);
+            return this;
+        }
+
+        public Builder setUnpaved(final Integer value) {
+            setFieldByNumber(163, value);
+            return this;
+        }
+
+        public Builder setStepSpeedLossDistance(final Float value) {
+            setFieldByNumber(164, value);
+            return this;
+        }
+
+        public Builder setStepSpeedLossPercentage(final Float value) {
+            setFieldByNumber(165, value);
+            return this;
+        }
+
+        public Builder setAvgForce(final Double value) {
+            setFieldByNumber(166, value);
+            return this;
+        }
+
+        public Builder setMaxForce(final Double value) {
+            setFieldByNumber(167, value);
+            return this;
+        }
+
+        public Builder setNormalizedForce(final Double value) {
+            setFieldByNumber(168, value);
             return this;
         }
 

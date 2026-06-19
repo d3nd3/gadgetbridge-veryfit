@@ -27,6 +27,8 @@ import java.util.List;
 import de.greenrobot.dao.AbstractDao;
 import de.greenrobot.dao.Property;
 import nodomain.freeyourgadget.gadgetbridge.devices.AbstractSampleProvider;
+import nodomain.freeyourgadget.gadgetbridge.devices.XiaomiSleepStageSampleProvider;
+import nodomain.freeyourgadget.gadgetbridge.devices.XiaomiSleepTimeSampleProvider;
 import nodomain.freeyourgadget.gadgetbridge.entities.DaoSession;
 import nodomain.freeyourgadget.gadgetbridge.entities.XiaomiActivitySample;
 import nodomain.freeyourgadget.gadgetbridge.entities.XiaomiActivitySampleDao;
@@ -113,8 +115,8 @@ public class XiaomiSampleProvider extends AbstractSampleProvider<XiaomiActivityS
             case 2 -> ActivityKind.DEEP_SLEEP;
             case 3 -> ActivityKind.LIGHT_SLEEP;
             case 4 -> ActivityKind.REM_SLEEP;
-            default -> // default to awake
-                    ActivityKind.UNKNOWN;
+            case 5 -> ActivityKind.AWAKE_SLEEP;
+            default -> ActivityKind.UNKNOWN;
         };
     }
 

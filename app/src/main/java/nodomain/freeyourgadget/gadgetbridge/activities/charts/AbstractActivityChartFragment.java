@@ -138,7 +138,7 @@ public abstract class AbstractActivityChartFragment<D extends ChartsData> extend
         akLightSleep = new ActivityConfig(ActivityKind.LIGHT_SLEEP, getString(R.string.abstract_chart_fragment_kind_light_sleep), AK_LIGHT_SLEEP_COLOR);
         akDeepSleep = new ActivityConfig(ActivityKind.DEEP_SLEEP, getString(R.string.abstract_chart_fragment_kind_deep_sleep), AK_DEEP_SLEEP_COLOR);
         akRemSleep = new ActivityConfig(ActivityKind.REM_SLEEP, getString(R.string.abstract_chart_fragment_kind_rem_sleep), AK_REM_SLEEP_COLOR);
-        akAwakeSleep = new ActivityConfig(ActivityKind.REM_SLEEP, getString(R.string.abstract_chart_fragment_kind_awake_sleep), AK_AWAKE_SLEEP_COLOR);
+        akAwakeSleep = new ActivityConfig(ActivityKind.AWAKE_SLEEP, getString(R.string.abstract_chart_fragment_kind_awake_sleep), AK_AWAKE_SLEEP_COLOR);
         akNotWorn = new ActivityConfig(ActivityKind.NOT_WORN, getString(R.string.abstract_chart_fragment_kind_not_worn), AK_NOT_WORN_COLOR);
     }
 
@@ -178,7 +178,7 @@ public abstract class AbstractActivityChartFragment<D extends ChartsData> extend
 
     protected List<? extends ActivitySample> getAllSamplesHighRes(DBHandler db, GBDevice device, int tsFrom, int tsTo) {
         SampleProvider<? extends ActivitySample> provider = getProvider(db, device);
-        // Only retrieve if the provider signals it has high res data, otherwise it is useless
+        // Only retrieve if the provider signals it has high-res data, otherwise it is useless
         if (provider.hasHighResData())
             return provider.getAllActivitySamplesHighRes(tsFrom, tsTo);
         return null;
@@ -190,14 +190,14 @@ public abstract class AbstractActivityChartFragment<D extends ChartsData> extend
     }
 
     public DefaultChartsData<LineData> refresh(GBDevice gbDevice, List<? extends ActivitySample> samples) {
-        // If there is no high res samples, all the samples are high res samples
+        // If there is no high-res samples, all the samples are high-res samples
         return refresh(gbDevice, samples, samples);
     }
 
     public DefaultChartsData<LineData> refresh(GBDevice gbDevice, List<? extends ActivitySample> samples, List<? extends ActivitySample> highResSamples) {
         TimestampTranslation tsTranslation = new TimestampTranslation();
         LOG.info("{}: number of samples: {}", getTitle(), samples.size());
-        LOG.info("{}: number of high res samples: {}", getTitle(), highResSamples.size());
+        LOG.info("{}: number of high-res samples: {}", getTitle(), highResSamples.size());
         LineData lineData;
 
         if (samples.isEmpty()) {
@@ -393,7 +393,7 @@ public abstract class AbstractActivityChartFragment<D extends ChartsData> extend
     protected abstract List<? extends ActivitySample> getSamples(DBHandler db, GBDevice device, int tsFrom, int tsTo);
 
     /**
-     * Implement this to supply high resolution data
+     * Implement this to supply high-resolution data
      */
     protected List<? extends ActivitySample> getSamplesHighRes(DBHandler db, GBDevice device, int tsFrom, int tsTo) {
         throw new NotImplementedException("High resolution samples have not been implemented for this chart.");
@@ -421,7 +421,8 @@ public abstract class AbstractActivityChartFragment<D extends ChartsData> extend
     }
 
     protected List<? extends ActivitySample> getSamplesofSleep(DBHandler db, GBDevice device) {
-        int SLEEP_HOUR_LIMIT = 12;
+        final String chartSleepRangeMode = GBApplication.getPrefs().getString("chart_sleep_range_mode", "18:00");
+        final int SLEEP_HOUR_LIMIT = "18:00".equals(chartSleepRangeMode) ? 18 : 12;
 
         int tsStart = getTSStart();
         Calendar day = GregorianCalendar.getInstance();
@@ -470,4 +471,3 @@ public abstract class AbstractActivityChartFragment<D extends ChartsData> extend
         return sample;
     }
 }
-
